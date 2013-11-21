@@ -1,5 +1,6 @@
 from urlparse import urlparse
 import datetime
+import dateutil.parser
 
 class BackUrlValidator:
     def __init__(self, back_url, valid_domains):
@@ -27,5 +28,5 @@ class BackUrlValidator:
 
 def is_authenticated(request):
     if request.session.get("relogin_time"):
-        return request.session.get("relogin_time") > datetime.datetime.now()
+        return dateutil.parser.parse(request.session.get("relogin_time")) > datetime.datetime.now()
     return False
