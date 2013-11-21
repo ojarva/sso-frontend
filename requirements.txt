@@ -1,0 +1,12 @@
+Django==1.6
+M2Crypto==0.21.1
+httplib2==0.8
+pycrypto==2.6
+urllib3==1.6
+wsgiref==0.1.2
+redis
+django-ratelimit
+django-redis-cache
+hiredis
+httpagentparser
+south

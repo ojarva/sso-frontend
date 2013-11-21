@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if server_not_allowed %}
+	<div class="alert alert-warning">
+		The specified return URL to {{ destination_host }} is invalid. You can still sign in, but your browser will stay on this login server.
+	</div>
+{% endif %}
+{% if enable_cookies %}
+	<div class="alert alert-error">
+		Please enable cookies. You're not able to sign in without properly working cookies.
+	</div>
+{% endif %}
+{% if authentication_failed %}
+	<div class="alert alert-error">
+		Authentication failed. Please try again.
+	</div>
+{% elif login_timeout %}
+	<div class="alert alert-warning">
+		Your session has ended due to a timeout. Please sign in again.
+	</div>
+{% elif unauth %}
+	<div class="alert alert-error">
+		You don&apos;t have permission to access the desired resource on
+		{{ destination_host }}<br>You may try signing in again
+		with different credentials.
+	</div>
+{% elif logout %}
+	<div class="alert alert-success">
+		You successfully signed out.
+	</div>
+{% endif %}
+
+<form class="form-signin" name="loginform" method="POST" action="/">
+	{% csrf_token %}
+	{{ form }}
+	<button class="btn btn-large btn-primary" type="submit">Sign in</button>
+</form>
+
+{% endblock %}

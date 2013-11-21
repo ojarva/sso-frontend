@@ -1,0 +1,112 @@
+html {
+  min-height: 100%;
+  height: auto;
+}
+
+body {
+  padding-top: 40px;
+  padding-bottom: 20px;
+  background-color: #ffffff;
+  background-image: url('../img/futurice-splash.png');
+  background-position: center bottom;
+  background-repeat: no-repeat;
+}
+
+.logo {
+	margin: 20px auto;
+	display: block;
+}
+
+.info-boxes {
+  max-width: 300px;
+  padding: 19px 29px 29px;
+  margin: 0 auto 20px;
+}
+
+.form-signin {
+  max-width: 300px;
+  padding: 19px 29px 29px;
+  margin: 0 auto 20px;
+}
+
+.form-signin button {
+	width: 140px;
+	margin: 25px auto;
+	display: block;
+	color: #ffffff;
+	background-color: #4a8a1b;
+  background-image: -moz-linear-gradient(top, #629f2b, #2e7206);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#629f2b), to(#2e7206));
+  background-image: -webkit-linear-gradient(top, #629f2b, #2e7206);
+  background-image: -o-linear-gradient(top, #629f2b, #2e7206);
+  background-image: linear-gradient(to bottom, #629f2b, #2e7206);
+  border-color: #2b6d05;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff629f2b', endColorstr='#ff2e7206', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+  text-shadow: 0 -1px 0 #385f19;
+}
+
+.form-signin button:hover,
+.form-signin button:active,
+.form-signin button.active,
+.form-signin button.disabled,
+.form-signin button[disabled] {
+  color: #ffffff;
+  background-color: #2e7206;
+}
+
+.form-signin .form-signin-heading,
+.form-signin .checkbox {
+  margin-bottom: 10px;
+}
+.form-signin input[type="text"],
+.form-signin input[type="password"] {
+  font-size: 16px;
+  height: auto;
+  margin-bottom: 15px;
+  padding: 7px 9px;
+  width: 100%;
+  max-width: 190px;
+  min-width: 140px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.logout-alert {
+  background-color: transparent;
+  color: #222;
+  text-align: center;
+  min-width: 160px;
+  padding-top: 30px;
+  padding-bottom: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  margin-right: auto;
+  margin-left: auto;
+  border: 0;
+}
+
+.logout-alert input {
+  margin-top: 30px;
+}
+
+.username {
+  color: #4c9018;
+  font-weight: bold;
+  font-size: 16pt;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+@media (max-width: 767px) { 
+  body {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .logout-alert {
+    padding-top: 12px;
+  }
+}

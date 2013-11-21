@@ -1,0 +1,7 @@
+syntax: glob
+data.db
+*/build/*
+local_settings.py
+*.pyc
+*.log
+*.pid
