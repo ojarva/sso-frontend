@@ -10,3 +10,5 @@ django-redis-cache
 hiredis
 httpagentparser
 south
+pyotp
+qrcode
