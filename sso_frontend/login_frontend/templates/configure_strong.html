@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if enable_cookies %}
+	<div class="alert alert-error">
+		Please enable cookies. You're not able to sign in without properly working cookies.
+	</div>
+{% endif %}
+
+
+{% if not user.strong_configured %}
+<h2>Configure Strong Authentication</h2>
+
+<p><a href="#TODO" class="btn btn-info">Skip for now</a></p>
+
+<p>It appears you haven't configured strong authentication. If you want to, you can do this later. 
+<a href="#TODO">Go back to service you tried to access</a>. This screen will be shown to you every time
+you login, until you select your preferences below.</p>
+
+{% else %}
+<p><a href="#TODO" class="btn btn-info">Continue to service you tried to access</a></p>
+{% endif %}
+
+
+{% if not user.strong_authenticator_secret %}
+
+<p>You don't have Google Authenticator configured, or your configuration was revoked. Google Authenticator generates one-time passwords on your phone. That's faster and more reliable than receiving SMS messages.</p>
+
+{% if not user.strong_sms_always %}
+<p>If you want to, you can also opt for always receiving SMS message:</p>
+
+<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+        {% csrf_token %}
+        <input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Always use SMS messages</button>
+</form>
+{% endif %}
+
+<p>If you want to make your life a bit easier, you can
+
+<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
+        {% csrf_token %}
+        <button class="btn btn-primary" type="submit">Configure Google Authenticator</button>
+</form>
+
+{% else %}
+
+<p>You have Google Authenticator configured.</p>
+
+<p>If you want to, you can opt to always use SMS messages instead:</p>
+
+<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+        {% csrf_token %}
+        <input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Revoke and always use SMS messages</button>
+</form>
+
+<p>If you don't have Google Authenticator configured anymore - for example, after reinstalling or changing the phone - you can reconfigure it:</p>
+<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
+        {% csrf_token %}
+        <button class="btn btn-primary" type="submit">Reconfigure Google Authenticator</button>
+</form>
+
+
+
+
+{% endif %}
+
+
+<h2>Your active sessions:</h2>
+
+<ul>
+{% for browser in browsers %}
+<li>{{ browser.ua}} (last seen {{ browser.modified }})</li>
+{% endfor %}
+</ul>
+
+<h2>Your settings:</h2>
+<ul>
+<li>Primary phone number: {{ user.primary_phone }} (last changed: {{ user.primary_phone_refresh }})</li>
+<li>Secondary phone number: {{ user.secondary_phone }} (last changed: {{ user.secondary_phone_refresh }})</li>
+<li>Google Authenticator configured: {% if user.authenticator_secret %}Yes{% else %}No{% endif %}</li>
+</ul>
+
+{% endblock %}

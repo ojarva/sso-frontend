@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if enable_cookies %}
+	<div class="alert alert-error">
+		Please enable cookies. You're not able to sign in without properly working cookies.
+	</div>
+{% endif %}
+
+
+{% if primary_phone_changed %}
+	<div class="alert alert-warning">
+		Your phone number has changed. For security reasons, you must reconfigure strong authentication.
+	</div>
+{% elif strong_not_configured %}
+	<div class="alert alert-warning">
+		You have not configured strong authentication. You should receive SMS message with one-time password shortly. Please enter it below. On the next step, you can set your preferences for authentication.
+
+TODO: link to instructions/"What is strong authentication"
+	</div>
+{% endif %}
+
+{% if authentication_failed %}
+	<div class="alert alert-error">
+		Invalid one-time code. You should enter code number {{otp_code_number}}
+	</div>
+{% endif %}
+
+{% if message %}
+	<div class="alert alert-warning">
+               {{ message }}
+	</div>
+{% endif %}
+
+You should receive SMS containing one-time password shortly. Please enter it below. It should be #{{ expected_sms_id }}.
+
+<form class="form-signin" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">
+	{% csrf_token %}
+	{{ form }}
+	<button class="btn btn-large btn-primary" type="submit">Sign in</button>
+</form>
+
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if enable_cookies %}
+	<div class="alert alert-error">
+		Please enable cookies. You're not able to sign in without properly working cookies.
+	</div>
+{% endif %}
+
+
+<h2>Configure Google Authenticator</h2>
+
+<p>Google Authenticator generates one-time passwords on your phone. It's faster and more reliable than receiving SMS messages. After configuring Google Authenticator, you can still authenticate using SMS messages if needed.</p>
+
+<p>No app? 
+<a target="_window" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a>, 
+<a target="_window" href="https://itunes.apple.com/fi/app/google-authenticator/id388497605?mt=8">iPhone</a>, 
+<a target="_window" href="http://www.windowsphone.com/fi-fi/store/app/authenticator/021dd79f-0598-e011-986b-78e7d1fa76f8">Windows Phone</a>.</p>
+
+{% if show_manual %}
+<p>Enter this string to Google Authenticator: <b>{{ authenticator_secret }}</b></p>
+
+<form method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{get_params }}">
+{% csrf_token %}
+<input type="hidden" name="show_manual" value="false">
+<button class="btn">Want to try again with QR code?</button>
+</form>
+
+{% else %}
+<p>Scan this image using Google Authenticator:</p>
+<p><img src="{% url 'login_frontend.views.get_authenticator_qr' authenticator_qr_nonce %}"></p>
+
+<form method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{get_params }}">
+{% csrf_token %}
+<input type="hidden" name="show_manual" value="true">
+<button class="btn">Can't scan? Enter manually.</button>
+</form>
+
+{% endif %}
+
+<p><b>Do not</b> save contents of this page to your computer. If you ever lose your configuration, you can always regenerate it from this service.</p>
+
+
+<p>After configuring Authenticator, it should show 6-digit code, changing every 30 seconds. To complete configuration and continue to service you accessed, please enter that code below:</p>
+
+
+{% if invalid_otp %}
+<div class="alert alert-error">
+	{{ invalid_otp }} If trying again doesn't help, try reconfiguring your Authenticator. If you can't get this to work, please contact IT team.
+</div>
+{% endif %}
+
+<form method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{get_params }}">
+{% csrf_token %}
+<input type="text" name="otp_code" placeholder="Enter OTP code">
+<button class="btn btn-primary">Save and continue</button>
+</form>
+
+<p>Want to skip this for now? <a href="{% url 'login_frontend.views.configure_strong' %}">Go back to configuration view</a> or <a href="#TODO">continue to your originating service</a></p>
+
+{% endblock %}
