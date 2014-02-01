@@ -11,17 +11,28 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'data.db',                      # Or path to database file if using sqlite3.
-        # The following settings are not used with sqlite3:
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',                      # Set to empty string for default.
-    }
+
+HUEY = {
+    'backend': 'huey.backends.redis_backend',  # required.
+    'name': 'sso_frontend',
+    'connection': {'host': 'localhost', 'port': 6379},
+    'always_eager': False, # Defaults to False when running via manage.py run_huey
+
+    # Options to pass into the consumer when running ``manage.py run_huey``
+    'consumer_options': {'workers': 4},
 }
+
+# DATABASES are configured in local_settings. Use mysql/postgresql instead of sqlite3
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+#        'NAME': 'sso',
+#        'USER': '',
+#        'PASSWORD': '',
+#        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+#        'PORT': '',                      # Set to empty string for default.
+#    }
+#}
 
 
 CACHES = {
@@ -151,6 +162,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'login_frontend',
     'south',
+    'huey.djhuey',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
