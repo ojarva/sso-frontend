@@ -5,3 +5,5 @@ local_settings.py
 *.pyc
 *.log
 *.pid
+sso_frontend/login_frontend/ldap_local_settings.py
+sso_frontend/login_frontend/send_sms.py
