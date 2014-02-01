@@ -4,9 +4,11 @@ from django.core.urlresolvers import reverse
 import urllib
 from django.http import HttpResponse, HttpResponseRedirect
 
-def custom_redirect(url_name, **kwargs):
+def custom_redirect(url_name, get_params = None):
     url = reverse(url_name)
-    params = urllib.urlencode(kwargs)
+    if not get_params:
+        return HttpResponseRedirect(url)
+    params = urllib.urlencode(get_params)
     return HttpResponseRedirect(url + "?%s" % params)
 
 def get_browser(request):

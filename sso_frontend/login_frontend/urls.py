@@ -4,7 +4,8 @@ from login_frontend import views
 from login_frontend import providers
 
 urlpatterns = patterns('',
-    url(r'^$', views.indexview, name='index'),
+    url(r'^$', views.main_redir),
+    url(r'^index$', views.indexview, name='index'),
 
     # First factor authentication
     url(r'^first$', views.firststepauth),

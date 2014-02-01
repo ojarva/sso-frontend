@@ -4,13 +4,13 @@ from django.db import models
 from django.utils import timezone
 from django.utils.timesince import timeuntil
 from random import choice, randint
+import datetime
 import httpagentparser
 import phonenumbers
+import pyotp
 import subprocess
 import time
-import datetime
 import uuid
-import pyotp
 
 def create_browser_uuid():
     return str(uuid.uuid4())
