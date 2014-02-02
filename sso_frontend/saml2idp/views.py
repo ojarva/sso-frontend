@@ -50,7 +50,8 @@ def login_begin(request, *args, **kwargs):
         source = request.GET
 
     if not ('SAMLRequest' in source and 'RelayState' in source):
-        return HttpResponse("Missing SAMLRequest or RelayState argument. Aborting.")
+        return render_to_response('saml2idp/error.html', {"missing_fields": True},
+                                  context_instance=RequestContext(request))
 
     # Store these values now, because Django's login cycle won't preserve them.
     request.session['SAMLRequest'] = source['SAMLRequest']
@@ -111,7 +112,8 @@ def slo_logout(request):
     """
 
     if "SAMLRequest" not in request.POST:
-	return HttpResponse("No SAMLRequest in POST. Aborting logout.")
+        return render_to_response('saml2idp/error.html', {"missing_fields": True},
+                                  context_instance=RequestContext(request))
 
     request.session['SAMLRequest'] = request.POST['SAMLRequest']
     #TODO: Parse SAML LogoutRequest from POST data, similar to login_process().
