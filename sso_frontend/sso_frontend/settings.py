@@ -58,6 +58,34 @@ CACHES = {
 
 PUBTKT_ALLOWED_DOMAINS=[".futurice.com"]
 
+
+PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '../')
+
+LOGIN_REDIRECT_URL = '/v2/idp/sso/post/response/preview/'
+
+# SAML2IDP metadata settings
+SAML2IDP_CONFIG = {
+    'autosubmit': False,
+    'issuer': 'https://login.futurice.com',
+    'signing': True,
+    'certificate_file': PROJECT_ROOT + '/saml2idp/keys/certificate.pem',
+    'private_key_file': PROJECT_ROOT + '/saml2idp/keys/private-key.pem'
+}
+SAML2IDP_REMOTES = {
+    # Group of SP CONFIGs.
+    # friendlyname: SP config
+    'google_apps': {
+        'acs_url': 'https://www.google.com/a/futurice.com/acs',
+        'processor': 'saml2idp.google_apps.Processor',
+    }
+}
+
+# Setup logging.
+import logging
+logging.basicConfig(filename=PROJECT_ROOT + '/logs/saml2idp.log', format='%(asctime)s: %(message)s', level=logging.DEBUG)
+logging.info('Logging setup.')
+
+
 RATELIMIT_ENABLE=True
 RATELIMIT_USE_CACHE="ratelimit"
 
@@ -164,6 +192,7 @@ INSTALLED_APPS = (
     'openid_provider',
     'south',
     'huey.djhuey',
+    'saml2idp',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
