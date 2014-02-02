@@ -20,6 +20,7 @@ urlpatterns = patterns('',
     # SSO providers
     url(r'^saml$', providers.saml),
     url(r'^pubtkt$', providers.pubtkt),
+    url(r'^internal_login$', providers.internal_login),
 
     # Rest
     url(r'^configure$', views.configure_strong),

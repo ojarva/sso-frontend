@@ -12,6 +12,8 @@ def redir_to_sso(request):
         return custom_redirect("login_frontend.providers.openid", request.GET.dict())
     elif sso == "saml":
         return custom_redirect("login_frontend.providers.saml", request.GET.dict())
+    elif sso == "internal":
+        return custom_redirect("login_frontend.providers.internal_login", request.GET.dict())
     else:
         return HttpResponse("Invalid SSO provider")
 
