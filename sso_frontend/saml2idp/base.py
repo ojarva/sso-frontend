@@ -12,6 +12,8 @@ import exceptions
 import saml2idp_metadata
 import xml_render
 
+from login_frontend.models import User
+
 MINUTES = 60
 HOURS = 60 * MINUTES
 
@@ -110,7 +112,11 @@ class Processor(object):
         """
         Determines _subject and _subject_type for Assertion Subject.
         """
-        self._subject = self._django_request.user.email
+        try:
+            user = User.objects.get(username=self._django_request.user.username)
+            self._subject = user.email
+        except User.DoesNotExist:
+            self._subject = self._django_request.user.email
 
     def _encode_response(self):
         """
