@@ -384,6 +384,7 @@ def authenticate_with_emergency(request, browser):
 @protect_view("logoutview", required_level=Browser.L_UNAUTH) # No authentication required to prevent silly sign-in - logout cycle.
 def logoutview(request, browser):
     ret = {}
+    ret["get_params"] = urllib.urlencode(request.GET)
     if request.method == 'POST' or request.GET.get("get_accepted"):
         logout_keys = ["username", "authenticated", "authentication_level", "login_time", "relogin_time"]
         for keyname in logout_keys:
@@ -397,4 +398,4 @@ def logoutview(request, browser):
             browser.logout()
         django_auth.logout(request)
         request.session["logout"] = True
-    return custom_redirect("login_frontend.views.indexview")
+    return custom_redirect("login_frontend.views.indexview", ret["get_params"])
