@@ -8,6 +8,7 @@ urlpatterns = patterns('',
     # Examples:
     url(r'^', include('openid_provider.urls')),
     url(r'^', include('login_frontend.urls')),
+    url(r'^', include('saml2idp.urls')),
     # url(r'^sso_frontend/', include('sso_frontend.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

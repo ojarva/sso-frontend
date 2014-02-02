@@ -27,12 +27,12 @@ def deeplink_url_patterns(
     return new_patterns
 
 urlpatterns = patterns('',
-    url( r'^login/$', login_begin, name="login_begin"),
-    url( r'^login/process/$', login_process, name='login_process'),
-    url( r'^logout/$', logout, name="logout"),
-    (r'^metadata/xml/$', descriptor),
+    url( r'^idp/login/$', login_begin, name="login_begin"),
+    url( r'^idp/login/process/$', login_process, name='login_process'),
+    url( r'^idp/logout/$', logout, name="logout"),
+    (r'^idp/metadata/xml/$', descriptor),
     # For "simple" deeplinks:
-    url( r'^init/(?P<resource>\w+)/(?P<target>\w+)/$', login_init, name="login_init"),
+    url( r'^idp/init/(?P<resource>\w+)/(?P<target>\w+)/$', login_init, name="login_init"),
 )
 # Issue 13 - Add new automagically-created URLs for deeplinks:
 urlpatterns += deeplink_url_patterns()
