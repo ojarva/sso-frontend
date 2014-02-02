@@ -9,3 +9,4 @@ sso_frontend/login_frontend/ldap_local_settings.py
 sso_frontend/login_frontend/send_sms.py
 sso_frontend/login_frontend/local_settings.json
 sso_frontend/static/admin
+sso_frontend/logs
