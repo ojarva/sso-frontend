@@ -1,4 +1,5 @@
 from StringIO import StringIO
+from django.contrib import auth as django_auth
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -121,7 +122,7 @@ def authenticate_with_password(request, browser):
             return custom_redirect("login_frontend.views.secondstepauth", request.GET)
         if browser.get_auth_state() in (Browser.S_AUTHENTICATED, ):
             # User is already authenticated. Redirect back to SSO service.
-            return HttpResponse("Redirect back to SSO service")
+            return redir_to_sso(request)
     else:
         # No Browser object is initialized. Create one.
         browser = Browser(bid=create_browser_uuid(), ua=request.META.get("HTTP_USER_AGENT"))
@@ -175,7 +176,7 @@ def secondstepauth(request, browser):
 
     # If already authenticated with L_STRONG, redirect back to destination
     if browser.get_auth_level() == Browser.L_STRONG or browser.get_auth_state() == Browser.S_AUTHENTICATED:
-        return HttpResponse("Redirect back to SSO")
+        return redir_to_sso(request)
 
     if not user.strong_configured:
         # User has not configured any authentication. Go to that pipe.
@@ -194,7 +195,7 @@ def secondstepauth(request, browser):
 def authenticate_with_authenticator(request, browser):
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
     if browser.get_auth_level() == Browser.L_STRONG or browser.get_auth_state() == Browser.S_AUTHENTICATED:
-        return HttpResponse("Redirect back to SSO")
+        return redir_to_sso(request)
 
     ret = {}
     user = browser.username
@@ -214,7 +215,7 @@ def authenticate_with_authenticator(request, browser):
                 browser.set_auth_level(Browser.L_STRONG)
                 browser.set_auth_state(Browser.S_AUTHENTICATED)
                 browser.save()
-                return HttpResponse("Redirect back to SSO service")                
+                return redir_to_sso(request)
             else:
                 ret["invalid_otp"] = message
     else:
@@ -234,7 +235,7 @@ def authenticate_with_authenticator(request, browser):
 def authenticate_with_sms(request, browser):
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
     if browser.get_auth_level() == Browser.L_STRONG or browser.get_auth_state() == Browser.S_AUTHENTICATED:
-        return HttpResponse("Redirect back to SSO")
+        return redir_to_sso(request)
 
     user = browser.username
     cookies = []
@@ -268,7 +269,7 @@ def authenticate_with_sms(request, browser):
                     # Strong authentication is not configured. Go to configuration view.
                     return custom_redirect("login_frontend.views.configure_strong", request.GET)
                 # Redirect back to SSO service
-                return HttpResponse("TODO: Redirect back to SSO service")
+                return redir_to_sso(request)
             else:
                 if message:
                     ret["message"] = message
@@ -347,7 +348,7 @@ def configure_authenticator(request, browser):
             user.strong_authenticator_used = True
             user.strong_sms_always = False
             user.save()
-            return HttpResponse("Redirect back to SSO")
+            return redir_to_sso(request)
         else:
             # Incorrect code. Don't regen secret.
             regen_secret = False
@@ -394,5 +395,6 @@ def logoutview(request, browser):
         browser = get_browser(request)
         if browser is not None:
             browser.logout()
+        django_auth.logout(request)
         request.session["logout"] = True
     return custom_redirect("login_frontend.views.indexview")
