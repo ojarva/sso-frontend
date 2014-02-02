@@ -12,3 +12,4 @@ httpagentparser
 south
 pyotp
 qrcode
+BeautifulSoup
