@@ -18,7 +18,6 @@ urlpatterns = patterns('',
     url(r'^second/emergency$', views.authenticate_with_emergency),
 
     # SSO providers
-    url(r'^openid$', providers.openid),
     url(r'^saml$', providers.saml),
     url(r'^pubtkt$', providers.pubtkt),
 
