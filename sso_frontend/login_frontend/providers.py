@@ -1,4 +1,6 @@
 from M2Crypto import DSA
+from django.conf import settings
+from urlparse import urlparse
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -51,18 +53,53 @@ def saml(request):
     pass
 
 def pubtkt(request):
+    def is_valid_back_url(back_url):
+        valid_domains = settings.PUBTKT_ALLOWED_DOMAINS
+        parsed_url = urlparse(back_url)
+        if parsed_url.scheme != "https":
+            return False
+
+        if parsed_url.hostname:
+            for domain in valid_domains:
+                if parsed_url.hostname.endswith(domain):
+                    break
+            else:
+                return False
+        else:
+            return False
+        return True
+
+
     ret = {}
     cookies = []
 
     params = request.GET.dict()
     params["_sso"] = "pubtkt"
+    ret["get_params"] = urllib.urlencode(params)
+
     browser = get_browser(request)
     if browser is None:
         return custom_redirect("login_frontend.views.firststepauth", params)
 
-    if request.GET.get("back") is None:
-        # No back url is defined. Go to front page.
-        return HttpResponseRedirect(reverse("login_frontend.views.indexview"))
+    show_error_page = False
+
+    back_url = request.GET.get("back")
+
+    if "unauth" in request.GET:
+        ret["unauth"] = True
+        ret["back_url"] = back_url
+        show_error_page = True
+    elif back_url is None:
+        # No back url is defined. Show error page.
+        show_error_page = True
+        ret["invalid_back_url"] = True
+    elif not is_valid_back_url(back_url):
+        show_error_page = True
+        ret["invalid_back_url"] = True
+        ret["back_url"] = back_url
+
+    if show_error_page:
+        return render_to_response("pubtkt_error.html", ret, context_instance=RequestContext(request))
 
     # TODO: static auth level
     if browser.get_auth_level() == Browser.L_STRONG:
@@ -71,7 +108,6 @@ def pubtkt(request):
         tokens = json.loads(browser.username.user_tokens)
         ticket = auth_pubtkt.create_ticket(privkey, browser.username.username, valid_until, tokens=tokens)
         cookies.append(("auth_pubtkt", {"value": urllib.quote(ticket), "secure": True, "httponly": True, "domain": ".futurice.com"}))
-        back_url = request.GET.get("back")
         ret["back_url"] = back_url
         response = render_to_response("html_redirect.html", ret, context_instance=RequestContext(request))
         for cookie_name, cookie in cookies:

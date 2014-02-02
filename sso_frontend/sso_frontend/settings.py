@@ -56,7 +56,7 @@ CACHES = {
     },	
 }
 
-PUBTKT_ALLOWED_DOMAINS=["futurice.com"]
+PUBTKT_ALLOWED_DOMAINS=[".futurice.com"]
 
 RATELIMIT_ENABLE=True
 RATELIMIT_USE_CACHE="ratelimit"
