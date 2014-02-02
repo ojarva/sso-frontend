@@ -15,7 +15,7 @@ def redir_to_sso(request):
     elif sso == "internal":
         return custom_redirect("login_frontend.providers.internal_login", request.GET.dict())
     else:
-        return HttpResponse("Invalid SSO provider")
+        return custom_redirect("login_frontend.views.indexview", request.GET.dict())
 
 def get_query_string(mapping, **kwargs):
     for item in kwargs:
