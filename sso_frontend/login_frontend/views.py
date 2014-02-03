@@ -407,9 +407,13 @@ def authenticate_with_emergency(request, browser):
 @ratelimit(rate='15/15s', ratekey='15s', block=True, method=["POST", "GET"], skip_if=is_authenticated)
 @protect_view("logoutview", required_level=Browser.L_UNAUTH) # No authentication required to prevent silly sign-in - logout cycle.
 def logoutview(request, browser):
-    ret = {}
-    ret["get_params"] = urllib.urlencode(request.GET)
-    if request.method == 'POST' or request.GET.get("get_accepted"):
+    """ Handles logout as well as possible. 
+
+    Only POST requests with valid CSRF token are accepted. In case of
+    a GET request, page with logout button is shown.
+    """        
+
+    if request.method == 'POST':
         logout_keys = ["username", "authenticated", "authentication_level", "login_time", "relogin_time"]
         for keyname in logout_keys:
             try:
@@ -417,9 +421,16 @@ def logoutview(request, browser):
             except KeyError:
                 pass
  
-        browser = get_browser(request)
         if browser is not None:
             browser.logout()
         django_auth.logout(request)
         request.session["logout"] = True
-    return custom_redirect("login_frontend.views.indexview", ret["get_params"])
+        return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+    else:
+        ret = {}
+        ret["get_params"] = urllib.urlencode(request.GET)
+        if browser is None:
+            ret["not_logged_in"] = True
+        elif browser.get_auth_level() < Browser.L_BASIC:
+            ret["not_logged_in"] = True
+        return render_to_response("logout.html", ret, context_instance=RequestContext(request))

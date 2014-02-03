@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% if not_logged_in %}
+<p>You're not signed in. <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">Continue.</a></p>
+
+{% else %}
+
+<form method="POST" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">
+        {% csrf_token %}
+        <button class="btn btn-large btn-primary" type="submit">Logout</button>
+</form>
+
+<p>Don't want to logout? <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">Skip.</a></p>
+
+<p><small>It appears you came to logout page by following a link. This additional step is here to protect you against accidential logouts. See <a href="http://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF</a> for more information.</small></p>
+{% endif %}
+
+{% endblock %}
