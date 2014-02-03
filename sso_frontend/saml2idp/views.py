@@ -34,8 +34,8 @@ def _generate_response(request, processor):
         return render_to_response('saml2idp/invalid_user.html',
                                   context_instance=RequestContext(request))
 
-
-    return custom_redirect("login_frontend.providers.internal_login", {"next": tv.get("next")})
+    return render_to_response('saml2idp/login.html', tv,
+                                context_instance=RequestContext(request))
 
 def xml_response(request, template, tv):
     return render_to_response(template, tv, mimetype="application/xml")
