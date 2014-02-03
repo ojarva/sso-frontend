@@ -332,6 +332,7 @@ def configure_strong(request):
 
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
+    ret["back_url"] = redir_to_sso(request).url
     response = render_to_response("configure_strong.html", ret, context_instance=RequestContext(request))
     return response
 
@@ -362,6 +363,8 @@ def configure_authenticator(request):
     user = request.browser.user
     if request.method != "POST":
         return custom_redirect("login_frontend.views.configure_strong", request.GET)
+
+    ret["back_url"] = redir_to_sso(request).url
 
     regen_secret = True
     otp = request.POST.get("otp_code")

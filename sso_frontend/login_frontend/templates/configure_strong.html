@@ -11,14 +11,18 @@
 {% if not user.strong_configured %}
 <h2>Configure Strong Authentication</h2>
 
-<p><a href="#TODO" class="btn btn-info">Skip for now</a></p>
+{% if back_url %}
+<p><a href="{{ back_url }}" class="btn btn-info">Skip for now</a></p>
+{% endif %}
 
-<p>It appears you haven't configured strong authentication. If you want to, you can do this later. 
-<a href="#TODO">Go back to service you tried to access</a>. This screen will be shown to you every time
-you login, until you select your preferences below.</p>
+<p>It appears you haven't configured strong authentication. 
+{% if back_url %} If you want to, you can do this later. <a href="{{ back_url }}">Go back to service you tried to access</a>.{% endif %}
+ This screen will be shown to you every time you login, until you select your preferences below.</p>
 
 {% else %}
-<p><a href="#TODO" class="btn btn-info">Continue to service you tried to access</a></p>
+{% if back_url %}
+<p><a href="{{ back_url }}" class="btn btn-info">Continue to service you tried to access</a></p>
+{% endif %}
 {% endif %}
 
 
