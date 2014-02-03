@@ -1,4 +1,4 @@
-from django.utils.functional import SimpleLazyObject
+from django.core.exceptions import ObjectDoesNotExist
 from login_frontend.models import Browser
 
 def get_browser(request):
@@ -13,4 +13,4 @@ def get_browser(request):
 
 class BrowserMiddleware(object):
     def process_request(self, request):
-        request.browser = SimpleLazyObject(lambda: get_browser(request))
+        request.browser = get_browser(request)
