@@ -80,12 +80,6 @@ SAML2IDP_REMOTES = {
     }
 }
 
-# Setup logging.
-import logging
-logging.basicConfig(filename=PROJECT_ROOT + '/logs/saml2idp.log', format='%(asctime)s: %(message)s', level=logging.DEBUG)
-logging.info('Logging setup.')
-
-
 RATELIMIT_ENABLE=True
 RATELIMIT_USE_CACHE="ratelimit"
 
@@ -208,6 +202,12 @@ INSTALLED_APPS = (
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt' : "%d/%b/%Y %H:%M:%S"
+        },
+    },
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse'
@@ -218,13 +218,73 @@ LOGGING = {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
-        }
+        },
+        'logfile_main': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/main",
+            'maxBytes': 50000,
+            'backupCount': 10,
+            'formatter': 'standard',
+        },
+
+        'logfile_saml': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/saml",
+            'maxBytes': 50000,
+            'backupCount': 10,
+            'formatter': 'standard',
+        },
+
+        'logfile_openid': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/openid",
+            'maxBytes': 50000,
+            'backupCount': 10,
+            'formatter': 'standard',
+        },
+
+        'logfile_users': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/users",
+            'maxBytes': 50000,
+            'backupCount': 10,
+            'formatter': 'standard',
+        },
+
     },
     'loggers': {
+        'django': {
+          'handlers': ['logfile_main'],
+          'propagate': True,
+        },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'users': {
+          'handlers': ['logfile_main', 'logfile_users'],
+          'propagate': True,
+          'level': 'INFO',
+        },
+        'openid_provider': {
+          'handlers': ['logfile_openid'],
+          'propagate': True,
+          'level': 'DEBUG',
+        },
+        'saml2idp': {
+          'handlers': ['logfile_saml'],
+          'propagate': True,
+          'level': 'INFO',
+        },
+        'main': {
+          'handlers': ['logfile_main'],
+          'propagate': True,
+          'level': 'INFO',
         },
     }
 }

@@ -74,12 +74,13 @@ class EmergencyCode(models.Model):
 def add_log_entry(request, message):
     if request.browser is None or request.browser.user is None:
         return
-    obj = Log.objects.create(user=request.browser.user, message=message, remote_ip=request.META.get("REMOTE_ADDR"))
+    obj = Log.objects.create(user=request.browser.user, bid_public=request.browser.bid_public, message=message, remote_ip=request.META.get("REMOTE_ADDR"))
     obj.save()
 
 class Log(models.Model):
     user = models.ForeignKey('User')
     timestamp = models.DateTimeField(auto_now_add=True)
+    bid_public = models.CharField(max_length=37)
     remote_ip = models.CharField(max_length=47, null=True, blank=True)
     message = models.TextField()
 
@@ -108,6 +109,8 @@ class Browser(models.Model):
     )
 
     bid = models.CharField(max_length=37, primary_key=True) # UUID
+    bid_public = models.CharField(max_length=37) # UUID
+
     user = models.ForeignKey('User', null=True)
     ua = models.CharField(max_length=250) # browser user agent
 

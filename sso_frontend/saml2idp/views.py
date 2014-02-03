@@ -23,6 +23,9 @@ import xml_signing
 
 from login_frontend.utils import custom_redirect
 
+import logging
+log = logging.getLogger(__name__)
+
 def _generate_response(request, processor):
     """
     Generate a SAML response using processor and return it in the proper Django
@@ -89,7 +92,7 @@ def login_process(request):
     Presents a SAML 2.0 Assertion for POSTing back to the Service Provider.
     """
     #reg = registry.ProcessorRegistry()
-    logging.debug("Request: %s" % request)
+    log.debug("Request: %s" % request)
     proc = registry.find_processor(request)
     return _generate_response(request, proc)
 

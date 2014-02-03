@@ -7,6 +7,9 @@ from xml_signing import get_signature_xml
 from xml_templates import ATTRIBUTE, ATTRIBUTE_STATEMENT, \
     ASSERTION_GOOGLE_APPS, ASSERTION_SALESFORCE, RESPONSE, SUBJECT
 
+log = logging.getLogger(__name__)
+
+
 def _get_attribute_statement(params):
     """
     Inserts AttributeStatement, if we have any attributes.
@@ -66,8 +69,8 @@ def _get_assertion_xml(template, parameters, signed=False):
     _get_attribute_statement(params)
 
     unsigned = template.substitute(params)
-    logging.debug('Unsigned:')
-    logging.debug(unsigned)
+    log.debug('Unsigned:')
+    log.debug(unsigned)
     if not signed:
         return unsigned
 
@@ -76,8 +79,8 @@ def _get_assertion_xml(template, parameters, signed=False):
     params['ASSERTION_SIGNATURE'] = signature_xml
     signed = template.substitute(params)
 
-    logging.debug('Signed:')
-    logging.debug(signed)
+    log.debug('Signed:')
+    log.debug(signed)
     return signed
 
 def get_assertion_googleapps_xml(parameters, signed=False):
@@ -99,8 +102,8 @@ def get_response_xml(parameters, signed=False):
     template = string.Template(RESPONSE)
     unsigned = template.substitute(params)
 
-    logging.debug('Unsigned:')
-    logging.debug(unsigned)
+    log.debug('Unsigned:')
+    log.debug(unsigned)
     if not signed:
         return unsigned
 
@@ -109,6 +112,6 @@ def get_response_xml(parameters, signed=False):
     params['RESPONSE_SIGNATURE'] = signature_xml
     signed = template.substitute(params)
 
-    logging.debug('Signed:')
-    logging.debug(signed)
+    log.debug('Signed:')
+    log.debug(signed)
     return signed

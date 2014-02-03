@@ -17,6 +17,10 @@ from login_frontend.models import User
 MINUTES = 60
 HOURS = 60 * MINUTES
 
+import logging
+log = logging.getLogger(__name__)
+
+
 def get_random_id():
     #NOTE: It is very important that these random IDs NOT start with a number.
     random_id = '_' + uuid.uuid4().hex
@@ -37,7 +41,7 @@ class Processor(object):
     # Formatting note: These methods are alphabetized.
 
     def __init__(self):
-        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger = logging.getLogger(__name__)
 
     def _build_assertion(self):
         """
