@@ -21,7 +21,7 @@
 
 <form class="form-signin" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">
 	{% csrf_token %}
-	{{ form }}
+        <tr><th><label for="id_otp">OTP:</label></th><td><input id="id_otp" name="otp" type="tel" pattern="[0-9 ]*" autocomplete='off' /></td></tr>
 	<button class="btn btn-large btn-primary" type="submit">Sign in</button>
 </form>
 

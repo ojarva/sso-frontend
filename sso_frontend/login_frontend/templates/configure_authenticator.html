@@ -52,7 +52,7 @@
 
 <form method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{get_params }}">
 {% csrf_token %}
-<input type="text" name="otp_code" placeholder="Enter OTP code">
+<input id="id_otp" name="otp_code" type="tel" pattern="[0-9 ]*" autocomplete='off' placeholder="Enter OTP code" />
 <button class="btn btn-primary">Save and continue</button>
 </form>
 
