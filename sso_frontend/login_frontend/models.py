@@ -95,7 +95,7 @@ class Browser(models.Model):
     )
 
     bid = models.CharField(max_length=37, primary_key=True) # UUID
-    username = models.ForeignKey('User', null=True)
+    user = models.ForeignKey('User', null=True)
     ua = models.CharField(max_length=250) # browser user agent
 
     created = models.DateTimeField(auto_now_add=True)

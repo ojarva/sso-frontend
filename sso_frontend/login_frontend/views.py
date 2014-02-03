@@ -102,7 +102,7 @@ def indexview(request):
     # TODO: "valid until"
     ret = {}
     cookies = []
-    ret["username"] = request.browser.username.username
+    ret["username"] = request.browser.user.username
 
     response = render_to_response("indexview.html", ret, context_instance=RequestContext(request))
     for cookie_name, cookie in cookies:
@@ -144,11 +144,11 @@ def authenticate_with_password(request):
             auth_status = auth.login()
             if auth_status == True:
                 # User authenticated successfully. Update AUTH_STATE and AUTH_LEVEL
-                if request.browser.username is None:
+                if request.browser.user is None:
                     (user, created) = User.objects.get_or_create(username=auth.username)
                     user.user_tokens = json.dumps(auth.get_auth_tokens())
                     user.save()
-                    request.browser.username = user
+                    request.browser.user = user
                     # TODO: no further authentication is necessarily needed. Determine these automatically.
                     request.browser.set_auth_level(Browser.L_BASIC)
                     request.browser.set_auth_state(Browser.S_REQUEST_STRONG)
@@ -176,10 +176,10 @@ def authenticate_with_password(request):
 def secondstepauth(request):
     """ Determines proper second step authentication method """
     assert request.browser is not None, "Second step authentication requested, but browser is None."
-    assert request.browser.username is not None, "Second step authentication requested, but user is not specified."
+    assert request.browser.user is not None, "Second step authentication requested, but user is not specified."
 
     get_params = request.GET
-    user = request.browser.username
+    user = request.browser.user
 
     # If already authenticated with L_STRONG, redirect back to destination
     if request.browser.get_auth_level() == Browser.L_STRONG or request.browser.get_auth_state() == Browser.S_AUTHENTICATED:
@@ -202,12 +202,14 @@ def secondstepauth(request):
 def authenticate_with_authenticator(request):
     """ Authenticates user with Google Authenticator """
 
+
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
     if request.browser.get_auth_level() == Browser.L_STRONG or request.browser.get_auth_state() == Browser.S_AUTHENTICATED:
         return redir_to_sso(request)
 
     ret = {}
-    user = request.browser.username
+    user = request.browser.user
+    assert user != None, "Browser is authenticated but no User object exists."
 
     if not user.strong_authenticator_secret:
         # Authenticator is not configured. Redirect back to secondstep main screen
@@ -253,7 +255,7 @@ def authenticate_with_sms(request):
     if request.browser.get_auth_level() == Browser.L_STRONG or request.browser.get_auth_state() == Browser.S_AUTHENTICATED:
         return redir_to_sso(request)
 
-    user = request.browser.username
+    user = request.browser.user
     cookies = []
     ret = {}
     if not (user.primary_phone or user.secondary_phone):
@@ -274,7 +276,7 @@ def authenticate_with_sms(request):
             status, message = request.browser.validate_sms(otp)
             if not status:
                 # If OTP from SMS did not match, also test for Authenticator OTP.
-                (status, _) = request.browser.username.validate_authenticator_code(otp)
+                (status, _) = request.browser.user.validate_authenticator_code(otp)
 
             if status:
                 # Authentication succeeded.
@@ -317,8 +319,8 @@ def authenticate_with_sms(request):
 @protect_view("configure_strong", required_level=Browser.L_STRONG)
 def configure_strong(request):
     """ Configuration view for general options. """
-    browsers = Browser.objects.filter(username=request.browser.username)
-    user = request.browser.username
+    user = request.browser.user
+    browsers = Browser.objects.filter(user=user)
     ret = {}
     ret["browsers"] = browsers
 
@@ -346,8 +348,8 @@ def get_authenticator_qr(request, **kwargs):
     request.browser.authenticator_qr_nonce = None
     request.browser.save()
 
-    totp = pyotp.TOTP(request.browser.username.strong_authenticator_secret)
-    img = qrcode.make(totp.provisioning_uri(request.browser.username.username+"@futu"))
+    totp = pyotp.TOTP(request.browser.user.strong_authenticator_secret)
+    img = qrcode.make(totp.provisioning_uri(request.browser.user.username+"@futu"))
     stringio = StringIO()
     img.save(stringio)
     stringio.seek(0)
@@ -357,14 +359,14 @@ def get_authenticator_qr(request, **kwargs):
 def configure_authenticator(request):
     """ Google Authenticator configuration view. Only POST requests are allowed. """
     ret = {}
-    user = request.browser.username
+    user = request.browser.user
     if request.method != "POST":
         return custom_redirect("login_frontend.views.configure_strong", request.GET)
 
     regen_secret = True
     otp = request.POST.get("otp_code")
     if otp:
-        (status, message) = request.browser.username.validate_authenticator_code(otp)
+        (status, message) = request.browser.user.validate_authenticator_code(otp)
         if status:
             # Correct code.
             user.strong_configured = True
@@ -397,7 +399,7 @@ def configure_authenticator(request):
 @protect_view("authenticate_with_emergency", required_level=Browser.L_BASIC)
 def authenticate_with_emergency(request):
     try:
-        codes = EmergencyCodes.objects.get(user=request.browser.username)
+        codes = EmergencyCodes.objects.get(user=request.browser.user)
     except EmergencyCodes.DoesNotExist:
         # No emergency codes generated. Show error message.
         pass
