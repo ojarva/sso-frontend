@@ -3,4 +3,7 @@
 {% block content %}
 <h1>{{ title }}</h1>
 {{ msg }}
+
+<p>If you want to, you can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
+
 {% endblock %}

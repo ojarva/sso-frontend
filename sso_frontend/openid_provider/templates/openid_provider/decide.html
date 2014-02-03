@@ -7,13 +7,14 @@
   of your OpenID.</p>
 {% endifequal %}
 {% ifequal trust_root_valid "Invalid" %}
-<div class="error">
+<div class="alert alert-warning">
   <p>This request claims to be from {{ trust_root|escape }} but I have
-  determined that <em>it is a pack of lies</em>.  Beware, if you release
-  information to them, they are likely to do unconscionable things with it,
-  being the lying liars that they are.</p>
+  determined that <em>it is a pack of lies</em>. Beware, if you
+  release your information (including your email address), they might
+  use it for something nasty.</p>
   <p>Please tell the <em>real</em> {{ trust_root|escape }} that someone is
   trying to abuse your trust in their good name.</p>
+  <p>Alternatively, there was a bug somewhere along the way.</p>
 </div>
 {% endifequal %}
 {% ifequal trust_root_valid "Unreachable" %}
@@ -26,8 +27,7 @@
   of your OpenID.  However, <tt>{{ trust_root|escape }}</tt> does not
   implement OpenID 2.0's relying party verification mechanism.  Please use
   extra caution in deciding whether to release information to this party,
-  and ask <tt>{{ trust_root|escape }}</tt> to implement relying party
-  verification for your future transactions.</p>
+  </p>
   <p>You will return to <tt>{{ return_to|escape }}</tt></p>
 {% endifequal %}
 
