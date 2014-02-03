@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>What has changed?</h2>
+
+<p>This version provides strong authentication, and only asks your credentials when there's reason to do so. Old version required authentication every single day, even if you worked from same place using same device.</p>
+
+<h2>What is strong authentication?</h2>
+
+<p>In strong authentication, in addition to your username and password, you must have something. In this service, it's one-time password (OTP). With OTPs, even if someone obtains your password, they are not able to sign in.</p>
+
+<h2>What is one-time password (OTP)?</h2>
+
+<p>In this service, one-time passwords are short - 5 or 6 digits - strings of numbers. You can use each number only once. You can get these numbers as SMS to your mobile phone (if your phone number is not up-to-date, please 
+contact IT team).</p>
+
+<h2>What is Authenticator?</h2>
+
+<p>You can get one-time passwords as SMS or by using Authenticator application on your mobile phone. Why? Authenticator works even if your phone is offline. Especially when traveling, there might be issues with SMS delivery.</p>
+
+<p>If you don't have app installed, depending on your phone OS, head over here: <a target="_window" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a>, 
+<a target="_window" href="https://itunes.apple.com/fi/app/google-authenticator/id388497605?mt=8">iPhone</a>, 
+<a target="_window" href="http://www.windowsphone.com/en-us/store/app/authenticator/e7994dbc-2336-4950-91ba-ca22d653759b">Windows Phone</a>. For more exotic devices, search for "Google Authenticator", ask from IT team or use SMS authentication.
+</p>
+
+<p>After installing the app, go to <a href="{% url 'login_frontend.views.configure_strong' %}">configure it</a>. If you're not happy with Authenticator, you can always disable it. Additionally, you can always opt to SMS authentication.</p>
+
+<p>This one-time password generation is based on <a href="http://tools.ietf.org/html/rfc6238">open standards</a>. Server and your mobile phone share secret string used to generate and validate OTPs.</p>
+
+{% endblock %}

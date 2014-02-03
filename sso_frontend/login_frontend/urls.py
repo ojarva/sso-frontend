@@ -1,4 +1,5 @@
 from django.conf.urls import patterns, url
+from django.views.generic import TemplateView
 
 from login_frontend import views
 from login_frontend import providers
@@ -21,9 +22,10 @@ urlpatterns = patterns('',
     url(r'^pubtkt$', providers.pubtkt),
     url(r'^internal_login$', providers.internal_login),
 
-    # Rest
+    # Other URLs
     url(r'^configure$', views.configure_strong),
     url(r'^configure_authenticator$', views.configure_authenticator),
     url(r'^configure_authenticator_qr/(?P<single_use_code>(.+))$', views.get_authenticator_qr),
     url(r'^logout$', views.logoutview, name='logout'),
+    url(r'^introduction$', TemplateView.as_view(template_name="introduction.html")),
 )
