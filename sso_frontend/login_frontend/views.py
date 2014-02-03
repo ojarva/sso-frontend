@@ -29,8 +29,24 @@ import qrcode
 import redis
 import time
 import urllib
+import logging
 
+
+log = logging.getLogger(__name__)
 r = redis.Redis()
+
+user_log = logging.getLogger("users.%s" % __name__)
+
+def custom_log(request, message, **kwargs):
+    level = kwargs.get("level", "info")
+    method = getattr(user_log, level)
+    remote_addr = request.META.get("REMOTE_ADDR")
+    bid_public = username = ""
+    if request.browser:
+        bid_public = request.browser.bid_public
+        if request.browser.user:
+            username = request.browser.user.username
+    method("%s - %s - %s - %s", remote_addr, username, bid_public, message)
 
 
 def protect_view(current_step, **main_kwargs):
@@ -132,7 +148,7 @@ def authenticate_with_password(request):
             return redir_to_sso(request)
     else:
         # No Browser object is initialized. Create one.
-        browser = Browser(bid=create_browser_uuid(), ua=request.META.get("HTTP_USER_AGENT"))
+        browser = Browser(bid=create_browser_uuid(), bid_public=create_browser_uuid(), ua=request.META.get("HTTP_USER_AGENT"))
         browser.save()
         cookies.append(browser.get_cookie())
     if request.method == 'POST':
@@ -149,16 +165,23 @@ def authenticate_with_password(request):
                     user.user_tokens = json.dumps(auth.get_auth_tokens())
                     user.save()
                     request.browser.user = user
-                    # TODO: no further authentication is necessarily needed. Determine these automatically.
-                    request.browser.set_auth_level(Browser.L_BASIC)
-                    request.browser.set_auth_state(Browser.S_REQUEST_STRONG)
-                    request.browser.save()
-                    return custom_redirect("login_frontend.views.secondstepauth", request.GET)
+                # TODO: no further authentication is necessarily needed. Determine these automatically.
+                request.browser.set_auth_level(Browser.L_BASIC)
+                request.browser.set_auth_state(Browser.S_REQUEST_STRONG)
+                request.browser.save()
+
+                add_log_entry(request, "Successfully logged in using username and password")
+                custom_log(request, "Successfully logged in using username and password")
+                return custom_redirect("login_frontend.views.secondstepauth", request.GET)
             else:
                 if auth_status == "invalid_credentials":
                     ret["authentication_failed"] = True
+                    custom_log(request, "Authentication failed. Invalid credentials", level="warn")
+                    add_log_entry(request, "Authentication failed. Invalid credentials")
                 else:
                     ret["message"] = auth_status 
+                    custom_log(request, "Authentication failed: %s" % auth_status, level="warn")
+                    add_log_entry(request, "Authentication failed: %s" % auth_status)
     else:
         form = AuthWithPasswordForm(request.POST)
     ret["form"] = form
@@ -224,6 +247,8 @@ def authenticate_with_authenticator(request):
                 # If authenticator code did not match, also try latest SMS (if available).
                 status, _ = request.browser.validate_sms(otp)
             if status:
+                custom_log(request, "Second-factor authentication succeeded")
+                add_log_entry(request, "Second-factor authentication succeeded")
                 user.strong_authenticator_used = True
                 user.save()
                 # TODO: determine the levels automatically.
@@ -232,6 +257,8 @@ def authenticate_with_authenticator(request):
                 request.browser.save()
                 return redir_to_sso(request)
             else:
+                custom_log(request, "Incorrect OTP provided: %s" % message, level="warn")
+                add_log_entry(request, "Incorrect OTP provided: %s" % message)
                 ret["invalid_otp"] = message
     else:
         form = OTPForm()
@@ -286,6 +313,8 @@ def authenticate_with_sms(request):
                 request.browser.save()
                 user.primary_phone_changed = False
                 user.save()
+                custom_log(request, "Second-factor authentication succeeded")
+                add_log_entry(request, "Second-factor authentication succeeded")
                 if not user.strong_configured:
                     # Strong authentication is not configured. Go to configuration view.
                     return custom_redirect("login_frontend.views.configure_strong", request.GET)
@@ -294,7 +323,11 @@ def authenticate_with_sms(request):
             else:
                 if message:
                     ret["message"] = message
+                    custom_log(request, "OTP login failed: %s" % message, level="warn")
+                    add_log_entry(request, "OTP login failed: %s" % message)
                 else:
+                    custom_log(request, "Incorrect OTP", level="warn")
+                    add_log_entry(request, "Incorrect OTP")
                     ret["authentication_failed"] = True
     else:
         form = OTPForm()
@@ -304,8 +337,12 @@ def authenticate_with_sms(request):
         for phone in (user.primary_phone, user.secondary_phone):
             if phone:
                 status = send_sms(phone, sms_text)
+                custom_log(request, "Sent OTP to %s" % phone)
+                add_log_entry(request, "Sent OTP code to %s" % phone)
                 if not status:
-                    ret["message"] = "Sending sms to %s failed." % phone
+                    ret["message"] = "Sending SMS to %s failed." % phone
+                    custom_log(request, "Sending SMS to %s failed" % phone, level="warn")
+                    add_log_entry(request, "Sending SMS to %s failed" % phone)
 
     ret["expected_sms_id"] = request.browser.sms_code_id
     ret["form"] = form
@@ -329,6 +366,7 @@ def configure_strong(request):
             user.strong_configured = True
             user.strong_sms_always = True
             user.save()
+        # TODO: disabling always_sms
 
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
@@ -343,6 +381,7 @@ def get_authenticator_qr(request, **kwargs):
     reloading / linking. """
     if not request.browser.authenticator_qr_nonce == kwargs["single_use_code"]:
         # TODO: render image
+        custom_log(request, "Invalid one-time code for QR", level="error")
         return HttpResponse("Invalid one-time code: unable to show QR")
 
     # Delete QR nonce to prevent replay.
@@ -364,6 +403,7 @@ def configure_authenticator(request):
     if request.method != "POST":
         return custom_redirect("login_frontend.views.configure_strong", request.GET)
 
+    custom_log(request, "Downloaded Authenticator secret QR code")
     ret["back_url"] = redir_to_sso(request).url
 
     regen_secret = True
@@ -376,9 +416,13 @@ def configure_authenticator(request):
             user.strong_authenticator_used = True
             user.strong_sms_always = False
             user.save()
+            custom_log(request, "Reconfigured Authenticator")
+            add_log_entry(request, "Successfully configured Authenticator")
             return redir_to_sso(request)
         else:
             # Incorrect code. Don't regen secret.
+            custom_log(request, "Entered invalid OTP during Authenticator configuration")
+            add_log_entry(request, "Entered invalid OTP during Authenticator configuration")
             regen_secret = False
             ret["invalid_otp"] = message
 
@@ -387,6 +431,8 @@ def configure_authenticator(request):
         ret["authenticator_secret"] = authenticator_secret
         user.strong_authenticator_used = False
         user.save()
+        add_log_entry(request, "Regenerated Authenticator code")
+        custom_log(request, "Regenerated Authenticator code")
 
     request.browser.authenticator_qr_nonce = create_browser_uuid()
     ret["authenticator_qr_nonce"] = request.browser.authenticator_qr_nonce
@@ -418,6 +464,8 @@ def logoutview(request):
     """        
 
     if request.method == 'POST':
+        add_log_entry(request, "Signed out")
+        custom_log(request, "Signed out")
         logout_keys = ["username", "authenticated", "authentication_level", "login_time", "relogin_time"]
         for keyname in logout_keys:
             try:
