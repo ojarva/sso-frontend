@@ -26,7 +26,7 @@ def internal_login(request):
     params["_sso"] = "internal"
     ret = {}
     cookies = []
-    browser = get_browser(request)
+    browser = request.browser
     if browser is None:
         return custom_redirect("login_frontend.views.firststepauth", params)
 
@@ -37,7 +37,7 @@ def internal_login(request):
     # TODO: static auth level
     if browser.get_auth_level() == Browser.L_STRONG:
         back_url = request.GET.get("next")
-        (user, created) = DjangoUser.objects.get_or_create(username=browser.username.username, defaults={"email": browser.username.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
+        (user, created) = DjangoUser.objects.get_or_create(username=browser.user.username, defaults={"email": browser.user.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
         user.backend = 'django.contrib.auth.backends.ModelBackend' # Horrible hack.
         django_login(request, user)
 
@@ -74,7 +74,7 @@ def pubtkt(request):
     params["_sso"] = "pubtkt"
     ret["get_params"] = urllib.urlencode(params)
 
-    browser = get_browser(request)
+    browser = request.browser
     if browser is None:
         return custom_redirect("login_frontend.views.firststepauth", params)
 
@@ -102,8 +102,8 @@ def pubtkt(request):
     if browser.get_auth_level() == Browser.L_STRONG:
         # TODO: ticket expiration time
         valid_until = int(time.time() + 3600 * 9)
-        tokens = json.loads(browser.username.user_tokens)
-        ticket = auth_pubtkt.create_ticket(privkey, browser.username.username, valid_until, tokens=tokens)
+        tokens = json.loads(browser.user.user_tokens)
+        ticket = auth_pubtkt.create_ticket(privkey, browser.user.username, valid_until, tokens=tokens)
         cookies.append(("auth_pubtkt", {"value": urllib.quote(ticket), "secure": True, "httponly": True, "domain": ".futurice.com"}))
         ret["back_url"] = back_url
         response = render_to_response("html_redirect.html", ret, context_instance=RequestContext(request))
