@@ -248,6 +248,7 @@ class User(models.Model):
 
     strong_configured = models.BooleanField(default=False)
     strong_authenticator_secret = models.CharField(max_length=30, null=True, blank=True)
+    strong_authenticator_generated_at = models.DateTimeField(null=True)
     strong_authenticator_used = models.BooleanField(default=False)
 
     strong_sms_always = models.BooleanField(default=False)
@@ -266,6 +267,7 @@ class User(models.Model):
     def gen_authenticator(self):
         """ Generates and stores new secret for authenticator. """
         self.strong_authenticator_secret = pyotp.random_base32()
+        self.strong_authenticator_generated_at = timezone.now()
         self.save()
         return self.strong_authenticator_secret
 

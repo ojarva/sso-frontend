@@ -81,7 +81,7 @@
 <ul>
 <li>Primary phone number: {{ user.primary_phone }} (last changed: {{ user.primary_phone_refresh }})</li>
 <li>Secondary phone number: {{ user.secondary_phone }} (last changed: {{ user.secondary_phone_refresh }})</li>
-<li>Google Authenticator configured: {% if user.strong_authenticator_secret %}Yes{% else %}No{% endif %}</li>
+<li>Google Authenticator configured: {% if user.strong_authenticator_secret %}Yes, at {{ user.strong_authenticator_generated_at }}{% else %}No{% endif %}</li>
 </ul>
 
 {% endblock %}
