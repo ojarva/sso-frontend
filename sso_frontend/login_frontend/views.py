@@ -207,7 +207,11 @@ def authenticate_with_authenticator(request, browser):
     if request.method == "POST":
         form = OTPForm(request.POST)
         if form.is_valid():
+            otp = form.cleaned_data["otp"]
             (status, message) = user.validate_authenticator_code(form.cleaned_data["otp"])
+            if not status:
+                # If authenticator code did not match, also try latest SMS (if available).
+                status, _ = browser.validate_sms(otp)
             if status:
                 user.strong_authenticator_used = True
                 user.save()
@@ -251,12 +255,15 @@ def authenticate_with_sms(request, browser):
         # Phone number changed. For security reasons...
         ret["primary_phone_changed"] = True
 
-#    if user.strong_sms_always:
-
     if request.method == "POST":
         form = OTPForm(request.POST)
         if form.is_valid():
-            status, message = browser.validate_sms(form.cleaned_data["otp"])
+            otp = form.cleaned_data["otp"]
+            status, message = browser.validate_sms(otp)
+            if not status:
+                # If OTP from SMS did not match, also test for Authenticator OTP.
+                (status, _) = browser.username.validate_authenticator_code(otp)
+
             if status:
                 # Authentication succeeded.
                 # TODO: determine the levels automatically.
