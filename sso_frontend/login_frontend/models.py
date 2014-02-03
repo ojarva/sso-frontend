@@ -70,6 +70,19 @@ class EmergencyCode(models.Model):
     class Meta:
         unique_together = (("codegroup", "code_id"), ("codegroup", "code_val"))
 
+
+def add_log_entry(request, message):
+    if request.browser is None or request.browser.user is None:
+        return
+    obj = Log.objects.create(user=request.browser.user, message=message, remote_ip=request.META.get("REMOTE_ADDR"))
+    obj.save()
+
+class Log(models.Model):
+    user = models.ForeignKey('User')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    remote_ip = models.CharField(max_length=47, null=True, blank=True)
+    message = models.TextField()
+
 class Browser(models.Model):
     L_UNAUTH = 0
     L_PUBLIC = 1
