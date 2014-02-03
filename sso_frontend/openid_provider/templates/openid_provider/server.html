@@ -11,5 +11,6 @@
 
 <p><input type="text" value="{{ openid_identifier }}"></p>
 
-<p>You can <a href="{% url 'login_frontend.views.indexview' %}">continue</a> to main page.</p>
+<p>You didn't came here with valid OpenID request, so you won't get redirected automatically.
+If you want to, feel free to <a href="{% url 'login_frontend.views.indexview' %}">continue</a> to main page.</p>
 {% endblock %}
