@@ -67,6 +67,7 @@ def openid_server(request):
                     reverse('openid-provider-xrds')),
             }
             logger.debug('invalid request, sending info: %s', data)
+            data["openid_identifier"] = "https://" + request.get_host() +  reverse('openid-provider-identity', args=[request.browser.user.username])
             return render_to_response('openid_provider/server.html',
                                       data,
                                       context_instance=RequestContext(request))

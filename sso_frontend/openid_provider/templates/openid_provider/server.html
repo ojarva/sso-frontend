@@ -5,5 +5,9 @@
 {% endblock %}
 
 {% block content %}
-This is an OpenID server.
+<p>This is an OpenID server.</p>
+
+<p>Your OpenID identifier is <b>{{ openid_identifier }}</b></p>
+
+<p>You can <a href="{% url 'login_frontend.views.indexview' %}">continue</a> to main page.</p>
 {% endblock %}
