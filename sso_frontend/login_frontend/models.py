@@ -165,7 +165,11 @@ class Browser(models.Model):
         return (True, None)        
 
     def generate_sms_text(self, length=5):
-        #The message includes four spaces to limit exposure to lock screen.
+        """ Generates new SMS code and returns contents of SMS.
+
+        Formatting of the message, including line breaks, is important to
+        prevent exposure to lock screen.
+        """
         (sms_code_id, sms_code) = self.generate_sms(length)
         return """Your one-time password #%s for Futurice SSO is below:
 
@@ -174,7 +178,9 @@ class Browser(models.Model):
 %s""" % (sms_code_id, sms_code)
 
     def generate_sms(self, length=5):
-        """ Generates new SMS code, but does not send the message. """
+        """ Generates new SMS code, but does not send the message.
+        Returns (code_id, sms_code) tuple. code_id is random
+        id for code, to avoid confusion with duplicate/old messages. """
         code = ""
         for _ in range(length):
             code += str(randint(0,9))
@@ -230,6 +236,8 @@ class BrowserUsers(models.Model):
 
 
 class UsedOTP(models.Model):
+    """ Stores list of used OTPs."""
+
     user = models.ForeignKey('User')
     code = models.CharField(max_length=15)
     used_at = models.DateTimeField(auto_now_add=True)
@@ -256,11 +264,20 @@ class User(models.Model):
     user_tokens = models.CharField(max_length=255, null=True, blank=True)
 
     def gen_authenticator(self):
+        """ Generates and stores new secret for authenticator. """
         self.strong_authenticator_secret = pyotp.random_base32()
         self.save()
         return self.strong_authenticator_secret
 
     def validate_authenticator_code(self, code):
+        """ Validates authenticator OTP. 
+
+        Returns (status, message) tuple.
+        - status is True if succeeded, False if failed.
+        - message is either None or user-readable string
+          describing the problem.
+        """
+ 
         if not self.strong_authenticator_secret:
             return (False, "Authenticator is not configured")
 
@@ -277,6 +294,8 @@ class User(models.Model):
 
 
     def refresh_strong(self, email, phone1, phone2):
+        """ Refreshes strong authentication details,
+        and revokes configuration when needed. """
         if phone2 != self.secondary_phone:
             self.secondary_phone = phone2
             self.secondary_phone_refresh = timezone.now()
