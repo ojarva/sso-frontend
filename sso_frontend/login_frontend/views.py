@@ -82,6 +82,10 @@ def protect_view(current_step, **main_kwargs):
     return wrap
 
 def main_redir(request):
+    """ Hack to enable backward compatibility with pubtkt.
+    If "back" parameter is specified, forward to pubtkt provider. Otherwise,
+    go to index page
+    """
     if request.GET.get("back") != None:
         return custom_redirect("login_frontend.providers.pubtkt", request.GET)
     return custom_redirect("login_frontend.views.indexview", request.GET)
@@ -92,6 +96,10 @@ def main_redir(request):
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("indexview", required_level=Browser.L_BASIC)
 def indexview(request, browser):
+    """ Index page: user is redirected
+    here if no real destination is available. """
+
+    # TODO: "valid until"
     ret = {}
     cookies = []
     browser = get_browser(request)
@@ -112,7 +120,7 @@ def firststepauth(request, browser):
 @protect_view("authenticate_with_password", required_level=Browser.L_UNAUTH)
 def authenticate_with_password(request, browser):
     """ Authenticate with username and password """
-    # If authenticated, redirect to next step.
+
     ret = {}
     cookies = []
     if browser is not None:
@@ -193,6 +201,8 @@ def secondstepauth(request, browser):
 
 @protect_view("authenticate_with_authenticator", required_level=Browser.L_BASIC)
 def authenticate_with_authenticator(request, browser):
+    """ Authenticates user with Google Authenticator """
+
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
     if browser.get_auth_level() == Browser.L_STRONG or browser.get_auth_state() == Browser.S_AUTHENTICATED:
         return redir_to_sso(request)
@@ -237,6 +247,9 @@ def authenticate_with_authenticator(request, browser):
 
 @protect_view("authenticate_with_sms", required_level=Browser.L_BASIC)
 def authenticate_with_sms(request, browser):
+    """ Authenticate user with SMS. 
+    Accepts Authenticator codes too.
+    """
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
     if browser.get_auth_level() == Browser.L_STRONG or browser.get_auth_state() == Browser.S_AUTHENTICATED:
         return redir_to_sso(request)
@@ -304,6 +317,7 @@ def authenticate_with_sms(request, browser):
 
 @protect_view("configure_strong", required_level=Browser.L_STRONG)
 def configure_strong(request, browser):
+    """ Configuration view for general options. """
     browsers = Browser.objects.filter(username=browser.username)
     user = browser.username
     ret = {}
@@ -323,6 +337,8 @@ def configure_strong(request, browser):
 
 @protect_view("get_authenticator_qr", required_level=Browser.L_STRONG)
 def get_authenticator_qr(request, browser, **kwargs):
+    """ Outputs QR code for Authenticator. Uses single_use_code to prevent
+    reloading / linking. """
     if not browser.authenticator_qr_nonce == kwargs["single_use_code"]:
         # TODO: render image
         return HttpResponse("Invalid one-time code: unable to show QR")
@@ -340,6 +356,7 @@ def get_authenticator_qr(request, browser, **kwargs):
 
 @protect_view("configure_authenticator", required_level=Browser.L_STRONG)
 def configure_authenticator(request, browser):
+    """ Google Authenticator configuration view. Only POST requests are allowed. """
     ret = {}
     user = browser.username
     if request.method != "POST":
