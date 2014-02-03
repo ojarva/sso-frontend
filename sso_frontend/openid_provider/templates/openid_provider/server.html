@@ -7,7 +7,9 @@
 {% block content %}
 <p>This is an OpenID server.</p>
 
-<p>Your OpenID identifier is <b>{{ openid_identifier }}</b></p>
+<p>If needed, you can copy and paste your OpenID identifier from below:</p>
+
+<p><input type="text" value="{{ openid_identifier }}"></p>
 
 <p>You can <a href="{% url 'login_frontend.views.indexview' %}">continue</a> to main page.</p>
 {% endblock %}
