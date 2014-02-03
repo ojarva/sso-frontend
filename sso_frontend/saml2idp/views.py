@@ -21,6 +21,8 @@ import registry
 import saml2idp_metadata
 import xml_signing
 
+from login_frontend.utils import custom_redirect
+
 def _generate_response(request, processor):
     """
     Generate a SAML response using processor and return it in the proper Django
@@ -32,8 +34,8 @@ def _generate_response(request, processor):
         return render_to_response('saml2idp/invalid_user.html',
                                   context_instance=RequestContext(request))
 
-    return render_to_response('saml2idp/login.html', tv,
-                                context_instance=RequestContext(request))
+
+    return custom_redirect("login_frontend.providers.internal_login", {"next": tv.get("next")})
 
 def xml_response(request, template, tv):
     return render_to_response(template, tv, mimetype="application/xml")
@@ -98,10 +100,7 @@ def logout(request):
     returns a standard logged-out page. (SalesForce and others use this method,
     though it's technically not SAML 2.0).
     """
-    auth.logout(request)
-    tv = {}
-    return render_to_response('saml2idp/logged_out.html', tv,
-                                context_instance=RequestContext(request))
+    return custom_redirect("login_frontend.views.logoutview", request.GET)
 
 @login_required
 @csrf_exempt
@@ -115,6 +114,7 @@ def slo_logout(request):
         return render_to_response('saml2idp/error.html', {"missing_fields": True},
                                   context_instance=RequestContext(request))
 
+    return custom_redirect("login_frontend.views.logoutview", request.GET)
     request.session['SAMLRequest'] = request.POST['SAMLRequest']
     #TODO: Parse SAML LogoutRequest from POST data, similar to login_process().
     #TODO: Add a URL dispatch for this view.
@@ -122,11 +122,6 @@ def slo_logout(request):
     #TODO: Combine this with login_process(), since they are so very similar?
     #TODO: Format a LogoutResponse and return it to the browser.
     #XXX: For now, simply log out without validating the request.
-    auth.logout(request)
-    tv = {}
-    return render_to_response('saml2idp/logged_out.html', tv,
-                               context_instance=RequestContext(request))
-
 
 def descriptor(request):
     """

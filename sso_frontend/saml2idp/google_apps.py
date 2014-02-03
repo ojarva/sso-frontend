@@ -5,7 +5,7 @@ import xml_render
 
 class Processor(base.Processor):
     """
-    SalesForce.com-specific SAML 2.0 AuthnRequest to Response Handler Processor.
+    Google Apps specific SAML 2.0 AuthnRequest to Response Handler Processor.
     """
     def _decode_request(self):
         """
