@@ -8,5 +8,7 @@
 			{% csrf_token %}
 			<input class="btn btn-large" type="submit" name="logout" value="Sign out">
 		</form>
+	<div>Want to <a href="{% url 'login_frontend.views.configure_strong' %}">configure something?</a></div>
 	</div>
+
 {% endblock %}
