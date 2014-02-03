@@ -49,9 +49,6 @@ def internal_login(request):
 
     return custom_redirect("login_frontend.views.firststepauth", params)
 
-def saml(request):
-    pass
-
 def pubtkt(request):
     def is_valid_back_url(back_url):
         valid_domains = settings.PUBTKT_ALLOWED_DOMAINS
