@@ -10,5 +10,5 @@ urlpatterns = patterns('openid_provider.views',
     url(r'^openid/$', 'openid_server', name='openid-provider-root'),
     url(r'^openid/decide/$', 'openid_decide', name='openid-provider-decide'),
     url(r'^openid/xrds/$', 'openid_xrds', name='openid-provider-xrds'),
-    url(r'^openid/(?P<id>.*)/$', 'openid_xrds', {'identity': True}, name='openid-provider-identity'),
+    url(r'^openid/(?P<id>.*)$', 'openid_xrds', {'identity': True}, name='openid-provider-identity'),
 )
