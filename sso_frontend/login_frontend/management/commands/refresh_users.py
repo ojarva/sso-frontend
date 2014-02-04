@@ -1,4 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.contrib.auth.models import User as DjangoUser
+from django.utils import timezone
+
 from login_frontend.models import User
 import slumber
 import _slumber_auth
@@ -22,14 +25,21 @@ class Command(BaseCommand):
             data = api.users.get(page=c)
             for user in data["results"]:
                 username = user.get("username")
-                email = user.get("email")
-                phone1 = user.get("phone1")
+                first_name = user.get("first_name")
+                last_name = user.get("last_name")
+                email = user.get("email", "")
+                phone1 = user.get("phone1", "")
                 phone2 = user.get("phone2")
                 if username is None or email is None or phone1 is None:
                     continue
                 if min(len(email), len(phone1)) < 5:
                     continue
-      
+                (user, _) = DjangoUser.objects.get_or_create(username=username, defaults={"email": email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": timezone.now(), "date_joined": timezone.now()})
+                user.email = email
+                user.first_name = first_name
+                user.last_name = last_name
+                user.save()
+
                 (obj, _) = User.objects.get_or_create(username=username)
                 obj.refresh_strong(email, phone1, phone2)
                 self.stdout.write('Refreshed %s (%s, %s, %s)' % (username, email, phone1, phone2))
