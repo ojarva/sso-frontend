@@ -3,6 +3,7 @@
 # and from examples/djopenid from python-openid-2.2.4
 import urlparse
 import logging
+import datetime
 from urllib import urlencode, quote
 
 from django.conf import settings
@@ -19,7 +20,7 @@ except ImportError:
     from django.contrib.csrf.middleware import csrf_exempt
 
 from django.contrib.auth import REDIRECT_FIELD_NAME
-
+from django.contrib.auth import login as django_login
 from openid.association import default_negotiator, encrypted_negotiator
 from openid.consumer.discover import OPENID_IDP_2_0_TYPE, OPENID_2_0_TYPE
 from openid.extensions import sreg, ax
@@ -29,7 +30,8 @@ from openid.yadis.constants import YADIS_CONTENT_TYPE
 from openid_provider import conf
 from openid_provider.utils import add_sreg_data, add_ax_data, get_store, \
     trust_root_validation, get_trust_session_key
-from openid_provider.models import TrustedRoot
+from openid_provider.models import TrustedRoot, OpenID
+from django.contrib.auth.models import User as DjangoUser
 
 logger = logging.getLogger(__name__)
 
@@ -256,4 +258,11 @@ def openid_get_identity(request, identity_url):
             return openids[0]
         if request.user.openid_set.count() > 0:
             return request.user.openid_set.all()[0]
-    return None
+
+    (user, created) = DjangoUser.objects.get_or_create(username=request.browser.user.username, defaults={"email": request.browser.user.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
+    user.backend = 'django.contrib.auth.backends.ModelBackend' # Horrible hack.
+    django_login(request, user)
+    logger.debug("Creating new OpenID association for %s", user.username)
+    (openid, created) = OpenID.objects.get_or_create(user=user, openid=user.username)
+    openid.save()
+    return openid
