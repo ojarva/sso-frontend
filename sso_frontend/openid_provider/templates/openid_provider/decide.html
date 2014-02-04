@@ -3,31 +3,37 @@
 {% block content %}
 {% ifequal trust_root_valid "Valid" %}
   <!-- Trust root has been validated by OpenID 2 mechanism. -->
-  <p>The site <tt>{{ trust_root|escape }}</tt> has requested verification
-  of your OpenID.</p>
-{% endifequal %}
-{% ifequal trust_root_valid "Invalid" %}
-<div class="alert alert-warning">
-  <p>This request claims to be from {{ trust_root|escape }} but I have
-  determined that <em>it is a pack of lies</em>. Beware, if you
-  release your information (including your email address), they might
-  use it for something nasty.</p>
-  <p>Please tell the <em>real</em> {{ trust_root|escape }} that someone is
-  trying to abuse your trust in their good name.</p>
-  <p>Alternatively, there was a bug somewhere along the way.</p>
+<div class="alert alert-success">
+  The site <tt>{{ trust_root|escape }}</tt> has requested your
+  OpenID information. Site has been verified.
 </div>
 {% endifequal %}
-{% ifequal trust_root_valid "Unreachable" %}
-  <p>The site <tt>{{ trust_root|escape }}</tt> has requested verification
-  of your OpenID.  I have failed to reach it and thus cannot vouch for its
-  authenticity.  Perhaps it is on your local network.</p>
+{% ifequal trust_root_valid "Invalid" %}
+<div class="alert alert-error">
+  <p>Validation of <tt>{{ trust_root|escape }}</tt> failed.</p>
+
+</div>
+
+<p>Beware, this might be scam. If you release your information, they might use it for something nasty.</p>
+
+<p>Please contact service provider and/or Futurice IT team.</p>
 {% endifequal %}
+{% ifequal trust_root_valid "Unreachable" %}
+<div class="alert alert-warning">
+  <p>Validating {{ trust_root|escape }} did not succeed, as the site was unreachable.</p>
+</div>
+
+<p>You can still release your information to this site, but there's no guarantee of it's authenticity.</p>
+{% endifequal %}
+
 {% ifequal trust_root_valid "DISCOVERY_FAILED" %}
-  <p>The site <tt>{{ trust_root|escape }}</tt> has requested verification
-  of your OpenID.  However, <tt>{{ trust_root|escape }}</tt> does not
-  implement OpenID 2.0's relying party verification mechanism. Please
-  use extra caution in deciding whether you trust that site.
-  </p>
+<div class="alert alert-warning">
+  <p>Unable to verify authenticity of <tt>{{ trust_root|escape }}</tt>.</p>
+</div>
+
+<p>You can still release your information to this site, but there's no guarantee of it's authenticity.
+The site does not implement OpenID 2.0's relying party verification mechanism.</p>
+
 {% comment %}  <p>You will return to <tt>{{ return_to|escape }}</tt></p>{% endcomment %}
 {% endifequal %}
 
@@ -43,7 +49,7 @@
 Verify your identity to the relying party?
 <br/>
 <input type="hidden" name="decide_page" value="True" />
-<input type="submit" value="Yes (Allow)" name="allow" />
-<input type="submit" value="No (Cancel)" name="cancel" />
+<input class="btn btn-default" type="submit" value="Yes (Continue)" name="allow" />
+<input class="btn btn-default" type="submit" value="No (Abort)" name="cancel" />
 </form>
 {% endblock %}
