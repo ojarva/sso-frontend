@@ -163,6 +163,13 @@ def openid_decide(request):
             request, "You are signed in but you don't have OpenID here!")
 
     if request.method == 'POST' and request.POST.get('decide_page', False):
+        if request.POST.get("cancel"):
+            for k in ["AuthorizationInfo", "OPENID_TRUSTROOT_VALID", "OPENID_REQUEST", get_trust_session_key(orequest)]:
+                try:
+                    del request.session[k]
+                except KeyError:
+                    pass
+            return HttpResponseRedirect(reverse("login_frontend.views.indexview"))
         TrustedRoot.objects.get_or_create(
             openid=openid, trust_root=orequest.trust_root)
         if not conf.FAILED_DISCOVERY_AS_VALID:
