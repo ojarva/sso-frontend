@@ -25,11 +25,19 @@
 {% ifequal trust_root_valid "DISCOVERY_FAILED" %}
   <p>The site <tt>{{ trust_root|escape }}</tt> has requested verification
   of your OpenID.  However, <tt>{{ trust_root|escape }}</tt> does not
-  implement OpenID 2.0's relying party verification mechanism.  Please use
-  extra caution in deciding whether to release information to this party,
+  implement OpenID 2.0's relying party verification mechanism. Please
+  use extra caution in deciding whether you trust that site.
   </p>
-  <p>You will return to <tt>{{ return_to|escape }}</tt></p>
+{% comment %}  <p>You will return to <tt>{{ return_to|escape }}</tt></p>{% endcomment %}
 {% endifequal %}
+
+<p>Following information will be released:</p>
+
+<ul>
+<li><b>email</b>: {{ sreg.email }}</li>
+<li><b>username</b>: {{ sreg.nickname }}</li>
+<li><b>full name</b>: {{ sreg.fullname }}</li>
+</ul>
 
 <form method="post">{% csrf_token %}
 Verify your identity to the relying party?

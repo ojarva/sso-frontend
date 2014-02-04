@@ -29,7 +29,7 @@ from openid.yadis.constants import YADIS_CONTENT_TYPE
 
 from openid_provider import conf
 from openid_provider.utils import add_sreg_data, add_ax_data, get_store, \
-    trust_root_validation, get_trust_session_key
+    trust_root_validation, get_trust_session_key, get_default_sreg_data
 from openid_provider.models import TrustedRoot, OpenID
 from django.contrib.auth.models import User as DjangoUser
 
@@ -175,6 +175,7 @@ def openid_decide(request):
         'trust_root_valid': trust_root_valid,
         'return_to': orequest.return_to,
         'identity': orequest.identity,
+        'sreg': get_default_sreg_data(request, orequest),
     }, context_instance=RequestContext(request))
 
 def error_page(request, msg):
