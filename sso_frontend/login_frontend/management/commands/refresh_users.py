@@ -30,10 +30,12 @@ class Command(BaseCommand):
                 email = user.get("email", "")
                 phone1 = user.get("phone1", "")
                 phone2 = user.get("phone2")
-                if username is None or email is None or phone1 is None:
+                if username is None or email is None:
                     continue
-                if min(len(email), len(phone1)) < 5:
+                if first_name is None or last_name is None:
+                    self.stderr.write("Missing first or last name: %s" % username)
                     continue
+
                 (user, _) = DjangoUser.objects.get_or_create(username=username, defaults={"email": email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": timezone.now(), "date_joined": timezone.now()})
                 user.email = email
                 user.first_name = first_name
