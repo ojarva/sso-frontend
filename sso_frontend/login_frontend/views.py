@@ -3,7 +3,7 @@ from django.contrib import auth as django_auth
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -247,8 +247,10 @@ def authenticate_with_authenticator(request):
                 # If authenticator code did not match, also try latest SMS (if available).
                 status, _ = request.browser.validate_sms(otp)
             if status:
-                custom_log(request, "Second-factor authentication succeeded")
-                add_log_entry(request, "Second-factor authentication succeeded")
+                custom_log(request, "Second-factor authentication with Authenticator succeeded")
+                add_log_entry(request, "Second-factor authentication with Authenticator succeeded")
+                # Mark authenticator configuration as valid. User might have configured
+                # authenticator but aborted without entering validation code.
                 user.strong_authenticator_used = True
                 user.save()
                 # TODO: determine the levels automatically.
@@ -381,8 +383,8 @@ def get_authenticator_qr(request, **kwargs):
     reloading / linking. """
     if not request.browser.authenticator_qr_nonce == kwargs["single_use_code"]:
         # TODO: render image
-        custom_log(request, "Invalid one-time code for QR", level="error")
-        return HttpResponse("Invalid one-time code: unable to show QR")
+        custom_log(request, "Invalid one-time code for QR. Referrer: %s" % request.META.get("HTTP_REFERRER"), level="warn")
+        return HttpResponseForbidden("Invalid one-time code: unable to show QR")
 
     # Delete QR nonce to prevent replay.
     request.browser.authenticator_qr_nonce = None
@@ -393,6 +395,7 @@ def get_authenticator_qr(request, **kwargs):
     stringio = StringIO()
     img.save(stringio)
     stringio.seek(0)
+    custom_log(request, "Downloaded Authenticator secret QR code", level="info")
     return HttpResponse(stringio.read(), content_type="image/png")
 
 @protect_view("configure_authenticator", required_level=Browser.L_STRONG)
@@ -401,9 +404,9 @@ def configure_authenticator(request):
     ret = {}
     user = request.browser.user
     if request.method != "POST":
+        custom_log(request, "Tried to enter Authenticator configuration view with GET request. Redirecting back. Referer: %s" % request.META.get("HTTP_REFERRER"), level="info")
         return custom_redirect("login_frontend.views.configure_strong", request.GET)
 
-    custom_log(request, "Downloaded Authenticator secret QR code")
     ret["back_url"] = redir_to_sso(request).url
 
     regen_secret = True
@@ -429,7 +432,11 @@ def configure_authenticator(request):
     if regen_secret:
         authenticator_secret = user.gen_authenticator()
         ret["authenticator_secret"] = authenticator_secret
+        # As new secret was generated and saved, authenticator configuration is no longer valid.
+        # Similarly, strong authentication is no longer configured, because authenticator configuration
+        # was revoked.
         user.strong_authenticator_used = False
+        user.strong_configured = False
         user.save()
         add_log_entry(request, "Regenerated Authenticator code")
         custom_log(request, "Regenerated Authenticator code")
