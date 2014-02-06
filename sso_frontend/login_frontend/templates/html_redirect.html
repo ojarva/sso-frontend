@@ -1,9 +1,13 @@
-<html>
-<head>
-<title>Redirecting...</title>
+{% extends "base.html" %}
+
+{% block header %}
 <meta http-equiv="refresh" content="0; url={{back_url}}">
-</head>
-<body>
-<p>Umm. For some reason, automatic redirect did not work properly. <a href="{{ back_url}}">Click here to continue.</a></p>
-</body>
-</html>
+{% endblock %}
+
+{% block content %}
+<h2>Redirecting...</h2>
+
+<p>Please wait. Your browser was already redirected, but loading your destination service seems to take some time.</p>
+
+<p>If this takes more than a few seconds, you can <a href="{{ back_url}}">retry</a>.</p>
+{% endblock %}
