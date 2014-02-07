@@ -10,7 +10,6 @@ from django.template import RequestContext
 from django.utils import timezone
 from django.utils.timesince import timeuntil
 from django.views.decorators.http import require_http_methods
-from dummy import *
 from helpers import *
 from ldap_auth import LdapLogin
 from login_frontend.forms import *
