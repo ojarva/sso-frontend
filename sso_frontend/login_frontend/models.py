@@ -132,8 +132,11 @@ class Browser(models.Model):
     authenticator_qr_nonce = models.CharField(max_length=37, null=True, blank=True)
 
     def get_cookie(self):
-        return ("browserid", {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "expires": time.time() + 86400 * 1000})
-
+        return [
+           ("browserid", {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
+           ("public-browserid", {"value": self.bid_public, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
+           ("sessionbid", {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com"})
+        ]
 
     def revoke_sms(self):
         self.sms_code = None
@@ -269,6 +272,8 @@ class User(models.Model):
 
     strong_sms_always = models.BooleanField(default=False)
 
+    # If this is True, no strong authentication is required, and login is valid only for 12 hours
+    emulate_legacy = models.BooleanField(default=False)
 
     primary_phone_changed = models.BooleanField(default=False)
 

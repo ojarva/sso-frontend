@@ -150,7 +150,7 @@ def authenticate_with_password(request):
         # No Browser object is initialized. Create one.
         browser = Browser(bid=create_browser_uuid(), bid_public=create_browser_uuid(), ua=request.META.get("HTTP_USER_AGENT"))
         browser.save()
-        cookies.append(browser.get_cookie())
+        cookies.extend(browser.get_cookie())
     if request.method == 'POST':
         form = AuthWithPasswordForm(request.POST)
         if form.is_valid():
