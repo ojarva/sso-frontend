@@ -6,7 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from models import Browser
-from utils import custom_redirect, get_browser
+from utils import custom_redirect
 import Cookie
 import auth_pubtkt
 import base64

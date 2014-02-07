@@ -11,12 +11,3 @@ def custom_redirect(url_name, get_params = None):
     params = urllib.urlencode(get_params)
     return HttpResponseRedirect(url + "?%s" % params)
 
-def get_browser(request):
-    """ Returns Browser object or None """
-    bid = request.COOKIES.get('browserid')
-    if not bid: return None
-    try:
-        browser = Browser.objects.get(bid=bid)
-        return browser
-    except ObjectDoesNotExist:
-        return None
