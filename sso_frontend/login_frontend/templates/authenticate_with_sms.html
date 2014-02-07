@@ -2,37 +2,36 @@
 
 {% block content %}
 {% if enable_cookies %}
-	<div class="alert alert-error">
+	<div class="alert alert-danger">
 		Please enable cookies. You're not able to sign in without properly working cookies.
 	</div>
 {% endif %}
 
 
 {% if primary_phone_changed %}
-	<div class="alert alert-warning">
-		Your phone number has changed. For security reasons, you must reconfigure strong authentication.
-	</div>
+<div class="alert alert-warning">
+Your phone number has changed. For security reasons, you must reconfigure strong authentication.
+</div>
+
+<p>You should receive SMS message with one-time password #{{ expected_sms_id }} shortly. Please enter the code below. On the next step, you can set your preferences for authentication. After that, you'll be redirected back to service you tried to access.</p>
+
 {% elif strong_not_configured %}
-	<div class="alert alert-warning">
-		You have not configured strong authentication. You should receive SMS message with one-time password shortly. Please enter it below. On the next step, you can set your preferences for authentication.
+<div class="alert alert-warning">
+You have not configured strong authentication.
+</div>
 
-TODO: link to instructions/"What is strong authentication"
-	</div>
-{% endif %}
+<p>You should receive SMS message with one-time password #{{ expected_sms_id }} shortly. Please enter it below. On the next step, you can set your preferences for authentication. After that, you'll be redirected back to service you tried to access.</p>
 
-{% if authentication_failed %}
-	<div class="alert alert-error">
-		Invalid one-time code. You should enter code number {{otp_code_number}}
-	</div>
-{% endif %}
+<p><a target="_window" href="{% url 'introduction' %}">What is strong authentication?</a></p>
+{% elif authentication_failed %}
+<div class="alert alert-danger">
+Incorrect one-time code.
+</div>
 
-{% if message %}
-	<div class="alert alert-warning">
-               {{ message }}
-	</div>
-{% endif %}
-
+<p>You're authenticating with SMS code. You should enter 5-digit code #{{ expected_sms_id }}. Older messages are not valid anymore. If you have Authenticator app installed and configured, you can enter one-time code from there.</p>
+{% else %}
 You should receive SMS containing one-time password shortly. Please enter it below. It should be #{{ expected_sms_id }}.
+{% endif %}
 
 <form class="form-signin" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">
 	{% csrf_token %}

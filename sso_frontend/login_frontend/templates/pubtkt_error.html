@@ -2,13 +2,13 @@
 
 {% block content %}
 {% if enable_cookies %}
-	<div class="alert alert-error">
+	<div class="alert alert-danger">
 		Please enable cookies. You're not able to sign in without properly working cookies.
 	</div>
 {% endif %}
 
 {% if invalid_back_url %}
-<div class="alert alert-error">
+<div class="alert alert-danger">
 Unable to complete sign-in request.
 </div>
 
@@ -17,7 +17,7 @@ Unable to complete sign-in request.
 {% endif %}
 
 {% if unauth %}
-<div class="alert alert-error">
+<div class="alert alert-danger">
 Your don't have access to requested resource.
 </div>
 

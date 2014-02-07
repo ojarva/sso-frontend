@@ -2,15 +2,18 @@
 
 {% block content %}
 {% if enable_cookies %}
-	<div class="alert alert-error">
+	<div class="alert alert-danger">
 		Please enable cookies. You're not able to sign in without properly working cookies.
 	</div>
 {% endif %}
 
 {% if invalid_otp %}
-	<div class="alert alert-error">
-		Invalid one-time code. You're authenticating with Authenticator password. You should enter 6-digit one-time password from your mobile app.
-	</div>
+<div class="alert alert-danger">
+Incorrect one-time code.
+</div>
+
+<p>You're authenticating with Authenticator password. You should enter 6-digit one-time password from your mobile app.
+If code from your app is not working, you can <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">sign in with SMS</a>.</p>
 {% endif %}
 
 {% if message %}

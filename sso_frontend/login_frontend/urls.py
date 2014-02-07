@@ -27,5 +27,5 @@ urlpatterns = patterns('',
     url(r'^configure_authenticator$', views.configure_authenticator),
     url(r'^configure_authenticator_qr/(?P<single_use_code>(.+))$', views.get_authenticator_qr),
     url(r'^logout$', views.logoutview, name='logout'),
-    url(r'^introduction$', TemplateView.as_view(template_name="introduction.html")),
+    url(r'^introduction$', TemplateView.as_view(template_name="introduction.html"), name='introduction'),
 )
