@@ -17,3 +17,8 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
 )
+
+handler400 = "login_frontend.error_views.error_400"
+handler403 = "login_frontend.error_views.error_403"
+handler404 = "login_frontend.error_views.error_404"
+handler500 = "login_frontend.error_views.error_500"

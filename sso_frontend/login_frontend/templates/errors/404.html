@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Oops. Not found</h1>
+
+<p>Page you tried to access does not exist (anymore).</p>
+
+<p>If you think this is an error, please explain what happened. {% if browser_public_bid %}Mentioning <b>{{ browser_public_bid }}</b> helps with solving the issue.{% endif %}</p>
+
+<p>You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
+
+
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Oops. Bad request</h1>
+
+<p>Your browser sent bad request. Your session data was removed, so you have to sign in again. Sorry about that.</p>
+
+<p>If you think this is an error, please explain what happened.</p>
+
+<p>You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
+
+{% endblock %}

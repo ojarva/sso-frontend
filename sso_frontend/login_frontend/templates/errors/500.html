@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Oh snap. Internal server error.</h1>
+
+<p>Something went seriously wrong. We'll take a look as soon as possible. This has been reported already.</p>
+
+<p>If you think additional information is useful, please explain what you did to reach this page. {% if browser_public_bid %}Mentioning <b>{{ browser_public_bid }}</b> helps with solving the issue.{% endif %}</p>
+
+<p>You can try to continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
+
+{% endblock %}
