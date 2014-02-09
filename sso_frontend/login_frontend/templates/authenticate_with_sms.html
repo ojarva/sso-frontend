@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 
-{% block content %}
-{% if enable_cookies %}
-	<div class="alert alert-danger">
-		Please enable cookies. You're not able to sign in without properly working cookies.
-	</div>
-{% endif %}
+{% block header %}
+<script src="/static/js/otp.js" type="text/javascript"></script>
+{% endblock %}
 
+
+{% block content %}
+<div class="row">
+<div class="col-md-8 col-centered">
 
 {% if primary_phone_changed %}
 <div class="alert alert-warning">
@@ -33,10 +34,25 @@ Incorrect one-time code.
 You should receive SMS containing one-time password shortly. Please enter it below. It should be #{{ expected_sms_id }}.
 {% endif %}
 
-<form class="form-signin" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">
-	{% csrf_token %}
-	<tr><th><label for="id_otp">OTP:</label></th><td><input id="id_otp" name="otp" type="tel" pattern="[0-9 ]*" autocomplete='off' /></td></tr>
-	<button class="btn btn-large btn-primary" type="submit">Sign in</button>
+<form role="form" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">
+  {% csrf_token %}
+  <div class="form-group control-group">
+    <label for="id_otp" control-label">OTP</label>
+    <input class="form-control" id="id_otp" placeholder="Please enter numeric OTP" title="You should enter 6-digit one-time password here." name="otp" type="tel" data-len="5-6" pattern="[0-9 ]*" autocomplete='off' />
+    <span class="glyphicon form-control-feedback"></span>
+  </div>
+  <div class="form-group">
+       <button class="btn btn-large btn-primary" type="submit">Sign in <span class="glyphicon glyphicon-remove-circle"></span></button>
+  </div>
+  <div class="form-group">
+      <div class="checkbox">
+        <label>
+          <input name="my_computer" type="checkbox"> Remember me on this computer
+        </label>
+      </div>
+  </div>
 </form>
+
+<p><small>Want to <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">use Authenticator</a> instead of SMS?</small></p>
 
 {% endblock %}
