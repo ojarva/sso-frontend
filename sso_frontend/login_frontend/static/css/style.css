@@ -17,6 +17,11 @@ body {
 	display: block;
 }
 
+.col-centered{
+    float: none;
+    margin: 0 auto;
+}
+
 .info-boxes {
   max-width: 500px;
   padding: 19px 29px 29px;
