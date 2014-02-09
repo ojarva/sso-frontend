@@ -82,6 +82,13 @@ SAML2IDP_REMOTES = {
 RATELIMIT_ENABLE=True
 RATELIMIT_USE_CACHE="ratelimit"
 
+
+DATETIME_FORMAT='Y-m-d H:i:s'
+DATE_FORMAT='Y-m-d'
+TIME_FORMAT='H:i'
+SHORT_DATE_FORMAT='Y-m-d'
+SHORT_DATETIME_FORMAT='Y-m-d H:i'
+
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = []
@@ -104,7 +111,7 @@ USE_I18N = True
 
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale.
-USE_L10N = True
+USE_L10N = False
 
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
