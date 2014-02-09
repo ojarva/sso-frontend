@@ -163,11 +163,11 @@ class Browser(models.Model):
 
     def get_auth_state(self):
         # TODO: logic for determining proper authentication state
-        return self.auth_level
+        return self.auth_state
 
     def get_auth_level(self):
         # TODO: logic for determining proper authentication level
-        return self.auth_state
+        return self.auth_level
 
     def valid_sms_exists(self):
         if not self.sms_code or not self.sms_code_generated_at:
