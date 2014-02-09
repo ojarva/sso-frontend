@@ -8,6 +8,12 @@
 {% endif %}
 
 
+{% if message %}
+<div class="alert alert-warning">
+	{{ message }}
+</div>
+{% endif %}
+
 {% if not user.strong_configured %}
 <h2>Configure Strong Authentication</h2>
 
@@ -72,8 +78,17 @@
 <h2>Your active sessions:</h2>
 
 <ul>
-{% for browser in browsers %}
-<li>{{ browser.ua}} (last seen {{ browser.modified }})</li>
+{% for detailed in sessions %}
+<li>Seen<br>
+   at <b>{{ detailed.session.last_seen }}</b> ({% if detailed.this_session %}this session{% else %}{{ detailed.session.last_seen|timesince}} ago{% endif %}) <br>
+ from <b>{{ detailed.session.remote_ip }}</b> <br>
+ with {{ detailed.browser.get_readable_ua}}
+<form method="post" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+{% csrf_token %}
+<input type="hidden" name="logout" value="{{ detailed.browser.bid_public }}">
+<button type="submit" class="btn-sm btn btn-danger">logout</button>
+</form>
+</li>
 {% endfor %}
 </ul>
 

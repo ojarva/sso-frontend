@@ -400,16 +400,44 @@ def authenticate_with_sms(request):
 def configure_strong(request):
     """ Configuration view for general options. """
     user = request.browser.user
-    browsers = Browser.objects.filter(user=user)
     ret = {}
-    ret["browsers"] = browsers
 
     if request.method == "POST":
         if request.POST.get("always_sms") == "on":
             user.strong_configured = True
             user.strong_sms_always = True
             user.save()
-        # TODO: disabling always_sms
+        if request.POST.get("logout"):
+            bid_public = request.POST.get("logout")
+            try:
+                browser_logout = Browser.objects.get(bid_public=bid_public)
+                if browser_logout.user != user:
+                    ret["message"] = "That browser belongs to another user."
+                else:
+                    self_logout = False
+                    if browser_logout == request.browser:
+                        self_logout = True
+                    browser_logout.logout()
+                    custom_log(request, "Signed out browser %s" % browser_logout.bid, level="info")
+                    if self_logout:
+                        return custom_redirect("login_frontend.views.indexview", request.GET)
+                    return custom_redirect("login_frontend.views.configure_strong", request.GET)
+            except Browser.DoesNotExist:
+                ret["message"] = "Invalid browser"
+        # TODO: disabling always_sms without reconfiguring authenticator
+
+
+    browsers = Browser.objects.filter(user=user)
+    sessions = []
+    for browser in browsers:
+        session = BrowserUsers.objects.get(user=user, browser=browser)
+        details = {"session": session, "browser": browser}
+        if browser == request.browser:
+            details["this_session"] = True
+        sessions.append(details)
+
+    ret["sessions"] = sessions
+
 
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)

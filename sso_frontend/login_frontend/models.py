@@ -226,16 +226,44 @@ class Browser(models.Model):
 
     def logout(self, request = None):
         """ User requested logout. In practice, cleanup all associations between user and browser. """
-        self.username = None
+        log.info("Logging out: %s" % self.bid)
+        self.revoke_sms()
+        self.user = None
         self.save_browser = False
         self.auth_level = Browser.L_UNAUTH
         self.auth_state = Browser.S_REQUEST_BASIC
         self.auth_level_valid_until = None
         self.auth_state_valid_until = None
-        self.revoke_sms()
         if request is not None:
             django_logout(request)
         self.save()
+
+
+    def get_readable_ua(self):
+        data = httpagentparser.detect(self.ua)
+        browser = None
+        os = None
+        if "browser" in data and "name" in data["browser"]:
+                browser = data["browser"]["name"]
+        if "dist" in data and "name" in data["dist"]:
+            if "version" in data["dist"]:
+                os = "%s (%s)" % (data["dist"]["name"], data["dist"]["version"])
+            else:
+                os = data["dist"]["name"]
+
+        elif "platform" in data and "name" in data["platform"]:
+            if "version" in data["platform"]:
+                os = "%s (%s)" % (data["platform"]["name"], data["platform"]["version"])
+            else:
+                os = data["platform"]["name"]
+        elif "os" in data and "name" in data["os"]:
+            os = data["os"]["name"]
+        if browser:
+            if os:
+                return "%s on %s" % (browser, os)
+            else:
+                return "%s on unknown platform" % (browser)
+        return self.ua
 
     def compare_ua(self, ua):
         # TODO: Validate this code.
@@ -264,12 +292,13 @@ class Browser(models.Model):
         return True
 
 class BrowserUsers(models.Model):
-    username = models.ForeignKey('User')
+    user = models.ForeignKey('User')
     browser = models.ForeignKey('Browser')
     auth_timestamp = models.DateTimeField(null=True)
     max_auth_level = models.CharField(max_length=1, choices=Browser.A_AUTH_LEVEL, default=Browser.L_UNAUTH)
 
-
+    remote_ip = models.GenericIPAddressField(null=True,blank=True)
+    last_seen = models.DateTimeField(null=True)
 
 class UsedOTP(models.Model):
     """ Stores list of used OTPs."""

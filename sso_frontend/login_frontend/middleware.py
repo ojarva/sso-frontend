@@ -1,6 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
-from login_frontend.models import Browser
+from django.utils import timezone
+from login_frontend.models import Browser, BrowserUsers
 import logging
+
 log = logging.getLogger(__name__)
 
 def get_browser(request):
@@ -8,14 +10,21 @@ def get_browser(request):
     if not bid: return None
     try:
         browser = Browser.objects.get(bid=bid)
-        if request.COOKIES.get("v2sessionbid") == browser.bid_session:
-            browser.valid_session_bid = True
-        else:
-            browser.valid_session_bid = False
-        return browser
     except ObjectDoesNotExist:
         log.info("Unknown browser id '%s' from '%s'", bid, request.META.get("REMOTE_ADDR"))
         return None
+
+    if request.COOKIES.get("v2sessionbid") == browser.bid_session:
+        browser.valid_session_bid = True
+    else:
+        browser.valid_session_bid = False
+
+    if browser.user:
+        user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)
+        user_to_browser.remote_ip = request.META.get("REMOTE_ADDR")
+        user_to_browser.last_seen = timezone.now()
+        user_to_browser.save()
+    return browser
 
 
 class BrowserMiddleware(object):
