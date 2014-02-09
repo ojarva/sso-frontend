@@ -141,40 +141,61 @@ def authenticate_with_password(request):
 
     ret = {}
     cookies = []
-    if request.browser is not None:
-        auth_state = request.browser.get_auth_state()
-        if request.browser.get_auth_state() in (Browser.S_REQUEST_STRONG, ):
-            # User is already in strong authentication. Redirect them there.
-            return custom_redirect("login_frontend.views.secondstepauth", request.GET)
-        if request.browser.get_auth_state() in (Browser.S_AUTHENTICATED, ):
-            # User is already authenticated. Redirect back to SSO service.
-            return redir_to_sso(request)
-    else:
+    if request.browser is None:
         # No Browser object is initialized. Create one.
-        browser = Browser(bid=create_browser_uuid(), bid_public=create_browser_uuid(), ua=request.META.get("HTTP_USER_AGENT"))
+        custom_log(request, "No browser object exists. Create a new one. Cookies: %s" % request.COOKIES, level="debug")
+        browser = Browser(bid=create_browser_uuid(), bid_public=create_browser_uuid(), bid_session=create_browser_uuid(), ua=request.META.get("HTTP_USER_AGENT"))
         browser.save()
         cookies.extend(browser.get_cookie())
+    else:
+        custom_log(request, "Browser object exists", level="debug")
+        browser = request.browser
+        auth_state = browser.get_auth_state()
+        if browser.get_auth_state() in (Browser.S_REQUEST_STRONG, ):
+            # User is already in strong authentication. Redirect them there.
+            custom_log(request, "State: REQUEST_STRONG. Redirecting user", level="debug")
+            return custom_redirect("login_frontend.views.secondstepauth", request.GET)
+        if browser.get_auth_state() in (Browser.S_AUTHENTICATED, ):
+            # User is already authenticated. Redirect back to SSO service.
+            custom_log(request, "User is already authenticated. Redirect back to SSO service.", level="debug")
+            return redir_to_sso(request)
+
     if request.method == 'POST':
+        custom_log(request, "POST request", level="debug")
         form = AuthWithPasswordForm(request.POST)
         if form.is_valid():
+            custom_log(request, "Form is valid", level="debug")
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
             auth = LdapLogin(username, password, r)
             auth_status = auth.login()
             if auth_status == True:
-                # User authenticated successfully. Update AUTH_STATE and AUTH_LEVEL
-                if request.browser.user is None:
-                    (user, created) = User.objects.get_or_create(username=auth.username)
-                    user.user_tokens = json.dumps(auth.get_auth_tokens())
-                    user.save()
-                    request.browser.user = user
-                # TODO: no further authentication is necessarily needed. Determine these automatically.
-                request.browser.set_auth_level(Browser.L_BASIC)
-                request.browser.set_auth_state(Browser.S_REQUEST_STRONG)
-                request.browser.save()
-
                 add_log_entry(request, "Successfully logged in using username and password")
                 custom_log(request, "Successfully logged in using username and password")
+                # User authenticated successfully. Update AUTH_STATE and AUTH_LEVEL
+                if browser.user is None:
+                    custom_log(request, "browser.user is None", level="debug")
+                    (user, created) = User.objects.get_or_create(username=auth.username)
+                    user.user_tokens = json.dumps(auth.get_auth_tokens())
+                    custom_log(request, "User tokens: %s" % user.user_tokens, level="info")
+                    user.save()
+                    browser.user = user
+                if browser.user.emulate_legacy:
+                    custom_log(request, "Emulating legacy SSO", level="info")
+                    # This is a special case for emulating legacy system:
+                    # - no two-factor authentication
+                    # - all logins expire in 12 hours
+                    browser.set_auth_level(Browser.L_STRONG)
+                    browser.set_auth_state(Browser.S_AUTHENTICATED)
+                    browser.save()
+                    custom_log(request, "Redirecting back to SSO service", level="info")
+                    return redir_to_sso(request)
+
+                # TODO: no further authentication is necessarily needed. Determine these automatically.
+                browser.set_auth_level(Browser.L_BASIC)
+                browser.set_auth_state(Browser.S_REQUEST_STRONG)
+                browser.save()
+
                 return custom_redirect("login_frontend.views.secondstepauth", request.GET)
             else:
                 if auth_status == "invalid_credentials":
@@ -186,14 +207,16 @@ def authenticate_with_password(request):
                     custom_log(request, "Authentication failed: %s" % auth_status, level="warn")
                     add_log_entry(request, "Authentication failed: %s" % auth_status)
     else:
+        custom_log(request, "GET request", level="debug")
         form = AuthWithPasswordForm(request.POST)
     ret["form"] = form
 
-
     # Keep GET query parameters in form posts.
     ret["get_params"] = urllib.urlencode(request.GET)
+    custom_log(request, "Query parameters: %s" % ret["get_params"], level="debug")
     response = render_to_response("authenticate_with_password.html", ret, context_instance=RequestContext(request))
     for cookie_name, cookie in cookies:
+        custom_log(request, "Setting cookie %s=%s" % (cookie_name, cookie))
         response.set_cookie(cookie_name, **cookie)
     return response
 
@@ -204,33 +227,42 @@ def secondstepauth(request):
     assert request.browser is not None, "Second step authentication requested, but browser is None."
     assert request.browser.user is not None, "Second step authentication requested, but user is not specified."
 
+    custom_log(request, "Second step authentication requested", level="debug")
+
     get_params = request.GET
     user = request.browser.user
 
     # If already authenticated with L_STRONG, redirect back to destination
     if request.browser.get_auth_level() == Browser.L_STRONG or request.browser.get_auth_state() == Browser.S_AUTHENTICATED:
+        custom_log(request, "User is already authenticated. Redirect back to SSO", level="info")
         return redir_to_sso(request)
 
     if not user.strong_configured:
         # User has not configured any authentication. Go to that pipe.
+        custom_log(request, "Strong authentication is not configured. Go to SMS authentication", level="info")
         return custom_redirect("login_frontend.views.authenticate_with_sms", get_params)
 
     if user.strong_sms_always:
         # Strong authentication has been configured, and user has requested to get SMS message.
+        custom_log(request, "User has requested SMS authentication.", level="info")
         return custom_redirect("login_frontend.views.authenticate_with_sms", get_params)
 
     if user.strong_authenticator_secret:
+        custom_log(request, "Authenticator is properly configured. Redirect.", level="info")
         return custom_redirect("login_frontend.views.authenticate_with_authenticator", get_params)
 
+    custom_log(request, "No proper redirect configured.", level="error")
     return HttpResponse("Second step auth: no proper redirect configured.")
 
 @protect_view("authenticate_with_authenticator", required_level=Browser.L_BASIC)
 def authenticate_with_authenticator(request):
     """ Authenticates user with Google Authenticator """
 
+    custom_log(request, "Requested authentication with Authenticator", level="debug")
 
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
     if request.browser.get_auth_level() == Browser.L_STRONG or request.browser.get_auth_state() == Browser.S_AUTHENTICATED:
+        custom_log(request, "User is already authenticated. Redirect back to SSO", level="info")
         return redir_to_sso(request)
 
     ret = {}
@@ -239,15 +271,20 @@ def authenticate_with_authenticator(request):
 
     if not user.strong_authenticator_secret:
         # Authenticator is not configured. Redirect back to secondstep main screen
+        custom_log(request, "Authenticator is not configured, but user accessed Authenticator view. Redirect back to secondstepauth", level="error")
         return custom_redirect("login_frontend.views.secondstepauth", request.GET)
 
     if request.method == "POST":
+        custom_log(request, "POST request", level="debug")
         form = OTPForm(request.POST)
         if form.is_valid():
+            custom_log(request, "Form is valid", level="debug")
             otp = form.cleaned_data["otp"]
+            custom_log(request, "Testing OTP code %s at %s" % (form.cleaned_data["otp"], time.time()), level="debug")
             (status, message) = user.validate_authenticator_code(form.cleaned_data["otp"])
             if not status:
                 # If authenticator code did not match, also try latest SMS (if available).
+                custom_log(request, "Authenticator code did not match. Testing SMS", level="info")
                 status, _ = request.browser.validate_sms(otp)
             if status:
                 custom_log(request, "Second-factor authentication with Authenticator succeeded")
@@ -260,12 +297,14 @@ def authenticate_with_authenticator(request):
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
                 request.browser.save()
+                custom_log(request, "Redirecting back to SSO provider", level="debug")
                 return redir_to_sso(request)
             else:
                 custom_log(request, "Incorrect OTP provided: %s" % message, level="warn")
                 add_log_entry(request, "Incorrect OTP provided: %s" % message)
                 ret["invalid_otp"] = message
     else:
+        custom_log(request, "GET request", level="debug")
         form = OTPForm()
 
 
@@ -285,10 +324,10 @@ def authenticate_with_sms(request):
     """
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
     if request.browser.get_auth_level() == Browser.L_STRONG or request.browser.get_auth_state() == Browser.S_AUTHENTICATED:
+        custom_log(request, "User is already authenticated. Redirect back to SSO service", level="debug")
         return redir_to_sso(request)
 
     user = request.browser.user
-    cookies = []
     ret = {}
     if not (user.primary_phone or user.secondary_phone):
         # Phone numbers are not available.
@@ -324,6 +363,7 @@ def authenticate_with_sms(request):
                     # Strong authentication is not configured. Go to configuration view.
                     return custom_redirect("login_frontend.views.configure_strong", request.GET)
                 # Redirect back to SSO service
+                custom_log(request, "Redirecting back to SSO provider", level="debug")
                 return redir_to_sso(request)
             else:
                 if message:
@@ -354,8 +394,6 @@ def authenticate_with_sms(request):
     ret["get_params"] = urllib.urlencode(request.GET)
 
     response = render_to_response("authenticate_with_sms.html", ret, context_instance=RequestContext(request))
-    for cookie_name, cookie in cookies:
-        response.set_cookie(cookie_name, **cookie)
     return response
 
 @protect_view("configure_strong", required_level=Browser.L_STRONG)
@@ -486,7 +524,7 @@ def logoutview(request):
                 pass
  
         if request.browser is not None:
-            request.browser.logout()
+            request.browser.logout(request)
         django_auth.logout(request)
         request.session["logout"] = True
         return custom_redirect("login_frontend.views.indexview", request.GET.dict())
