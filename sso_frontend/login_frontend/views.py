@@ -116,13 +116,17 @@ def indexview(request):
 
     # TODO: "valid until"
     ret = {}
-    cookies = []
     ret["username"] = request.browser.user.username
+    ret["user"] = request.browser.user
+    ret["get_params"] = urllib.urlencode(request.GET)
+    auth_level = request.browser.get_auth_level()
+    if auth_level == Browser.L_STRONG:
+        ret["auth_level"] = "strong"
+    elif auth_level == Browser.L_BASIC:
+        ret["auth_level"] = "basic"
+
 
     response = render_to_response("indexview.html", ret, context_instance=RequestContext(request))
-    for cookie_name, cookie in cookies:
-        response.set_cookie(cookie_name, **cookie)
-
     return response
 
 @protect_view("firststepauth", required_level=Browser.L_UNAUTH)

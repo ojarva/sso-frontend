@@ -1,12 +1,34 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="logout-alert ">
 		Signed in as <div class="username">{{ username }}</div>
-		Expires in {{ login_expire }}
+
+{% if auth_level == "strong" %}
+
+<p>You have authenticated with <a role="button" href="{% url 'introduction' %}" class="popover-link" data-toggle="popover" 
+title="Strong authentication?" data-trigger="hover"
+data-content="You are fully authenticated. You entered one-time password to validate you have your 
+mobile phone with you.">strong authentication</a>.</p>
+
+{% elif auth_level == "basic" %}
+<p>You are authenticated only on basic level. To access services, you have to <a href="{% url 'login_frontend.views.secondstepauth' %}?{{get_params}}">authenticate with strong authentication.</p>
+{% endif %}
+
+
+{% if remembered %}
+<p>You will be <a href="#" role="button" class="popover-link" data-toggle="popover" data-trigger="hover"
+title="Remembered browser" data-content="You have indicated this is your private browser. Your authentication is remembered
+over browser restarts.">remembered on this browser</a>.</p>
+{% else %}
+<p>When closing the browser <a href="#" role="button" class="popover-link" data-toggle="popover" data-trigger="hover"
+title="Why?" data-content="You have not indicated you want to be remembered on this computer. When you click 'Sign out' below or
+close your browser, you will be signed out.">you will be signed out</a>.</p>
+{% endif %}
 		<form action="/v2/logout" method="POST">
 			{% csrf_token %}
 			<input class="btn btn-large" type="submit" name="logout" value="Sign out">
 		</form>
 	<div>Want to <a href="{% url 'login_frontend.views.configure_strong' %}?{{ get_params}}">configure something?</a></div>
-
+</div>
 {% endblock %}
