@@ -4,6 +4,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.timesince import timeuntil
 from random import choice, randint
+from django.contrib.auth import logout as django_logout
 import datetime
 import httpagentparser
 import phonenumbers
@@ -214,7 +215,7 @@ class Browser(models.Model):
         self.save()
         return (self.sms_code_id, self.sms_code)
 
-    def logout(self):
+    def logout(self, request = None):
         """ User requested logout. In practice, cleanup all associations between user and browser. """
         self.username = None
         self.save_browser = False
@@ -223,6 +224,8 @@ class Browser(models.Model):
         self.auth_level_valid_until = None
         self.auth_state_valid_until = None
         self.revoke_sms()
+        if request is not None:
+            django_logout(request)
         self.save()
 
     def compare_ua(self, ua):
