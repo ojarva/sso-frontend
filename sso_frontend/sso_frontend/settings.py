@@ -2,6 +2,8 @@ import os.path
 
 # Django settings for sso_frontend project.
 
+URL_PREFIX = "/v2"
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -10,7 +12,7 @@ ADMINS = (
 )
 
 MANAGERS = ADMINS
-LOGIN_URL = "/v2/internal_login"
+LOGIN_URL = URL_PREFIX+"/internal_login"
 
 HUEY = {
     'backend': 'huey.backends.redis_backend',  # required.
@@ -56,12 +58,9 @@ CACHES = {
     },	
 }
 
-PUBTKT_ALLOWED_DOMAINS=[".futurice.com"]
-
-
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '../')
 
-LOGIN_REDIRECT_URL = '/v2/idp/sso/post/response/preview/'
+LOGIN_REDIRECT_URL = URL_PREFIX+'/idp/sso/post/response/preview/'
 
 # SAML2IDP metadata settings
 SAML2IDP_CONFIG = {
@@ -269,7 +268,7 @@ LOGGING = {
         'users': {
           'handlers': ['logfile_main', 'logfile_users'],
           'propagate': True,
-          'level': 'INFO',
+          'level': 'DEBUG',
         },
         'openid_provider': {
           'handlers': ['logfile_openid'],
@@ -279,12 +278,12 @@ LOGGING = {
         'saml2idp': {
           'handlers': ['logfile_saml'],
           'propagate': True,
-          'level': 'INFO',
+          'level': 'DEBUG',
         },
-        'main': {
+        '': {
           'handlers': ['logfile_main'],
           'propagate': True,
-          'level': 'INFO',
+          'level': 'DEBUG',
         },
     }
 }
