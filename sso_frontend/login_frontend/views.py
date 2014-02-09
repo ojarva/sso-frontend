@@ -375,7 +375,9 @@ def configure_strong(request):
 
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
-    ret["back_url"] = redir_to_sso(request).url
+    back_url = redir_to_sso(request, no_default=True)
+    if back_url:
+        ret["back_url"] = back_url.url
     response = render_to_response("configure_strong.html", ret, context_instance=RequestContext(request))
     return response
 

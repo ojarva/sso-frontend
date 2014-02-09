@@ -4,7 +4,7 @@ import datetime
 import dateutil.parser
 import urllib
 
-def redir_to_sso(request):
+def redir_to_sso(request, **kwargs):
     sso = request.GET.get("_sso")
     if sso == "pubtkt":
         return custom_redirect("login_frontend.providers.pubtkt", request.GET.dict())
@@ -15,7 +15,9 @@ def redir_to_sso(request):
     elif sso == "internal":
         return custom_redirect("login_frontend.providers.internal_login", request.GET.dict())
     else:
-        return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+        if not kwargs.get("no_default", False):
+            return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+        return None
 
 def get_query_string(mapping, **kwargs):
     for item in kwargs:
