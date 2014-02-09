@@ -11,6 +11,10 @@ import pyotp
 import subprocess
 import time
 import uuid
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def create_browser_uuid():
     return str(uuid.uuid4())
@@ -307,6 +311,8 @@ class User(models.Model):
 
         totp = pyotp.TOTP(self.strong_authenticator_secret)
         for timestamp in [time.time() - 30, time.time(), time.time() + 30]:
+            totp_code = totp.at(timestamp)
+            log.info("Comparing '%s' and '%s'" % (totp_code, code))
             if str(code) == str(totp.at(timestamp)):
                 (obj, created) = UsedOTP.objects.get_or_create(user=self, code=code)
                 if created:
