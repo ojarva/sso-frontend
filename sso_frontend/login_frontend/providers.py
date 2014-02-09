@@ -19,7 +19,7 @@ import time
 import urllib
 
 #TODO: store private key path in settings.
-privkey = DSA.load_key("/var/www/private/privkey1.pem")
+privkey = settings.PUBTKT_PRIVKEY
 
 log = logging.getLogger(__name__)
 

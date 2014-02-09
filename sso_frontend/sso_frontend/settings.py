@@ -59,6 +59,8 @@ CACHES = {
 }
 
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '../')
+GEOIP_DB = PROJECT_ROOT+"data/GeoLite2-City.mmdb"
+
 
 LOGIN_REDIRECT_URL = URL_PREFIX+'/idp/sso/post/response/preview/'
 

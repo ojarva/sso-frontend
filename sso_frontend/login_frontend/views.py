@@ -434,6 +434,7 @@ def configure_strong(request):
         details = {"session": session, "browser": browser}
         if browser == request.browser:
             details["this_session"] = True
+        details["geo"] = get_geoip_string(session.remote_ip)
         sessions.append(details)
 
     ret["sessions"] = sessions
