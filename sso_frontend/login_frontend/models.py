@@ -109,6 +109,7 @@ class Browser(models.Model):
     )
 
     bid = models.CharField(max_length=37, primary_key=True) # UUID
+    bid_session = models.CharField(max_length=37) # UUID
     bid_public = models.CharField(max_length=37) # UUID
 
     user = models.ForeignKey('User', null=True)
@@ -133,9 +134,9 @@ class Browser(models.Model):
 
     def get_cookie(self):
         return [
-           ("browserid", {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
-           ("public-browserid", {"value": self.bid_public, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
-           ("sessionbid", {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com"})
+           ("v2browserid", {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
+           ("v2public-browserid", {"value": self.bid_public, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
+           ("v2sessionbid", {"value": self.bid_session, "secure": True, "httponly": True, "domain": "login.futurice.com"})
         ]
 
     def revoke_sms(self):

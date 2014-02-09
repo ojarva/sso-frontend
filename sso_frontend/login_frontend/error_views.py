@@ -18,17 +18,17 @@ r = redis.Redis()
 @require_http_methods(["GET", "POST"])
 def error_400(request, **kwargs):
     ret = {}
-    ret["browser_public_bid"] = request.COOKIES.get("public-browserid")
+    ret["browser_public_bid"] = request.COOKIES.get("v2public-browserid")
     response = render_to_response("errors/400.html", ret, context_instance=RequestContext(request))
 
     # Upon bad request, delete all session data.
     if request.browser:
         request.browser.delete()
 
-    response.delete_cookie("public-browserid")
+    response.delete_cookie("v2public-browserid")
     response.delete_cookie("auth_pubtkt")
     response.delete_cookie("csrftoken")
-    response.delete_cookie("sessionbid")
+    response.delete_cookie("v2sessionbid")
     response.delete_cookie("sessionid")
     response.delete_cookie("slogin")
     return response
@@ -37,7 +37,7 @@ def error_400(request, **kwargs):
 @require_http_methods(["GET", "POST"])
 def error_403(request, **kwargs):
     ret = {}
-    ret["browser_public_bid"] = request.COOKIES.get("public-browserid")
+    ret["browser_public_bid"] = request.COOKIES.get("v2public-browserid")
     response = render_to_response("errors/403.html", ret, context_instance=RequestContext(request))
     return response
 
@@ -45,7 +45,7 @@ def error_403(request, **kwargs):
 @require_http_methods(["GET", "POST"])
 def error_404(request, **kwargs):
     ret = {}
-    ret["browser_public_bid"] = request.COOKIES.get("public-browserid")
+    ret["browser_public_bid"] = request.COOKIES.get("v2public-browserid")
     response = render_to_response("errors/404.html", ret, context_instance=RequestContext(request))
     return response
 
@@ -53,7 +53,7 @@ def error_404(request, **kwargs):
 @require_http_methods(["GET", "POST"])
 def error_500(request, **kwargs):
     ret = {}
-    ret["browser_public_bid"] = request.COOKIES.get("public-browserid")
+    ret["browser_public_bid"] = request.COOKIES.get("v2public-browserid")
     response = render_to_response("errors/500.html", ret, context_instance=RequestContext(request))
     return response
 

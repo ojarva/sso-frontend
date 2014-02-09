@@ -4,11 +4,11 @@ import logging
 log = logging.getLogger(__name__)
 
 def get_browser(request):
-    bid = request.COOKIES.get('browserid')
+    bid = request.COOKIES.get('v2browserid')
     if not bid: return None
     try:
         browser = Browser.objects.get(bid=bid)
-        if request.COOKIES.get("sessionbid") == bid:
+        if request.COOKIES.get("v2sessionbid") == browser.bid_session:
             browser.valid_session_bid = True
         else:
             browser.valid_session_bid = False
