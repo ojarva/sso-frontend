@@ -153,13 +153,22 @@ class Browser(models.Model):
     def set_auth_state(self, state):
         # TODO: logic for determining proper timeouts
         self.auth_state = state
-        self.auth_state_valid_until = timezone.now() + datetime.timedelta(days=1)
+        if self.user.emulate_legacy:
+            validity_time = datetime.timedelta(hours=12)
+        else:
+            validity_time = datetime.timedelta(days=1)
+        self.auth_state_valid_until = timezone.now() + validity_time
+        self.save()
 
     def set_auth_level(self, level):
         # TODO: logic for determining proper timeouts
         self.auth_level = level
-        self.auth_level_valid_until = timezone.now() + datetime.timedelta(days=1)
-        
+        if self.user.emulate_legacy:
+            validity_time = datetime.timedelta(hours=12)
+        else:
+            validity_time = datetime.timedelta(days=1)
+        self.auth_level_valid_until = timezone.now() + validity_time
+        self.save()
 
     def get_auth_state(self):
         # TODO: logic for determining proper authentication state
