@@ -5,6 +5,32 @@
 {% if not_logged_in %}
 <p>You're not signed in. <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">Continue.</a></p>
 
+{% elif signed_out %}
+<div class="alert alert-success">
+You are now signed out.
+</div>
+
+{% if active_sessions %}
+<p>You have following active sessions:</p>
+
+<ul>
+{% for login in active_sessions %}
+<li><span data-toggle="popover" 
+          data-placement="bottom" 
+          class="popover-link" 
+          data-trigger="hover" 
+          title="Details for {{ login.sso_provider }}" 
+          data-content="{% if login.remote_service %}It was used to log in to '{{ login.remote_service }}'.{% endif %}
+{% if login.expires_at %}Session will expire at {{ login.expires_at }}.{% endif %}
+{% if login.expires_session %}You have to close the browser to close this session.{% endif %}
+"
+    >{{ login.sso_provider }} at {{ login.auth_timestamp }}</span></li>
+{% endfor %}
+</ul>
+{% endif %}
+
+<p>If you want to, you can <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">sign in again</a>.</p>
+
 {% else %}
 
 <form method="POST" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">
