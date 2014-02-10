@@ -25,7 +25,7 @@ over browser restarts.">remembered on this browser</a>.</p>
 title="Why?" data-content="You have not indicated you want to be remembered on this computer. When you click 'Sign out' below or
 close your browser, you will be signed out.">you will be signed out</a>.</p>
 {% endif %}
-		<form action="/v2/logout" method="POST">
+		<form action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}" method="POST">
 			{% csrf_token %}
 			<input class="btn btn-large" type="submit" name="logout" value="Sign out">
 		</form>
