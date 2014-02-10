@@ -6,7 +6,7 @@ import logging
 log = logging.getLogger(__name__)
 
 def get_browser(request):
-    bid = request.COOKIES.get('v2browserid')
+    bid = request.COOKIES.get(Browser.C_BID)
     if not bid: return None
     try:
         browser = Browser.objects.get(bid=bid)
@@ -14,7 +14,7 @@ def get_browser(request):
         log.info("Unknown browser id '%s' from '%s'", bid, request.META.get("REMOTE_ADDR"))
         return None
 
-    if request.COOKIES.get("v2sessionbid") == browser.bid_session:
+    if request.COOKIES.get(Browser.C_BID_SESSION) == browser.bid_session:
         browser.valid_session_bid = True
     else:
         browser.valid_session_bid = False
