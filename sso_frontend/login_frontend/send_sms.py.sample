@@ -1,0 +1,25 @@
+import urllib2
+
+send_sms = send_sms_get
+
+def send_sms_get(number, message):
+    message = urllib2.quote(message.encode('utf-8'))
+    try:
+        url = "url_to_sms_gateway/?number=%s&text=%s" % (number, text)
+        req = urllib2.Request(url)
+        f = urllib2.urlopen(req)
+        code = f.readline()
+    except urllib2.URLError, e:
+        return False
+    return True
+
+def send_sms_post(number, message):
+    message = urllib2.quote(message.encode('utf-8'))
+    try:
+        url = "url_to_sms_gateway"
+        req = urllib2.Request(url, {"number": number, "text": text})
+        f = urllib2.urlopen(req)
+        code = f.readline()
+    except urllib2.URLError, e:
+        return False
+    return True
