@@ -2,10 +2,7 @@
 
 {% block content %}
 
-{% if not_logged_in %}
-<p>You're not signed in. <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">Continue.</a></p>
-
-{% elif signed_out %}
+{% if signed_out %}
 <div class="alert alert-success">
 You are now signed out.
 </div>
@@ -30,6 +27,10 @@ You are now signed out.
 {% endif %}
 
 <p>If you want to, you can <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">sign in again</a>.</p>
+
+{% elif not_logged_in %}
+<p>You're not signed in. <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">Continue.</a></p>
+
 
 {% else %}
 

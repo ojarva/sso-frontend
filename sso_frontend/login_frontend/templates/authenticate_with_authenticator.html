@@ -38,7 +38,7 @@ If code from your app is not working, you can <a href="{% url 'login_frontend.vi
   <div class="form-group">
       <div class="checkbox">
         <label>
-          <input name="my_computer" type="checkbox"> Remember me on this computer
+          <input name="my_computer" {% if my_computer %} checked="on" {% endif %} type="checkbox"> Remember me on this computer
         </label>
       </div>
   </div>

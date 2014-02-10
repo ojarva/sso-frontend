@@ -180,6 +180,7 @@ def authenticate_with_password(request):
                     custom_log(request, "User tokens: %s" % user.user_tokens, level="info")
                     user.save()
                     browser.user = user
+
                 if browser.user.emulate_legacy:
                     custom_log(request, "Emulating legacy SSO", level="info")
                     # This is a special case for emulating legacy system:
@@ -210,6 +211,7 @@ def authenticate_with_password(request):
         custom_log(request, "GET request", level="debug")
         form = AuthWithPasswordForm(request.POST)
     ret["form"] = form
+    ret["my_computer"] = browser.save_browser
 
     # Keep GET query parameters in form posts.
     ret["get_params"] = urllib.urlencode(request.GET)
@@ -293,6 +295,10 @@ def authenticate_with_authenticator(request):
                 # authenticator but aborted without entering validation code.
                 user.strong_authenticator_used = True
                 user.save()
+                if request.POST.get("my_computer"):
+                    custom_log(request, "Marked browser as saved", level="info")
+                    request.browser.save_browser = True
+
                 # TODO: determine the levels automatically.
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
@@ -311,6 +317,7 @@ def authenticate_with_authenticator(request):
     ret["form"] = form
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
+    ret["my_computer"] = request.browser.save_browser
 
     response = render_to_response("authenticate_with_authenticator.html", ret, context_instance=RequestContext(request))
     return response
@@ -327,40 +334,52 @@ def authenticate_with_sms(request):
         custom_log(request, "User is already authenticated. Redirect back to SSO service", level="debug")
         return redir_to_sso(request)
 
+    custom_log(request, "authenticate_with_sms", level="debug")
+
     user = request.browser.user
     ret = {}
     if not (user.primary_phone or user.secondary_phone):
         # Phone numbers are not available.
-        return HttpResponse("No phone number available")
+        custom_log(request, "No phone number available - unable to authenticate.", level="warning")
+        return render_to_response("no_phone_available.html", ret, context_instance=RequestContext(request))
 
     if not user.strong_configured:
+        custom_log(request, "Strong authentication is not configured yet.", level="debug")
         # No strong authentication is configured.
         ret["strong_not_configured"] = True
     if user.primary_phone_changed:
+        custom_log(request, "Phone number has changed.", level="debug")
         # Phone number changed. For security reasons...
         ret["primary_phone_changed"] = True
 
     if request.method == "POST":
+        custom_log(request, "POST request", level="debug")
         form = OTPForm(request.POST)
         if form.is_valid():
+            custom_log(request, "Form is valid", level="debug")
             otp = form.cleaned_data["otp"]
             status, message = request.browser.validate_sms(otp)
             if not status:
                 # If OTP from SMS did not match, also test for Authenticator OTP.
+                custom_log(request, "OTP from SMS did not match, testing Authenticator", level="info")
                 (status, _) = request.browser.user.validate_authenticator_code(otp)
 
             if status:
                 # Authentication succeeded.
+                custom_log(request, "Second-factor authentication succeeded")
+                add_log_entry(request, "Second-factor authentication succeeded")
                 # TODO: determine the levels automatically.
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
+                if request.POST.get("my_computer"):
+                    custom_log(request, "Marked browser as saved", level="info")
+                    request.browser.save_browser = True
                 request.browser.save()
                 user.primary_phone_changed = False
                 user.save()
-                custom_log(request, "Second-factor authentication succeeded")
-                add_log_entry(request, "Second-factor authentication succeeded")
                 if not user.strong_configured:
                     # Strong authentication is not configured. Go to configuration view.
+                    custom_log(request, "User has not configured strong authentication. Redirect to configuration view", level="debug")
                     return custom_redirect("login_frontend.views.configure_strong", request.GET)
                 # Redirect back to SSO service
                 custom_log(request, "Redirecting back to SSO provider", level="debug")
@@ -375,9 +394,11 @@ def authenticate_with_sms(request):
                     add_log_entry(request, "Incorrect OTP")
                     ret["authentication_failed"] = True
     else:
+        custom_log(request, "GET request", level="debug")
         form = OTPForm()
 
     if request.method == "GET" or request.GET.get("regen_sms") or not request.browser.valid_sms_exists():
+        custom_log(request, "Generating a new SMS code", level="info")
         sms_text = request.browser.generate_sms_text()
         for phone in (user.primary_phone, user.secondary_phone):
             if phone:
@@ -388,10 +409,11 @@ def authenticate_with_sms(request):
                     ret["message"] = "Sending SMS to %s failed." % phone
                     custom_log(request, "Sending SMS to %s failed" % phone, level="warn")
                     add_log_entry(request, "Sending SMS to %s failed" % phone)
-
+            
     ret["expected_sms_id"] = request.browser.sms_code_id
     ret["form"] = form
     ret["get_params"] = urllib.urlencode(request.GET)
+    ret["my_computer"] = request.browser.save_browser
 
     response = render_to_response("authenticate_with_sms.html", ret, context_instance=RequestContext(request))
     return response
@@ -538,7 +560,7 @@ def authenticate_with_emergency(request):
 
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='15/15s', ratekey='15s', block=True, method=["POST", "GET"], skip_if=is_authenticated)
-@protect_view("logoutview", required_level=Browser.L_UNAUTH) # No authentication required to prevent silly sign-in - logout cycle.
+#@protect_view("logoutview", required_level=Browser.L_UNAUTH) # No authentication required to prevent silly sign-in - logout cycle.
 def logoutview(request):
     """ Handles logout as well as possible. 
 
@@ -546,7 +568,14 @@ def logoutview(request):
     a GET request, page with logout button is shown.
     """        
 
-    if request.method == 'POST':
+    if request.method == 'POST' and request.browser and request.browser.user:
+        ret_dict = request.GET.dict()
+        ret_dict["logout"] = "on"
+        logins = BrowserLogin.objects.filter(user=request.browser.user, browser=request.browser).filter(can_logout=False).filter(signed_out=False)
+        active_sessions = []
+        for login in logins:
+            active_sessions.append({"sso_provider": login.sso_provider, "remote_service": login.remote_service, "expires_at": login.expires_at, "expires_session": login.expires_session, "login.auth_timestamp": login.auth_timestamp})
+
         add_log_entry(request, "Signed out")
         custom_log(request, "Signed out")
         logout_keys = ["username", "authenticated", "authentication_level", "login_time", "relogin_time"]
@@ -559,11 +588,20 @@ def logoutview(request):
         if request.browser is not None:
             request.browser.logout(request)
         django_auth.logout(request)
+        request.session["active_sessions"] = active_sessions
         request.session["logout"] = True
-        return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+        return custom_redirect("login_frontend.views.logoutview", ret_dict)
     else:
         ret = {}
-        ret["get_params"] = urllib.urlencode(request.GET)
+        if request.GET.get("logout") == "on":
+            ret["signed_out"] = True
+            ret["active_sessions"] = request.session.get("active_sessions")
+        get_params = request.GET.dict()
+        try:
+            del get_params["logout"]
+        except KeyError:
+            pass
+        ret["get_params"] = urllib.urlencode(get_params)
         if request.browser is None:
             ret["not_logged_in"] = True
         elif request.browser.get_auth_level() < Browser.L_BASIC:

@@ -47,7 +47,7 @@ You should receive SMS containing one-time password shortly. Please enter it bel
   <div class="form-group">
       <div class="checkbox">
         <label>
-          <input name="my_computer" type="checkbox"> Remember me on this computer
+          <input name="my_computer" {% if my_computer %} checked="on" {% endif %} type="checkbox"> Remember me on this computer
         </label>
       </div>
   </div>
