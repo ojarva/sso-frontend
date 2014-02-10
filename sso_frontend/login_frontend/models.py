@@ -113,6 +113,10 @@ class Browser(models.Model):
       (S_AUTHENTICATED, 'Authenticated'),
     )
 
+    C_BID = "v2browserid"
+    C_BID_PUBLIC = "v2public-browserid"
+    C_BID_SESSION = "v2sessionbid"
+
     bid = models.CharField(max_length=37, primary_key=True) # UUID
     bid_session = models.CharField(max_length=37) # UUID
     bid_public = models.CharField(max_length=37) # UUID
@@ -139,9 +143,9 @@ class Browser(models.Model):
 
     def get_cookie(self):
         return [
-           ("v2browserid", {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
-           ("v2public-browserid", {"value": self.bid_public, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
-           ("v2sessionbid", {"value": self.bid_session, "secure": True, "httponly": True, "domain": "login.futurice.com"})
+           (Browser.C_BID, {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
+           (Browser.C_BID_PUBLIC, {"value": self.bid_public, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
+           (Browser.C_BID_SESSION, {"value": self.bid_session, "secure": True, "httponly": True, "domain": "login.futurice.com"})
         ]
 
     def revoke_sms(self):

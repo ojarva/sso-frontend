@@ -9,6 +9,7 @@ from django.template import RequestContext
 from django.utils import timezone
 from django.utils.timesince import timeuntil
 from django.views.decorators.http import require_http_methods
+from models import Browser
 import logging
 import redis
 
@@ -18,17 +19,18 @@ r = redis.Redis()
 @require_http_methods(["GET", "POST"])
 def error_400(request, **kwargs):
     ret = {}
-    ret["browser_public_bid"] = request.COOKIES.get("v2public-browserid")
+    ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
     response = render_to_response("errors/400.html", ret, context_instance=RequestContext(request))
 
     # Upon bad request, delete all session data.
     if request.browser:
         request.browser.delete()
 
-    response.delete_cookie("v2public-browserid")
+    response.delete_cookie(Browser.C_BID)
+    response.delete_cookie(Browser.C_BID_PUBLIC)
+    response.delete_cookie(Browser.C_BID_SESSION)
     response.delete_cookie("auth_pubtkt")
     response.delete_cookie("csrftoken")
-    response.delete_cookie("v2sessionbid")
     response.delete_cookie("sessionid")
     response.delete_cookie("slogin")
     return response
@@ -37,7 +39,7 @@ def error_400(request, **kwargs):
 @require_http_methods(["GET", "POST"])
 def error_403(request, **kwargs):
     ret = {}
-    ret["browser_public_bid"] = request.COOKIES.get("v2public-browserid")
+    ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
     response = render_to_response("errors/403.html", ret, context_instance=RequestContext(request))
     return response
 
@@ -45,7 +47,7 @@ def error_403(request, **kwargs):
 @require_http_methods(["GET", "POST"])
 def error_404(request, **kwargs):
     ret = {}
-    ret["browser_public_bid"] = request.COOKIES.get("v2public-browserid")
+    ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
     response = render_to_response("errors/404.html", ret, context_instance=RequestContext(request))
     return response
 
@@ -53,7 +55,7 @@ def error_404(request, **kwargs):
 @require_http_methods(["GET", "POST"])
 def error_500(request, **kwargs):
     ret = {}
-    ret["browser_public_bid"] = request.COOKIES.get("v2public-browserid")
+    ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
     response = render_to_response("errors/500.html", ret, context_instance=RequestContext(request))
     return response
 
