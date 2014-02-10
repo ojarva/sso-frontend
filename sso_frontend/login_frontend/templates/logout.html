@@ -9,12 +9,12 @@
 
 <form method="POST" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">
         {% csrf_token %}
-        <button class="btn btn-large btn-primary" type="submit">Logout</button>
+        <button class="btn btn-large btn-primary" type="submit">Sign out</button>
 </form>
 
-<p>Don't want to logout? <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">Skip.</a></p>
+<p>Don't want to sign out? <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">Skip.</a></p>
 
-<p><small>It appears you came to logout page by following a link. This additional step is here to protect you against accidential logouts. See <a href="http://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF</a> for more information.</small></p>
+<p><small>It appears you came to sign out page by following a link. This additional step is here to protect you against accidential logouts. See <a href="http://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF</a> for more information.</small></p>
 {% endif %}
 
 {% endblock %}
