@@ -291,6 +291,21 @@ class Browser(models.Model):
                 return False # downgraded browser version
         return True
 
+class BrowserLogin(models.Model):
+    browser = models.ForeignKey("Browser")
+    user = models.ForeignKey("User")
+
+    sso_provider = models.CharField(max_length=30)
+    remote_service = models.CharField(max_length=1000, null=True, blank=True)
+    message = models.CharField(max_length=1000, null=True, blank=True)
+    auth_timestamp = models.DateTimeField()
+
+    can_logout = models.BooleanField(default=False)
+    expires_at = models.DateTimeField(null=True)
+    expires_session = models.BooleanField(default=True)
+
+    signed_out = models.BooleanField(default=False)
+
 class BrowserUsers(models.Model):
     user = models.ForeignKey('User')
     browser = models.ForeignKey('Browser')

@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
-from login_frontend.models import Browser, BrowserUsers
+from login_frontend.models import Browser, BrowserUsers, BrowserLogin, create_browser_uuid
 import logging
 
 log = logging.getLogger(__name__)
@@ -18,6 +18,12 @@ def get_browser(request):
         browser.valid_session_bid = True
     else:
         browser.valid_session_bid = False
+        # Mark session based logins as signed_out
+        sessions = BrowserLogin.objects.filter(browser=browser).filter(expires_session=True).filter(signed_out=False)
+        for session in sessions:
+            log.info("Marking session %s for %s (user %s) as signed out, after browser session id cookie disappeared.", session.sso_provider, browser.bid, session.user.username)
+            session.signed_out = True
+            session.save()
 
     if browser.user:
         user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)

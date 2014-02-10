@@ -6,7 +6,8 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from models import Browser
+from django.utils import timezone
+from models import Browser, BrowserLogin
 from urlparse import urlparse
 from utils import custom_redirect
 import Cookie
@@ -37,6 +38,8 @@ def internal_login(request):
         # No back url is defined. Go to front page.
         log.debug("No back URL is defined. Redirect to the front page")
         return HttpResponseRedirect(reverse("login_frontend.views.indexview"))
+
+
 
     # TODO: static auth level
     if browser.get_auth_level() == Browser.L_STRONG:
@@ -108,12 +111,22 @@ def pubtkt(request):
     # TODO: static auth level
     if browser.get_auth_level() == Browser.L_STRONG:
         # TODO: ticket expiration time
-        valid_until = int(time.time() + 3600 * 9)
+        expiration_in_seconds = 3600 * 9
+        valid_until = int(time.time() + expiration_in_seconds)
         tokens = json.loads(browser.user.user_tokens)
         ticket = auth_pubtkt.create_ticket(privkey, browser.user.username, valid_until, tokens=tokens)
         cookies.append(("auth_pubtkt", {"value": urllib.quote(ticket), "secure": True, "httponly": True, "domain": ".futurice.com"}))
         ret["back_url"] = back_url
         response = render_to_response("html_redirect.html", ret, context_instance=RequestContext(request))
+
+        # Add/update BrowserLogin
+        d_valid_until = timezone.now() + datetime.timedelta(seconds=expiration_in_seconds)
+        (browser_login, _) = BrowserLogin.objects.get_or_create(user=browser.user, browser=browser, sso_provider="pubtkt", defaults={"auth_timestamp": timezone.now(), "expires_at": d_valid_until})
+        browser_login.auth_timestamp = timezone.now()
+        browser_login.expires_at = d_valid_until
+        browser_login.save()
+
+        # Set cookies
         for cookie_name, cookie in cookies:
             log.debug("Setting cookie: %s=%s" % (cookie_name, cookie))
             response.set_cookie(cookie_name, **cookie) 
