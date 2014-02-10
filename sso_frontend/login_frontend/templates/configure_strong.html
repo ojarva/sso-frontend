@@ -142,9 +142,9 @@
 
 <h2>Your settings:</h2>
 <ul>
-<li>Primary phone number: {{ user.primary_phone }} (last changed: {{ user.primary_phone_refresh }})</li>
-{% if user.secondary_phone %}<li>Secondary phone number: {{ user.secondary_phone }} (last changed: {{ user.secondary_phone_refresh }})</li>{% endif %}
-<li>Google Authenticator configured: {% if user.strong_authenticator_secret %}<span class="glyphicon glyphicon-ok"></span>{% if user.strong_authenticator_generated_at %}, at {{ user.strong_authenticator_generated_at }}{% endif %}{% else %}No{% endif %}</li>
+<li>Primary phone number: {{ user.primary_phone }} (last changed {{ user.primary_phone_refresh|timesince }} ago)</li>
+{% if user.secondary_phone %}<li>Secondary phone number: {{ user.secondary_phone }} (last changed {{ user.secondary_phone_refresh|timesince }} ago)</li>{% endif %}
+<li>Google Authenticator configured: {% if user.strong_authenticator_secret %}<span class="glyphicon glyphicon-ok"></span>{% if user.strong_authenticator_generated_at %}, {{ user.strong_authenticator_generated_at|timesince }} ago{% endif %}{% else %}No{% endif %}</li>
 <li>Authenticate with SMS by default: {% if user.strong_always_sms %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</li>
 </ul>
 
