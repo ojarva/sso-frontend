@@ -176,6 +176,19 @@ MIDDLEWARE_CLASSES = (
     'login_frontend.middleware.BrowserMiddleware',
 )
 
+TEMPLATE_CONTEXT_PROCESSORS = (
+"django.contrib.auth.context_processors.auth",
+"django.core.context_processors.debug",
+"django.core.context_processors.i18n",
+"django.core.context_processors.media",
+"django.core.context_processors.static",
+"django.core.context_processors.tz",
+"django.contrib.messages.context_processors.messages",
+"login_frontend.context_processors.add_browser",
+"login_frontend.context_processors.add_user"
+)
+
+
 CSRF_COOKIE_SECURE=True
 CSRF_COOKIE_HTTPONLY=True
 CSRF_FAILURE_VIEW="login_frontend.errors.error_csrf"

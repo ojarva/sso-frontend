@@ -74,73 +74,11 @@
 
 {% endif %}
 
+<h2>Your sessions</h2>
 
-<h2>Your active sessions</h2>
+<p>You have {{ num_sessions }} open session{{ num_sessions|pluralize }}. <a href="{% url 'login_frontend.views.sessions' %}?{{ get_params }}">View and close your open session{{ num_sessions|pluralize }}</a>.</p>
 
-<div class="panel panel-default">
-
-<div class="panel-body">
-
-<p>Here are all your active sessions. Do note that signing out does not sign out from all external services. For example, if you (or someone else) signed in to Google Apps, or to any OpenID service, those will still be valid.</p>
-
-<p>You can also terminate all sessions, excluding this one: 
- <form method="post" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
-  {% csrf_token %}
-  <input type="hidden" name="logout" value="{{ detailed.browser.bid_public }}">
-  <button type="submit" class="btn-large btn btn-danger">Sign out all my sessions</button>
- </form>
-</p>
-</div>
-
-<ul class="list-group">
-<li class="list-group-item"></li>
-{% for detailed in sessions %}
-<li class="list-group-item">
-<div class="row">
-<div class="col-md-9">
-   At <b>{{ detailed.session.last_seen }}</b> ({% if detailed.this_session %}this session{% else %}{{ detailed.session.last_seen|timesince }} ago{% endif %}) <br>
- from <b>{{ detailed.session.remote_ip }}</b> ({{ detailed.geo }})<br>
- with <b>{{ detailed.browser.get_readable_ua }}</b> {% if detailed.browser.save_browser %}(<span class="tooltip-link" title="You have marked this browser as 'remembered'">remembered</span>){% endif %}
-
-<ul>
-{% for login in detailed.logins %}
-<li><span data-toggle="popover" 
-          data-placement="bottom" 
-          class="popover-link" 
-          data-trigger="hover" 
-          title="Details for {{ login.sso_provider }}" 
-          data-content="Signing out this browser will not sign out this session.
-{% if login.remote_service %}It was used to log in to '{{ login.remote_service }}'.{% endif %}
-{% if login.expires_at %}Session will expire at {{ login.expires_at }}.{% endif %}
-{% if login.expires_session %}Alternatively, when the browser is closed, the session is automatically destroyed.{% endif %}
-"
-    >{{ login.sso_provider }} at {{ login.auth_timestamp }}</span></li>
-{% empty %}
-<li><span data-toggle="popover" 
-          data-placement="top" 
-          class="popover-link" 
-          data-trigger="hover" 
-          title="No unrevocable logins" 
-          data-content="No unrevocable logins associated with this session. If you sign out this session, no harm can be done."
-     >No unrevocable logins <span class="glyphicon glyphicon-question-sign glyphicon-small btn-sm"></span></span></li>
-{% endfor %}
-</ul>
-
-</div>
-<div class="col-md-3">
-<form role="form" class="" method="post" action="{% if detailed.this_session %}{% url 'login_frontend.views.logoutview' %}{% else %}{% url 'login_frontend.views.configure_strong' %}{% endif %}?{{ get_params }}">
-{% csrf_token %}
-<input type="hidden" name="logout" value="{{ detailed.browser.bid_public }}">
-<button type="submit" class="btn-sm btn btn-danger">Sign out</button>
-</form>
-</div>
-</div>
-</li>
-{% endfor %}
-</ul>
-</div>
-
-<h2>Your settings:</h2>
+<h2>Your settings</h2>
 <ul>
 <li>Primary phone number: {{ user.primary_phone }} (last changed {{ user.primary_phone_refresh|timesince }} ago)</li>
 {% if user.secondary_phone %}<li>Secondary phone number: {{ user.secondary_phone }} (last changed {{ user.secondary_phone_refresh|timesince }} ago)</li>{% endif %}

@@ -23,6 +23,7 @@ urlpatterns = patterns('',
     url(r'^internal_login$', providers.internal_login),
 
     # Other URLs
+    url(r'^sessions$', views.sessions),
     url(r'^configure$', views.configure_strong),
     url(r'^configure_authenticator$', views.configure_authenticator),
     url(r'^configure_authenticator_qr/(?P<single_use_code>(.+))$', views.get_authenticator_qr),

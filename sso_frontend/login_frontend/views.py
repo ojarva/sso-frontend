@@ -124,6 +124,7 @@ def indexview(request):
         ret["auth_level"] = "strong"
     elif auth_level == Browser.L_BASIC:
         ret["auth_level"] = "basic"
+    ret["remembered"] = request.browser.save_browser
 
 
     response = render_to_response("indexview.html", ret, context_instance=RequestContext(request))
@@ -428,35 +429,40 @@ def authenticate_with_sms(request):
     response = render_to_response("authenticate_with_sms.html", ret, context_instance=RequestContext(request))
     return response
 
-@protect_view("configure_strong", required_level=Browser.L_STRONG)
-def configure_strong(request):
-    """ Configuration view for general options. """
+
+@protect_view("sessions", required_level=Browser.L_STRONG)
+def sessions(request):
     user = request.browser.user
     ret = {}
-
     if request.method == "POST":
-        if request.POST.get("always_sms") == "on":
-            user.strong_configured = True
-            user.strong_sms_always = True
-            user.save()
         if request.POST.get("logout"):
             bid_public = request.POST.get("logout")
-            try:
-                browser_logout = Browser.objects.get(bid_public=bid_public)
-                if browser_logout.user != user:
-                    ret["message"] = "That browser belongs to another user."
-                else:
-                    self_logout = False
-                    if browser_logout == request.browser:
-                        self_logout = True
-                    browser_logout.logout()
-                    custom_log(request, "Signed out browser %s" % browser_logout.bid, level="info")
-                    if self_logout:
-                        return custom_redirect("login_frontend.views.indexview", request.GET)
-                    return custom_redirect("login_frontend.views.configure_strong", request.GET)
-            except Browser.DoesNotExist:
-                ret["message"] = "Invalid browser"
-        # TODO: disabling always_sms without reconfiguring authenticator
+            if bid_public == "":
+                # Log out all sessions
+                custom_log(request, "Requested signing out all sessions", level="info")
+                bid_public = [obj.bid_public for obj in Browser.objects.filter(user=user).filter(bid_public!=request.browser.bid_public)]
+            else:
+                bid_public = [bid_public]
+
+            self_logout = False
+            for bid in bid_public:
+                try:
+                    browser_logout = Browser.objects.get(bid_public=bid)
+                    if browser_logout.user != user:
+                        ret["message"] = "That browser belongs to another user."
+                    else:
+                        if browser_logout == request.browser:
+                            self_logout = True
+                        browser_logout.logout()
+                        custom_log(request, "Signed out browser %s" % browser_logout.bid, level="info")
+                except Browser.DoesNotExist:
+                    ret["message"] = "Invalid browser"
+
+            if self_logout:
+                get_params = request.GET.dict()
+                get_params["logout"] = "on"
+                return custom_redirect("login_frontend.views.logoutview", get_params)
+            return custom_redirect("login_frontend.views.configure_strong", request.GET)
 
 
     browsers = Browser.objects.filter(user=user)
@@ -468,17 +474,40 @@ def configure_strong(request):
             details["this_session"] = True
         details["geo"] = get_geoip_string(session.remote_ip)
 
-        logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False)
+        logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(expires_at__lte=timezone.now())
         details["logins"] = logins
 
         sessions.append(details)
 
     ret["sessions"] = sessions
+    ret["num_sessions"] = len(sessions)
+    ret["user"] = user
+    ret["get_params"] = urllib.urlencode(request.GET)
+    response = render_to_response("sessions.html", ret, context_instance=RequestContext(request))
+    return response
+
+
+
+@protect_view("configure_strong", required_level=Browser.L_STRONG)
+def configure_strong(request):
+    """ Configuration view for general options. """
+    user = request.browser.user
+    ret = {}
+
+    if request.method == "POST":
+        if request.POST.get("always_sms") == "on":
+            user.strong_configured = True
+            user.strong_sms_always = True
+            user.save()
+        # TODO: disabling always_sms without reconfiguring authenticator
+
 
 
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
     back_url = redir_to_sso(request, no_default=True)
+    ret["num_sessions"] = Browser.objects.filter(user=user).count()
+
     if back_url:
         ret["back_url"] = back_url.url
     response = render_to_response("configure_strong.html", ret, context_instance=RequestContext(request))
