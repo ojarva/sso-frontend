@@ -124,6 +124,9 @@ MEDIA_ROOT = ''
 
 SESSION_COOKIE_AGE=3*365*24*60*60
 
+SESSION_SERIALIZER="django.contrib.sessions.serializers.PickleSerializer"
+
+
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://example.com/media/", "http://media.example.com/"
