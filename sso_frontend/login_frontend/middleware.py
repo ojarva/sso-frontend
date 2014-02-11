@@ -24,6 +24,9 @@ def get_browser(request):
             log.info("Marking session %s for %s (user %s) as signed out, after browser session id cookie disappeared.", session.sso_provider, browser.bid, session.user.username)
             session.signed_out = True
             session.save()
+        if not browser.save_browser:
+            # Browser was restarted, and save_browser is not set. Logout.
+            browser.logout(request)
 
     if browser.user:
         user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)

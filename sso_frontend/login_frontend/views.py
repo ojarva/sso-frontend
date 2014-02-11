@@ -197,8 +197,14 @@ def authenticate_with_password(request):
                     return redir_to_sso(request)
 
                 # TODO: no further authentication is necessarily needed. Determine these automatically.
-                browser.set_auth_level(Browser.L_BASIC)
-                browser.set_auth_state(Browser.S_REQUEST_STRONG)
+                if browser.get_auth_state == Browser.S_REQUEST_BASIC_ONLY:
+                    # Only basic authentication is required.
+                    browser.set_auth_level(Browser.L_STRONG)
+                    browser.set_auth_state(Browser.S_AUTHENTICATED)
+                else:
+                    # Continue to strong authentication
+                    browser.set_auth_level(Browser.L_BASIC)
+                    browser.set_auth_state(Browser.S_REQUEST_STRONG)
                 browser.save()
 
                 return custom_redirect("login_frontend.views.secondstepauth", request.GET)

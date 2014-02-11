@@ -174,6 +174,14 @@ class Browser(models.Model):
         self.auth_level_valid_until = timezone.now() + validity_time
         self.save()
 
+        if self.user:
+            (browser_user, _) = BrowserUsers.objects.get_or_create(browser=self, user=self.user)
+            if level >= browser_user.max_auth_level:
+                browser_user.auth_timestamp = timezone.now()
+            if level > browser_user.max_auth_level:
+                browser_user.max_auth_level = level
+            browser_user.save()
+
     def get_auth_state(self):
         # TODO: logic for determining proper authentication state
         return self.auth_state
