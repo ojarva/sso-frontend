@@ -173,6 +173,10 @@ def authenticate_with_password(request):
                 add_log_entry(request, "Successfully logged in using username and password")
                 custom_log(request, "Successfully logged in using username and password")
                 # User authenticated successfully. Update AUTH_STATE and AUTH_LEVEL
+                if request.POST.get("my_computer"):
+                    custom_log(request, "Marked browser as saved", level="info")
+                    request.browser.save_browser = True
+
                 if browser.user is None:
                     custom_log(request, "browser.user is None", level="debug")
                     (user, created) = User.objects.get_or_create(username=auth.username)
