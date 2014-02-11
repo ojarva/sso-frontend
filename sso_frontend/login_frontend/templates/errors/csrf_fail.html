@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Oops. CSRF failed.</h1>
+
+<p>Processing your request was aborted, as it was missing validation token. 
+This is a security feature designed to protect you against malicious external sites. 
+You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
+
+
+<hr/>
+<p>Technical details: Cross Site Request Forgery (CSRF) check failed. Your POST request did not include valid token. This might be either configuration error, or 
+improperly configured external site. Alternatively, it was (failed) attack attempt. This error has been logged, and we'll take a look into it.</p>
+
+<p>You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
+
+{% endblock %}

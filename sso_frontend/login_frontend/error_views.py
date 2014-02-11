@@ -16,6 +16,12 @@ import redis
 log = logging.getLogger(__name__)
 r = redis.Redis()
 
+
+@require_http_methods(["GET", "POST"])
+def error_csrf(request, reason="", **kwargs):
+    response = render_to_response("errors/csrf_fail.html", ret, context_instance=RequestContext(request))
+    return response
+
 @require_http_methods(["GET", "POST"])
 def error_400(request, **kwargs):
     ret = {}

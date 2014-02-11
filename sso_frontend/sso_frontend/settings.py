@@ -176,6 +176,16 @@ MIDDLEWARE_CLASSES = (
     'login_frontend.middleware.BrowserMiddleware',
 )
 
+CSRF_COOKIE_SECURE=True
+CSRF_COOKIE_HTTPONLY=True
+CSRF_FAILURE_VIEW="login_frontend.errors.error_csrf"
+
+handler400 = "login_frontend.errors.error_400"
+handler403 = "login_frontend.errors.error_403"
+handler404 = "login_frontend.errors.error_404"
+handler500 = "login_frontend.errors.error_500"
+
+
 ROOT_URLCONF = 'sso_frontend.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
