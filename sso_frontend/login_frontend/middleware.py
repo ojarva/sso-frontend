@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from login_frontend.models import Browser, BrowserUsers, BrowserLogin, create_browser_uuid
+from login_frontend.providers import pubtkt_logout
 import logging
 
 log = logging.getLogger(__name__)
@@ -49,7 +50,10 @@ class BrowserMiddleware(object):
     def process_response(self, request, response):
         # Browser from process_request is not available here.
         browser = get_browser(request)
-  
+
+        if not browser or browser.get_auth_level() < Browser.L_STRONG:
+            response = pubtkt_logout(request, response)
+
         if not browser:
             return response
 

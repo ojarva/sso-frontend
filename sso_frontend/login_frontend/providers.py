@@ -55,6 +55,18 @@ def internal_login(request):
 
     return custom_redirect("login_frontend.views.firststepauth", params)
 
+
+def pubtkt_logout(request, response = None):
+    if response:
+        response.set_cookie("auth_pubtkt", **{"value": "invalid", "secure": True, "httponly": True, "domain": ".futurice.com"})
+    if request.browser is None:
+        return response
+    browser_login = BrowserLogin.objects.filter(browser=request.browser, sso_provider="pubtkt")
+    for login in browser_login:
+        login.signed_out = True
+        login.save()
+    return response
+
 def pubtkt(request):
     def is_valid_back_url(back_url):
         valid_domains = settings.PUBTKT_ALLOWED_DOMAINS
