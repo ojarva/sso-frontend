@@ -613,7 +613,7 @@ def logoutview(request):
         logins = BrowserLogin.objects.filter(user=request.browser.user, browser=request.browser).filter(can_logout=False).filter(signed_out=False)
         active_sessions = []
         for login in logins:
-            active_sessions.append({"sso_provider": login.sso_provider, "remote_service": login.remote_service, "expires_at": login.expires_at, "expires_session": login.expires_session, "login.auth_timestamp": login.auth_timestamp})
+            active_sessions.append({"sso_provider": login.sso_provider, "remote_service": login.remote_service, "expires_at": login.expires_at, "expires_session": login.expires_session, "auth_timestamp": login.auth_timestamp})
 
         add_log_entry(request, "Signed out")
         custom_log(request, "Signed out")
@@ -635,6 +635,10 @@ def logoutview(request):
         if request.GET.get("logout") == "on":
             ret["signed_out"] = True
             ret["active_sessions"] = request.session.get("active_sessions")
+            try:
+                del request.session["active_sessions"]
+            except KeyError:
+                pass
         get_params = request.GET.dict()
         try:
             del get_params["logout"]
