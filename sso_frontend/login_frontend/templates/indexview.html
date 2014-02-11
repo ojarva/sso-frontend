@@ -20,13 +20,13 @@ strong authentication</a>.</p>
 
 
 {% if remembered %}
-<p>You will be <a href="#" role="button" class="popover-link" data-toggle="popover" data-trigger="hover"
+<p>You are <span class="popover-link" data-toggle="popover" data-trigger="hover"
 title="Remembered browser" data-content="You have indicated this is your private browser. Your authentication is remembered
-over browser restarts. You might need enter your credentials from time to time.">remembered on this browser</a>.</p>
+over browser restarts. You might need enter your credentials from time to time.">remembered on this browser</span>.</p>
 {% else %}
-<p>When closing the browser <a href="#" role="button" class="popover-link" data-toggle="popover" data-trigger="hover"
+<p>When closing the browser <span class="popover-link" data-toggle="popover" data-trigger="hover"
 title="Why?" data-content="You have not indicated you want to be remembered on this computer. When you click 'Sign out' below or
-close your browser, you will be signed out.">you will be signed out</a>.</p>
+close your browser, you will be signed out.">you will be signed out</span>.</p>
 {% endif %}
 		<form action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}" method="POST">
 			{% csrf_token %}
