@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+<h1>Settings</h1>
+
 {% if enable_cookies %}
 	<div class="alert alert-danger">
 		Please enable cookies. You're not able to sign in without properly working cookies.
@@ -74,13 +77,9 @@
 
 {% endif %}
 
-<h2>Your sessions</h2>
-
-<p>You have {{ num_sessions }} open session{{ num_sessions|pluralize }}. <a href="{% url 'login_frontend.views.sessions' %}?{{ get_params }}">View and close your open session{{ num_sessions|pluralize }}</a>.</p>
-
 <h2>Your settings</h2>
 <ul>
-<li>Primary phone number: {{ user.primary_phone }} (last changed {{ user.primary_phone_refresh|timesince }} ago)</li>
+<li><span class="tooltip-link" title="Want to change this? Please contact IT team">Primary phone number: {{ user.primary_phone }} (last changed {{ user.primary_phone_refresh|timesince }} ago)</span></li>
 {% if user.secondary_phone %}<li>Secondary phone number: {{ user.secondary_phone }} (last changed {{ user.secondary_phone_refresh|timesince }} ago)</li>{% endif %}
 <li>Google Authenticator configured: {% if user.strong_authenticator_secret %}<span class="glyphicon glyphicon-ok"></span>{% if user.strong_authenticator_generated_at %}, {{ user.strong_authenticator_generated_at|timesince }} ago{% endif %}{% else %}No{% endif %}</li>
 <li>Authenticate with SMS by default: {% if user.strong_always_sms %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</li>

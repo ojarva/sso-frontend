@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User as DjangoUser
+from models import Browser
 
 def add_browser(request):
     if request.browser:
@@ -17,3 +18,10 @@ def add_user(request):
             pass
         return ret_dict
     return {}
+
+def session_info(request):
+    ret = {}
+    if request.browser and request.browser.user:
+        # TODO: filter out expired sessions
+        ret["num_sessions"] = Browser.objects.filter(user=request.browser.user).count()
+    return ret

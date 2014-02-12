@@ -32,6 +32,5 @@ close your browser, you will be signed out.">you will be signed out</span>.</p>
 			{% csrf_token %}
 			<input class="btn btn-large" type="submit" name="logout" value="Sign out">
 		</form>
-	<div>Want to <a href="{% url 'login_frontend.views.configure_strong' %}?{{ get_params}}">configure something?</a></div>
 </div>
 {% endblock %}

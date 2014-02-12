@@ -1,3 +1,9 @@
+.navbar-fixed-top-custom {
+ border-color: #e7e7e7;
+ background-color: #ffffff;
+ opacity: 0.95;
+}
+
 html {
   min-height: 100%;
   height: auto;
@@ -26,6 +32,8 @@ body {
   max-width: 500px;
   padding: 19px 29px 29px;
   margin: 0 auto 20px;
+  margin-top: 40px;
+  margin-bottom: 40px;
 }
 
 .form-signin {
