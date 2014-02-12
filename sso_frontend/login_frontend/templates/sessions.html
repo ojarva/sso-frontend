@@ -29,9 +29,13 @@
 <li class="list-group-item">
 <div class="row">
 <div class="col-md-9">
-   At <b>{{ detailed.session.last_seen }}</b> ({% if detailed.this_session %}this session{% else %}<span class="tooltip-link" title="{{ detailed.session.last_seen }}">{{ detailed.session.last_seen|timesince }} ago</span>{% endif %}) <br>
+{% for icon in detailed.icons %}
+<i class="fa fa-{{icon}}"></i>
+{% endfor %}
+
+   {% if detailed.this_session %}Right now (this session){% else %}<b><span class="tooltip-link" title="{{ detailed.session.last_seen }}">{{ detailed.session.last_seen|timesince }} ago</span></b>{% endif %}<br/>
  from <b>{{ detailed.session.remote_ip }}</b> ({{ detailed.geo }})<br>
- with <b>{{ detailed.browser.get_readable_ua }}</b> {% if detailed.browser.save_browser %}(<span class="tooltip-link" title="You have marked this browser as 'remembered'">remembered</span>){% endif %}
+ with <b><span class="tooltip-link" title="{{ detailed.browser.ua }}">{{ detailed.browser.get_readable_ua }}</span></b> {% if detailed.browser.save_browser %}(<span class="tooltip-link" title="You have marked this browser as 'remembered'">remembered</span>){% endif %}
 
 <ul>
 {% for login in detailed.logins %}

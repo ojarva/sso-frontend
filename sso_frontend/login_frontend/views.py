@@ -473,8 +473,9 @@ def sessions(request):
         if browser == request.browser:
             details["this_session"] = True
         details["geo"] = get_geoip_string(session.remote_ip)
+        details["icons"] = browser.get_ua_icons()
 
-        logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(expires_at__lte=timezone.now())
+        logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(expires_at__gte=timezone.now())
         details["logins"] = logins
 
         sessions.append(details)

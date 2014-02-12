@@ -9,6 +9,7 @@ import datetime
 import httpagentparser
 import phonenumbers
 import pyotp
+import re
 import subprocess
 import time
 import uuid
@@ -276,6 +277,38 @@ class Browser(models.Model):
             else:
                 return "%s on unknown platform" % (browser)
         return self.ua
+
+    UA_DETECT = {
+        ".*Maemo": ["linux", "mobile"],
+        ".*Opera.*S60": ["mobile"],
+        ".*Opera.*Android": ["android", "mobile"],
+        ".*Opera.*Windows.*Mini": ["windows", "mobile"],
+        ".*Opera.*iPhone": ["apple", "mobile"],
+        ".*Opera.*iPad": ["apple", "tablet"],
+        ".*Opera.*Android": ["android", "mobile"],
+        ".*Android.*Mobile": ["android", "mobile"],
+        "^.*Android((?!Mobile).)*$": ["android", "tablet"],
+        ".*\(iPad": ["apple", "tablet"],
+        ".*\(iPhone": ["apple", "mobile"],
+        ".*Macintosh": ["apple", "laptop"],
+        ".*BlackBerry": ["mobile"],
+        ".*Bolt": ["mobile"],
+        ".*Symbian": ["mobile"],
+        ".*Fennec": ["mobile"],
+        ".*IEMobile": ["mobile"],
+        ".*Mobile": ["mobile"],
+        ".*[Aa]ndroid": ["android", "mobile"],
+        ".*Windows Phone": ["windows", "mobile"],
+        ".*Windows.*Mobile": ["windows", "mobile"],
+        ".*Windows": ["windows"],
+        ".*Linux": ["linux"],
+    }
+
+    def get_ua_icons(self):
+        icon = ["question"] # By default, show unknown icon
+        for (regex, icons) in self.UA_DETECT.iteritems():
+            if re.match(regex, self.ua):
+                return icons
 
     def compare_ua(self, ua):
         # TODO: Validate this code.
