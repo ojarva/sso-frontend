@@ -10,6 +10,21 @@ This single sign-on service offers
 
 For licensing, see [separate file](LICENSE.md).
 
+Installation
+------------
+
+1. Install requirements: ```pip install -r requirements.txt```
+2. Configure your local settings: ```mv sso_frontend/local_settings.py.sample sso_frontend/local_settings.py; vim sso_frontend/local_settings.py```
+
+
+Cookies
+-------
+
+- ```Browser.C_BID = "v2browserid"``` - unique, strictly private browser ID
+- ```Browser.C_BID_PUBLIC = "v2public-browserid"``` - public browser ID - sharing this is not an issue. Should be used in logging / on error messages / when asking for browser identity.
+- ```Browser.C_BID_SESSION = "v2sessionbid"``` - unique per-session browser ID. This cookie is used to reliably (?) detect browser restarts.
+- ```auth_pubtkt``` - session based [pubtkt](https://neon1.net/mod_auth_pubtkt/install.html) cookie
+- ```csrftoken``` - [Django CSRF token](https://docs.djangoproject.com/en/dev/ref/contrib/csrf/)
 
 HTTP headers
 ------------
@@ -26,3 +41,17 @@ x-xss-protection: 1; mode=block
 x-frame-options: DENY
 strict-transport-security: max-age=86400000; includeSubDomains
 ```
+
+Font Content-Type headers
+-------------------------
+
+With ```x-content-type-options: nosniff``` content-types are not automatically detected. For apache2, add
+
+```
+AddType application/x-font-ttf           .ttf
+AddType application/font-woff            .woff
+AddType application/x-font-opentype      .otf
+AddType application/vnd.ms-fontobject    .eot
+```
+
+to configuration file and reload apache.
