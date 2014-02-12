@@ -63,12 +63,18 @@ def protect_view(current_step, **main_kwargs):
     def wrap(f):
         def inner(request, *args, **kwargs):
             required_level = main_kwargs.get("required_level", Browser.L_STRONG)
-            get_params = request.GET
+            get_params = request.GET.dict()
+            if get_params.get("_sso") is None:
+                # Avoid redirect loops
+                if current_step not in ("firststepauth", "secondstepauth", "authenticate_with_sms", "authenticate_with_password", "authenticate_with_authenticator"):
+                    get_params["_sso"] = "internal"
+                    get_params["next"] = request.build_absolute_uri()
+
             browser = request.browser
             if browser is None:
                 current_level = Browser.L_UNAUTH
             else:
-                current_level = int(browser.auth_level)
+                current_level = int(browser.get_auth_level())
 
 
             if current_level >= required_level:
