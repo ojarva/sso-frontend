@@ -7,9 +7,15 @@
 {% block content %}
 <p>This is an OpenID server.</p>
 
+{% if openid_identifier %}
 <p>If needed, you can copy and paste your OpenID identifier from below:</p>
 
 <p><input type="text" value="{{ openid_identifier }}"></p>
+
+{% else %}
+<p>You are not signed in. If you need your OpenID identifier, please <a href="{% url 'login_frontend.views.indexview' %}?_sso=internal&next={{ page_url }}">sign in first</a></p>
+
+{% endif %}
 
 <p>You didn't came here with valid OpenID request, so you won't get redirected automatically.
 If you want to, feel free to <a href="{% url 'login_frontend.views.indexview' %}">continue</a> to main page.</p>

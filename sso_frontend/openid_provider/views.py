@@ -73,13 +73,16 @@ def openid_server(request):
                     reverse('openid-provider-xrds')),
             }
             logger.debug('invalid request, sending info: %s', data)
-            data["openid_identifier"] = "https://" + request.get_host() +  reverse('openid-provider-identity', args=[request.browser.user.username])
+            if request.browser and request.browser.user:
+                data["openid_identifier"] = "https://" + request.get_host() +  reverse('openid-provider-identity', args=[request.browser.user.username])
+            else:
+                data["page_url"] = request.build_absolute_uri()
             return render_to_response('openid_provider/server.html',
                                       data,
                                       context_instance=RequestContext(request))
 
     if orequest.mode in BROWSER_REQUEST_MODES:
-        if not request.user.is_authenticated():
+        if not (request.browser and request.browser.user and request.browser.is_authenticated()):
             logger.debug('no local authentication, sending landing page')
             return landing_page(request, orequest)
 
@@ -113,7 +116,7 @@ def openid_server(request):
             return HttpResponseRedirect(reverse('openid-provider-decide'))
     else:
         oresponse = server.handleRequest(orequest)
-    if request.user.is_authenticated():
+    if (request.browser and request.browser.user and request.browser.is_authenticated()):
         add_sreg_data(request, orequest, oresponse)
         if conf.AX_EXTENSION:
             add_ax_data(request, orequest, oresponse)
@@ -164,7 +167,7 @@ def openid_decide(request):
     orequest = server.decodeRequest(request.session.get('OPENID_REQUEST'))
     trust_root_valid = request.session.get('OPENID_TRUSTROOT_VALID')
 
-    if not request.user.is_authenticated():
+    if not (request.browser and request.browser.user and request.browser.is_authenticated()):
         return landing_page(request, orequest)
 
     openid = openid_get_identity(request, orequest.identity)
@@ -243,7 +246,7 @@ def openid_is_authorized(request, identity_url, trust_root):
     Check that they own the given identity URL, and that the trust_root is 
     in their whitelist of trusted sites.
     """
-    if not request.user.is_authenticated():
+    if not (request.browser and request.browser.user and request.browser.is_authenticated()):
         return None
 
     openid = openid_get_identity(request, identity_url)

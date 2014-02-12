@@ -191,6 +191,11 @@ class Browser(models.Model):
         # TODO: logic for determining proper authentication level
         return self.auth_level
 
+    def is_authenticated(self):
+        if self.get_auth_level() >= Browser.L_STRONG:
+            return True
+        return False
+
     def valid_sms_exists(self):
         if not self.sms_code or not self.sms_code_generated_at:
             return False
