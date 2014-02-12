@@ -15,7 +15,9 @@ Installation
 
 1. Install requirements: ```pip install -r requirements.txt```
 2. Configure your local settings: ```mv sso_frontend/local_settings.py.sample sso_frontend/local_settings.py; vim sso_frontend/local_settings.py```
-
+3. Implement your own SMS gateway: see ```login_frontend/send_sms.py.sample```.
+4. Find and replace branding: ```grep -i futurice * -R```
+5. Configure WSGI server to apache2
 
 Cookies
 -------

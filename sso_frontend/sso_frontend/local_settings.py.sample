@@ -1,0 +1,35 @@
+from M2Crypto import DSA
+import ipaddr
+
+SECRET_KEY = 'generate_random_string_here'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'PORT': '',                      # Set to empty string for default.
+    }   
+} 
+
+# These networks are used for geolocating internal networks.
+IP_NETWORKS = [
+   (ipaddr.IPv4Network("10.0.0.0/24"), "FI", "Helsinki, "Example network"),
+]
+
+
+PUBTKT_PRIVKEY = DSA.load_key(path_to_pubtkt_private_key)
+PUBTKT_ALLOWED_DOMAINS=[domains_that_are_allowed_for_pubtkt]
+
+# FUM is Futurice's proprietary user management tool. It's used to download user details (see login_frontend/management/commands/refresh_users.py)
+FUM_ADDRESS="https://api.fum.futurice.com/v1/"
+FUM_TOKEN="enter_your_token_here"
+
+# https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
+ALLOWED_HOSTS = [hostname_of_login_server]
+
+DEBUG = False
+TEMPLATE_DEBUG = DEBUG
+
