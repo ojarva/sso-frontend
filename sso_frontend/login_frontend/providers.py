@@ -58,14 +58,23 @@ def internal_login(request):
 
 def pubtkt_logout(request, response = None):
     if response:
+        log.info("Unsetting pubtkt cookie: %s" % request.META.get("REMOTE_ADDR"))
         response.set_cookie("auth_pubtkt", **{"value": "invalid", "secure": True, "httponly": True, "domain": ".futurice.com"})
     try:
         if request.browser is None:
+            log.debug("Browser is None. No further actions")
             return response
     except AttributeError:
+        log.debug("No browser set. No further actions")
         return response
-    browser_login = BrowserLogin.objects.filter(browser=request.browser, sso_provider="pubtkt")
+    if request.COOKIES.get("auth_pubtkt") and not response:
+        # If cookie exists but it was not removed, don't mark as signed out.
+        log.debug("pubtkt cookie exists, but response object was not specified. Aborting")
+        return response
+
+    browser_login = BrowserLogin.objects.filter(browser=request.browser, sso_provider="pubtkt", signed_out=False)
     for login in browser_login:
+        log.debug("Marking %s as signed out" % login.id)
         login.signed_out = True
         login.save()
     return response
@@ -136,7 +145,7 @@ def pubtkt(request):
 
         # Add/update BrowserLogin
         d_valid_until = timezone.now() + datetime.timedelta(seconds=expiration_in_seconds)
-        (browser_login, _) = BrowserLogin.objects.get_or_create(user=browser.user, browser=browser, sso_provider="pubtkt", defaults={"auth_timestamp": timezone.now(), "expires_at": d_valid_until})
+        (browser_login, _) = BrowserLogin.objects.get_or_create(user=browser.user, browser=browser, sso_provider="pubtkt", signed_out=False, defaults={"auth_timestamp": timezone.now(), "expires_at": d_valid_until})
         browser_login.auth_timestamp = timezone.now()
         browser_login.expires_at = d_valid_until
         browser_login.save()
