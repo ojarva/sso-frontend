@@ -417,9 +417,9 @@ class User(models.Model):
 
         totp = pyotp.TOTP(self.strong_authenticator_secret)
         for timestamp in [time.time() - 30, time.time(), time.time() + 30]:
-            totp_code = totp.at(timestamp)
+            totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
             log.info("Comparing '%s' and '%s'" % (totp_code, code))
-            if str(code) == str(totp.at(timestamp)):
+            if str(code) == totp_code:
                 (obj, created) = UsedOTP.objects.get_or_create(user=self, code=code)
                 if created:
                     obj.save()
