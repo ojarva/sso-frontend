@@ -443,12 +443,14 @@ def sessions(request):
     if request.method == "POST":
         if request.POST.get("logout"):
             bid_public = request.POST.get("logout")
-            if bid_public == "":
+            if bid_public == "all":
                 # Log out all sessions
                 custom_log(request, "Requested signing out all sessions", level="info")
-                bid_public = [obj.bid_public for obj in Browser.objects.filter(user=user).filter(bid_public!=request.browser.bid_public)]
+                bid_public = [obj.bid_public for obj in Browser.objects.filter(user=user).exclude(bid_public=request.browser.bid_public)]
             else:
                 bid_public = [bid_public]
+
+            custom_log(request, "Signing out sessions: %s" % bid_public, level="debug")
 
             self_logout = False
             for bid in bid_public:
@@ -468,7 +470,7 @@ def sessions(request):
                 get_params = request.GET.dict()
                 get_params["logout"] = "on"
                 return custom_redirect("login_frontend.views.logoutview", get_params)
-            return custom_redirect("login_frontend.views.configure_strong", request.GET)
+            return custom_redirect("login_frontend.views.sessions", request.GET)
 
 
     browsers = Browser.objects.filter(user=user)
