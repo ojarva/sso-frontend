@@ -1,3 +1,7 @@
+.data-container {
+ padding-top: 80px;
+ padding-bottom: 80px;
+}
 .navbar-fixed-top-custom {
  border-color: #e7e7e7;
  background-color: #ffffff;
