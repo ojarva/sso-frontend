@@ -464,8 +464,9 @@ def sessions(request):
                         if browser_logout == request.browser:
                             self_logout = True
                         browser_logout.logout()
-                        custom_log(request, "Signed out browser %s" % browser_logout.bid, level="info")
-                        add_log_entry(request, "Signed out browser %s" % browser_logout.bid, "sign-out")
+                        custom_log(request, "Signed out browser %s" % browser_logout.bid_public, level="info")
+                        add_log_entry(request, "Signed out browser %s" % browser_logout.bid_public, "sign-out")
+                        add_log_entry(request, "Signed out by browser %s" % request.browser.bid_public, "sign-out", bid_public=browser_logout.bid_public)
                 except Browser.DoesNotExist:
                     ret["message"] = "Invalid browser"
 
@@ -503,23 +504,33 @@ def sessions(request):
 def view_log(request, **kwargs):
     ret = {}
 
+    browsers = {}
+    ret["browsers"] = []
+    list_of_browsers = Log.objects.filter(user=request.browser.user).values("bid_public").distinct()
+    for item in list_of_browsers:
+        try:
+            browser_item = Browser.objects.get(bid_public=item["bid_public"])
+        except Browser.DoesNotExist:
+            continue
+        browsers[item["bid_public"]] = browser_item
+        ret["browsers"].append(browser_item)
+
     entries = Log.objects.filter(user=request.browser.user).order_by("-timestamp")
     bid_public = kwargs.get("bid_public")
     if bid_public:
-        entries.filter(bid_public=bid_public)
+        entries = entries.filter(bid_public=bid_public)
         try:
-            ret["this_browser"] = Browser.objects.get(user=request.browser.user, bid_public=bid_public)
+            ret["this_browser"] = Browser.objects.get(bid_public=bid_public)
         except Browser.DoesNotExist:
             pass
 
     entries_out = []
-    browsers = {}
     for entry in entries[0:100]:
-       browser = browsers.get(bid_public)
+       browser = browsers.get(entry.bid_public)
        if not browser:
            try:
                browser = Browser.objects.get(bid_public=entry.bid_public)
-               browsers[bid_public] = browser
+               browsers[entry.bid_public] = browser
            except Browser.DoesNotExist:
                pass
        entry.browser = browser

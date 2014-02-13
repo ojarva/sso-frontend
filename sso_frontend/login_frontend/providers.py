@@ -150,7 +150,7 @@ def pubtkt(request):
         browser_login.expires_at = d_valid_until
         browser_login.save()
 
-        add_log_entry(request, "Granted pubtkt access (%s)" % back_url)
+        add_log_entry(request, "Granted pubtkt access (%s)" % back_url, "share-square-o")
 
         # Set cookies
         for cookie_name, cookie in cookies:

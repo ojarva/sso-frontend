@@ -15,21 +15,12 @@
 
 {% if entries %}
 <table class="table table-striped">
-<thead>
-<tr>
-<th>Timestamp</th>
-<th>Remote IP</th>
-<th></th>
-<th>Message</th>
-<th></th>
-</tr>
-</thead>
 <tbody>
 {% for entry in entries %}
 <tr>
 <td><span class="tooltip-link" title="{{ entry.timestamp|timesince }} ago">{{ entry.timestamp }}</span></td>
 <td><span class="tooltip-link" title="{{ entry.remote_ip }}">{{ entry.remote_ip|ip_to_geoip }}</span></td>
-<td>{% for icon in entry.browser.get_ua_icons %} <i class="fa fa-{{icon}}"></i>{% endfor %}</td>
+<td><span class="tooltip-link" title="{{ entry.browser.ua }}">{% for icon in entry.browser.get_ua_icons %} <i class="fa fa-{{icon}}"></i>{% endfor %}</a></td>
 <td>{{ entry.message }}</td>
 <td><i class="fa fa-{{ entry.status }}"></i></td>
 </tr>
@@ -39,6 +30,14 @@
 
 <p><small>This list includes only last 100 entries.</small></p>
 
+<p>
+{% for your_browser in browsers %}
+{% if not your_browser == this_browser %}
+<a href="{% url 'login_frontend.views.view_log' your_browser.bid_public %}">{{ your_browser.get_readable_ua }}</a>
+{% if not forloop.last %} - {% endif %}
+{% endif %}
+{% endfor %}
+</p>
 {% else %}
 <p>There isn't a single log entry for you.</p>
 {% endif %}

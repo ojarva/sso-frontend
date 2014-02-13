@@ -77,10 +77,13 @@ class EmergencyCode(models.Model):
         unique_together = (("codegroup", "code_id"), ("codegroup", "code_val"))
 
 
-def add_log_entry(request, message, status="custom"):
+def add_log_entry(request, message, status="question", **kwargs):
     if request.browser is None or request.browser.user is None:
         return
-    obj = Log.objects.create(user=request.browser.user, bid_public=request.browser.bid_public, message=message, remote_ip=request.META.get("REMOTE_ADDR"), status=status)
+    bid_public = kwargs.get("bid_public")
+    if not bid_public:
+        bid_public = request.browser.bid_public
+    obj = Log.objects.create(user=request.browser.user, bid_public=bid_public, message=message, remote_ip=request.META.get("REMOTE_ADDR"), status=status)
     obj.save()
 
 class Log(models.Model):
