@@ -25,6 +25,7 @@ urlpatterns = patterns('',
     # Other URLs
     url(r'^sessions$', views.sessions),
     url(r'^configure$', views.configure_strong),
+    url(r'^view_log$', views.view_log),
     url(r'^configure_authenticator$', views.configure_authenticator),
     url(r'^configure_authenticator_qr/(?P<single_use_code>(.+))$', views.get_authenticator_qr),
     url(r'^logout$', views.logoutview, name='logout'),

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block container %}
+
+
+<h1>Your log entries</h1>
+
+{% if entries %}
+<table class="table table-striped">
+<thead>
+<tr>
+<th>Timestamp</th>
+<th>Remote IP</th>
+<th>Message</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for entry in entries %}
+<tr>
+<td>{{ entry.timestamp }}</td>
+<td>{{ entry.remote_ip }}</td>
+<td>{{ entry.message }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% else %}
+<p>There isn't a single log entry for you.</p>
+{% endif %}
+
+{% endblock %}

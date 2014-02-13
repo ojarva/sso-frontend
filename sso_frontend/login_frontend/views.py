@@ -496,6 +496,16 @@ def sessions(request):
     return response
 
 
+@protect_view("view_log", required_level=Browser.L_STRONG)
+def view_log(request):
+    ret = {}
+    entries = Log.objects.filter(user=request.user).order_by("timestamp")
+    ret["entries"] = entries
+
+    response = render_to_response("view_log.html", ret, context_instance=RequestContext(request))
+    return response
+
+
 
 @protect_view("configure_strong", required_level=Browser.L_STRONG)
 def configure_strong(request):
