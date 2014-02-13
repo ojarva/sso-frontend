@@ -1,9 +1,17 @@
 {% extends "base.html" %}
 
+{% load ip_to_geoip %}
+
 {% block container %}
 
 
 <h1>Your log entries</h1>
+
+{% if this_browser %}
+<p>This is log for your browser <span class="tooltip-link" title="{{ this_browser.ua }}">{{ this_browser.get_readable_ua }}</span>.</p>
+
+<p><a class="btn btn-primary" href="{% url 'login_frontend.views.view_log' %}">View all log entries</a></p>
+{% endif %}
 
 {% if entries %}
 <table class="table table-striped">
@@ -11,6 +19,7 @@
 <tr>
 <th>Timestamp</th>
 <th>Remote IP</th>
+<th></th>
 <th>Message</th>
 <th></th>
 </tr>
@@ -18,13 +27,17 @@
 <tbody>
 {% for entry in entries %}
 <tr>
-<td>{{ entry.timestamp }}</td>
-<td>{{ entry.remote_ip }}</td>
+<td><span class="tooltip-link" title="{{ entry.timestamp|timesince }} ago">{{ entry.timestamp }}</span></td>
+<td><span class="tooltip-link" title="{{ entry.remote_ip }}">{{ entry.remote_ip|ip_to_geoip }}</span></td>
+<td>{% for icon in entry.browser.get_ua_icons %} <i class="fa fa-{{icon}}"></i>{% endfor %}</td>
 <td>{{ entry.message }}</td>
+<td><i class="fa fa-{{ entry.status }}"></i></td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
+
+<p><small>This list includes only last 100 entries.</small></p>
 
 {% else %}
 <p>There isn't a single log entry for you.</p>

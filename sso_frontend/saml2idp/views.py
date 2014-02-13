@@ -22,7 +22,7 @@ import saml2idp_metadata
 import xml_signing
 
 from login_frontend.utils import custom_redirect
-from login_frontend.models import BrowserLogin
+from login_frontend.models import BrowserLogin, add_log_entry
 
 from django.utils import timezone
 
@@ -42,9 +42,11 @@ def _generate_response(request, processor):
 
 
     # Update/add BrowserLogin
-    (browser_login, _) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="saml2", remote_service=str(tv["acs_url"]), defaults={"auth_timestamp": timezone.now()})
+    (browser_login, _) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="saml2", signed_out=False, remote_service=str(tv["acs_url"]), defaults={"auth_timestamp": timezone.now()})
     browser_login.auth_timestamp = timezone.now()
     browser_login.save()
+
+    add_log_entry(request, "Signed in with SAML to %s" % tv["acs_url"], "share-square-o")
 
     return render_to_response('saml2idp/login.html', tv,
                                 context_instance=RequestContext(request))

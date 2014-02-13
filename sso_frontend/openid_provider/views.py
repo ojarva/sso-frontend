@@ -20,7 +20,7 @@ except ImportError:
     from django.contrib.csrf.middleware import csrf_exempt
 
 
-from login_frontend.models import BrowserLogin
+from login_frontend.models import BrowserLogin, add_log_entry
 
 from django.utils import timezone
 from django.contrib.auth import REDIRECT_FIELD_NAME
@@ -122,9 +122,12 @@ def openid_server(request):
             add_ax_data(request, orequest, oresponse)
 
     # Add/update BrowserLogin object.
-    (browser_login, _) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="openid", remote_service=str(orequest.trust_root), defaults={"auth_timestamp": timezone.now()})
+    (browser_login, _) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="openid", signed_out=False, remote_service=str(orequest.trust_root), defaults={"auth_timestamp": timezone.now()})
     browser_login.auth_timestamp = timezone.now()
     browser_login.save()
+
+    # Add entry to user log
+    add_log_entry(request, "Signed in with OpenID to %s" % orequest.trust_root, "share-square-o")
 
     # Convert a webresponse from the OpenID library in to a Django HttpResponse
     webresponse = server.encodeResponse(oresponse)

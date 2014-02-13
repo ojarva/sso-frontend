@@ -7,7 +7,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
-from models import Browser, BrowserLogin
+from models import Browser, BrowserLogin, add_log_entry
 from urlparse import urlparse
 from utils import custom_redirect
 import Cookie
@@ -149,6 +149,8 @@ def pubtkt(request):
         browser_login.auth_timestamp = timezone.now()
         browser_login.expires_at = d_valid_until
         browser_login.save()
+
+        add_log_entry(request, "Granted pubtkt access (%s)" % back_url)
 
         # Set cookies
         for cookie_name, cookie in cookies:

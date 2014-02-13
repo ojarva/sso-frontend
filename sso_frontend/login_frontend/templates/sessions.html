@@ -68,6 +68,7 @@
 <input type="hidden" name="logout" value="{{ detailed.browser.bid_public }}">
 <button type="submit" class="btn-sm btn btn-danger">Sign out</button>
 </form>
+<a class="btn btn-primary" href="{% url 'login_frontend.views.view_log' detailed.browser.bid_public %}">View log</a>
 </div>
 </div>
 </li>
