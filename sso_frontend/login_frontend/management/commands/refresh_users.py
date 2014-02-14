@@ -36,15 +36,16 @@ class Command(BaseCommand):
                     self.stderr.write("Missing first or last name: %s" % username)
                     continue
 
-                (user, _) = DjangoUser.objects.get_or_create(username=username, defaults={"email": email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": timezone.now(), "date_joined": timezone.now()})
+                (user, created1) = DjangoUser.objects.get_or_create(username=username, defaults={"email": email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": timezone.now(), "date_joined": timezone.now()})
                 user.email = email
                 user.first_name = first_name
                 user.last_name = last_name
                 user.save()
 
-                (obj, _) = User.objects.get_or_create(username=username)
-                obj.refresh_strong(email, phone1, phone2)
-                self.stdout.write('Refreshed %s (%s, %s, %s)' % (username, email, phone1, phone2))
+                (obj, created2) = User.objects.get_or_create(username=username)
+                changed = obj.refresh_strong(email, phone1, phone2, created=created2)
+                if changed or created1 or created2:
+                    self.stdout.write('Refreshed %s (%s, %s, %s)' % (username, email, phone1, phone2))
             if "next" not in data or data["next"] is None:
                 break
             c += 1

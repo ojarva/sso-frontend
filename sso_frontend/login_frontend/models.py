@@ -146,6 +146,8 @@ class Browser(models.Model):
 
     authenticator_qr_nonce = models.CharField(max_length=37, null=True, blank=True)
 
+    forced_sign_out = models.BooleanField(default=False)
+
     def get_cookie(self):
         return [
            (Browser.C_BID, {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
@@ -433,9 +435,12 @@ class User(models.Model):
         return (False, "Incorrect OTP code.")
 
 
-    def refresh_strong(self, email, phone1, phone2):
+    def refresh_strong(self, email, phone1, phone2, **kwargs):
         """ Refreshes strong authentication details,
         and revokes configuration when needed. """
+        changed = False
+        created = kwargs.get("created", False)
+
         if phone2 != self.secondary_phone:
             self.secondary_phone = phone2
             self.secondary_phone_refresh = timezone.now()
@@ -446,14 +451,19 @@ class User(models.Model):
         if phone1 == self.primary_phone:
             # All is fine. Carry on.
             self.save()
-            return
+            return changed
 
         if phone1 != self.primary_phone:
             # Strong auth is configured but primary phone changed.
+            changed = True
             self.primary_phone = phone1
             self.primary_phone_refresh = timezone.now()
             self.strong_configured = False
-            self.primary_phone_changed = True
+            if created:
+                self.primary_phone_changed = False
+            else:
+                self.primary_phone_changed = True
             self.strong_authenticator_secret = None
             self.strong_authenticator_used = False
         self.save()
+        return changed
