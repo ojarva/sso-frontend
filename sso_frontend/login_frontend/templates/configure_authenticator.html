@@ -10,40 +10,77 @@
 
 <h2>Configure Google Authenticator</h2>
 
+<div class="panel panel-info">
+<div class="panel-heading">
+ <h3 class="panel-title">What is Google Authenticator?</h3>
+</div>
+<div class="panel-body">
 <p>Google Authenticator generates one-time passwords on your phone. It's faster and more reliable than receiving SMS messages. After configuring Google Authenticator, you can still authenticate using SMS messages if needed.</p>
+</div>
+</div>
 
-<p>No app? 
-<a target="_window" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a>, 
-<a target="_window" href="https://itunes.apple.com/fi/app/google-authenticator/id388497605?mt=8">iPhone</a>, 
-<a target="_window" href="http://www.windowsphone.com/en-us/store/app/authenticator/e7994dbc-2336-4950-91ba-ca22d653759b">Windows Phone</a>
+<div class="panel panel-info">
+<div class="panel-heading">
+ <h3 class="panel-title">No Authenticator installed?</h3>
+</div>
+<div class="panel-body">
+<p>You need to install a small app to your phone.</p>
+
+<ul>
+
+<li><a target="_window" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a> <b>and</b> 
+    <a target="_window" href="https://play.google.com/store/apps/details?id=com.google.zxing.client.android">barcode scanner</a>.
+    If you're signed in to Google, open these links and click <button class="btn btn-sm btn-default" disabled="disabled">Install</button> to send those to your phone.</li> 
+
+<li><a target="_window" href="https://itunes.apple.com/fi/app/google-authenticator/id388497605?mt=8">iPhone</a>. Or search for "Google Authenticator" from App Store.</li>
+
+<li><a target="_window" href="http://www.windowsphone.com/en-us/store/app/authenticator/e7994dbc-2336-4950-91ba-ca22d653759b">Windows Phone</a>.
+    If you're signed in with your Microsoft account, open this link and click <button class="btn btn-sm btn-default" disabled="disabled">Install</button> to install the app to your phone. There's also another, inferior Authenticator app available - try to avoid that one.</li>
+
+</ul>
+</div>
+</div>
+
+<div class="panel panel-info">
+<div class="panel-heading">
+ <h3 class="panel-title">Authenticator setup</h3>
+</div>
+<div class="panel-body">
+<div class="manual-instructions">
+<ol>
+<li>Open Authenticator app</li>
+<li>In Authenticator, select <button class="btn btn-sm btn-default" disabled="disabled">Begin Setup</button> and click <button class="btn btn-sm btn-default" disabled="disabled">Scan a barcode</button>. Do not select Google accounts it lists.</li>
+<li>Scan this QR code:
+</ol>
+<p><img width="410" height="410" src="{% url 'login_frontend.views.get_authenticator_qr' authenticator_qr_nonce %}"></p>
+
+</div>
+
+
+<div class="manual-instructions"><hr/>
+If you can't scan this code, you can setup Authenticator manually. 
+<button data-open-class="manual-instructions" class="toggle btn btn-sm btn-info">Show alternative instructions</button>
+</div>
+
+<div class="hidden manual-instructions">
+<p><b>Use these instructions only if you can't scan QR code.</b> <button data-open-class="manual-instructions" class="toggle btn btn-sm btn-info">Show barcode instructions</button></p>
 </p>
+<ol>
+<li>In Authenticator, select <button class="btn btn-small btn-default" disabled="disabled">Begin Setup</button> and <button class="btn btn-small btn-default" disabled="disabled">Enter provided key</button></li>
+<li>To first field ("Enter account name"), enter <tt>{{ username }}@futu</tt></li>
+<li>To second field ("Enter your key"), enter <tt>{{ authenticator_secret }}</tt></li>
+<li>Key type is "Time based"</li>
+<li>Click <button class="btn btn-small btn-default" disabled="disabled">Add</button> and continue to next step</li>
+</ol>
+</div>
+</div>
+</div>
 
-{% if show_manual %}
-<p>Enter this string to Google Authenticator: <b>{{ authenticator_secret }}</b></p>
-
-<form method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{get_params }}">
-{% csrf_token %}
-<input type="hidden" name="show_manual" value="false">
-<button class="btn">Want to try again with QR code?</button>
-</form>
-
-{% else %}
-<p>Scan this image using Google Authenticator:</p>
-<p><img src="{% url 'login_frontend.views.get_authenticator_qr' authenticator_qr_nonce %}"></p>
-
-<form method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{get_params }}">
-{% csrf_token %}
-<input type="hidden" name="show_manual" value="true">
-<button class="btn">Can't scan? Enter manually.</button>
-</form>
-
-{% endif %}
-
-<p><b>Do not</b> save contents of this page to your computer. If you ever lose your configuration, you can always regenerate it from this service.</p>
-
-
-<p>After configuring Authenticator, it should show 6-digit code, changing every 30 seconds. To complete configuration and continue to service you accessed, please enter that code below:</p>
-
+<div class="panel panel-info">
+<div class="panel-heading">
+ <h3 class="panel-title">Finish it</h3>
+</div>
+<div class="panel-body">
 
 {% if invalid_otp %}
 <div class="alert alert-danger">
@@ -51,11 +88,25 @@
 </div>
 {% endif %}
 
+<p>After configuring Authenticator, it should show 6-digit that changes every 30 seconds. The title should be <tt>{{ username }}@futu</tt>.</p>
+
+<p>To complete configuration and continue to service you tried to access, please enter that code below:</p>
+
 <form method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{get_params }}">
 {% csrf_token %}
-<input id="id_otp" name="otp_code" type="tel" pattern="[0-9 ]*" autocomplete='off' placeholder="Enter OTP code" />
+<input id="id_otp" name="otp_code" type="tel" pattern="[0-9 ]*" autocomplete='off' placeholder="123456" />
 <button class="btn btn-primary">Save and continue</button>
 </form>
+
+</div>
+</div>
+
+
+
+
+
+<p><b>Do not</b> save contents of this page to your computer. If you ever lose your configuration, you can always regenerate it from this service.</p>
+
 
 <p>Want to skip this for now? <a href="{% url 'login_frontend.views.configure_strong' %}">Go back to configuration view</a>
 {% if back_url %} or <a href="{{ back_url }}">continue to your originating service</a>{% endif %}

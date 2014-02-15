@@ -24,6 +24,8 @@ You are now signed out.
     >{{ login.sso_provider }} at {{ login.auth_timestamp }}</span></li>
 {% endfor %}
 </ul>
+
+<p>These sessions will be closed if you either manually delete relevant cookies or close the browser.</p>
 {% endif %}
 
 <p>If you want to, you can <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">sign in again</a>.</p>

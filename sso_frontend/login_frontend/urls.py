@@ -24,6 +24,7 @@ urlpatterns = patterns('',
 
     # Other URLs
     url(r'^sessions$', views.sessions),
+    url(r'^ping/internal/js$', views.js_ping, {"internal": True}),
     url(r'^configure$', views.configure_strong),
     url(r'^view_log$', views.view_log),
     url(r'^view_log/(?P<bid_public>(.+))$', views.view_log),

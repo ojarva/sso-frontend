@@ -18,71 +18,89 @@
 {% endif %}
 
 {% if not user.strong_configured %}
-<h2>Configure Strong Authentication</h2>
+	<h2>Configure Strong Authentication</h2>
 
-{% if back_url %}
-<p><a href="{{ back_url }}" class="btn btn-info">Skip for now</a></p>
-{% endif %}
+	{% if back_url %}
+		<p><a href="{{ back_url }}" class="btn btn-info">Skip for now</a></p>
+	{% endif %}
 
-<p>It appears you haven't configured strong authentication. 
-{% if back_url %} If you want to, you can do this later. <a href="{{ back_url }}">Go back to service you tried to access</a>.{% endif %}
- This screen will be shown to you every time you login, until you select your preferences below.</p>
+	<p>It appears you haven't configured strong authentication. 
+
+	{% if back_url %} 
+		If you want to, you can do this later. <a href="{{ back_url }}">Go back to service you tried to access</a>.
+	{% endif %}
+
+	This screen will be shown to you every time you login, until you select your preferences below.</p>
 
 {% else %}
-{% if back_url %}
-<p><a href="{{ back_url }}" class="btn btn-info">Continue to service you tried to access</a></p>
+	{% if back_url %}
+		<p><a href="{{ back_url }}" class="btn btn-info">Continue to service you tried to access</a></p>
+	{% endif %}
 {% endif %}
-{% endif %}
-
 
 {% if not user.strong_authenticator_secret %}
 
-<p>You don't have Google Authenticator configured, or your configuration was revoked. Google Authenticator generates one-time passwords on your phone. That's faster and more reliable than receiving SMS messages.</p>
+	<p>You don't have Google Authenticator configured, or your configuration was revoked.
+	Google Authenticator generates one-time passwords on your phone.
+	That's faster and more reliable than receiving SMS messages, as it works with no cell or network connection.</p>
 
-{% if not user.strong_sms_always %}
-<p>If you want to, you can also opt for always receiving SMS message:</p>
 
-<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
-        {% csrf_token %}
-        <input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Always use SMS messages</button>
-</form>
-{% endif %}
+	<p>If you want to make your life a bit easier, you can
 
-<p>If you want to make your life a bit easier, you can
+	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
+	        {% csrf_token %}
+	        <button class="btn btn-primary" type="submit">Configure Google Authenticator</button>
+	</form>
 
-<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
-        {% csrf_token %}
-        <button class="btn btn-primary" type="submit">Configure Google Authenticator</button>
-</form>
+	{% if not user.strong_sms_always %}
+		<p>If you don't want to make your life easier, you can opt for always receiving SMS messages:</p>
+
+		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+		        {% csrf_token %}
+			<input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Always use SMS messages</button>
+		</form>
+	{% endif %}
 
 {% else %}
 
-<p>You have Google Authenticator configured.</p>
+	{% if not user.strong_authenticator_used %}
+		<p>It seems you have Google Authenticator configured, but you have not used it.</p>
+	{% else %}
+		<p>You have Google Authenticator configured and according to our records you have successfully used it.</p>
+	{% endif %}
 
-<p>If you want to, you can opt to always use SMS messages instead:</p>
+	<p>If you don't have Google Authenticator configured anymore - for example, after reinstalling or changing the phone - you can reconfigure it:</p>
+	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
+	        {% csrf_token %}
+	        <span class="tooltip-link" title="Clicking this will immediately revoke your previous configuration"><button class="btn btn-warning" type="submit">Reconfigure Google Authenticator</button></span>
+	</form>
 
-<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
-        {% csrf_token %}
-        <input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Revoke and always use SMS messages</button>
-</form>
+	<p>If you don't want to use Authenticator, you can opt to always use SMSes instead. Do note that Authenticator is more reliable and quicker to use.</p>
 
-<p>If you don't have Google Authenticator configured anymore - for example, after reinstalling or changing the phone - you can reconfigure it:</p>
-<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
-        {% csrf_token %}
-        <button class="btn btn-primary" type="submit">Reconfigure Google Authenticator</button>
-</form>
-
-
+	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+	        {% csrf_token %}
+	        <input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Revoke and always use SMS messages</button>
+	</form>
 
 
 {% endif %}
 
-<h2>Your settings</h2>
 <ul>
-<li><span class="tooltip-link" title="Want to change this? Please contact IT team">Primary phone number: {{ user.primary_phone }} (last changed {{ user.primary_phone_refresh|timesince }} ago)</span></li>
-{% if user.secondary_phone %}<li>Secondary phone number: {{ user.secondary_phone }} (last changed {{ user.secondary_phone_refresh|timesince }} ago)</li>{% endif %}
-<li>Google Authenticator configured: {% if user.strong_authenticator_secret %}<span class="glyphicon glyphicon-ok"></span>{% if user.strong_authenticator_generated_at %}, {{ user.strong_authenticator_generated_at|timesince }} ago{% endif %}{% else %}No{% endif %}</li>
-<li>Authenticate with SMS by default: {% if user.strong_always_sms %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}</li>
+<li><span class="tooltip-link" title="Want to change this? Please contact IT team"><b>Primary phone number:</b> {{ user.primary_phone }} (last changed {{ user.primary_phone_refresh|timesince }} ago)</span></li>
+{% if user.secondary_phone %}<li><b>Secondary phone number:</b> {{ user.secondary_phone }} (last changed {{ user.secondary_phone_refresh|timesince }} ago)</li>{% endif %}
+<li><b>Google Authenticator configured:</b>
+   {% if user.strong_authenticator_secret %}
+	{% if user.strong_authenticator_used %}
+		<i class="fa fa-thumbs-o-up"></i>
+	{% else %}
+		<span class="tooltip-link" title="Maybe - it's configured, but you haven't used it."><i class="fa fa-question"></i></span>
+        {% endif %}
+	{% if user.strong_authenticator_generated_at %} <span class="tooltip-link" title="{{ user.strong_authenticator_generated_at }}">{{ user.strong_authenticator_generated_at|timesince }} ago</span>
+	{% endif %}
+   {% else %}<i class="fa fa-thumbs-o-down"></i>
+   {% endif %}
+</li>
+<li><b>Authenticate with SMS by default:</b> {% if user.strong_always_sms %}yes. You'll automatically receive SMS every time strong authentication is required. Do note that SMS does not work too well when traveling.{% else %}By default, you'll get to Authenticator page. However, you can always click "use SMS" link, if you want to.{% endif %}</li>
 </ul>
 
 {% endblock %}
