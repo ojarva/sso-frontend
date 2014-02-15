@@ -75,13 +75,23 @@
 	        <span class="tooltip-link" title="Clicking this will immediately revoke your previous configuration"><button class="btn btn-warning" type="submit">Reconfigure Google Authenticator</button></span>
 	</form>
 
+	{% if not user.strong_sms_always %}
 	<p>If you don't want to use Authenticator, you can opt to always use SMSes instead. Do note that Authenticator is more reliable and quicker to use.</p>
 
 	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
 	        {% csrf_token %}
 	        <input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Revoke and always use SMS messages</button>
 	</form>
+	{% else %}
+		{% if not user.strong_authenticator_used %}
+			<p>It seems you have generated configuration for Authenticator <span class="tooltip-link" title="{{ user.strong_authenticator_generated_at }}">{{ user.strong_authenticator_generated_at|timesince }} ago</span>, but never used it. If you want to, you can still switch to using Authenticator by default:</p>
+			<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+			        {% csrf_token %}
+			        <input type="hidden" name="always_sms" value="off"><button class="btn btn-primary" type="submit">Prompt for Authenticator</button>
+			</form>
 
+		{% endif %}
+	{% endif %}
 
 {% endif %}
 
@@ -100,7 +110,7 @@
    {% else %}<i class="fa fa-thumbs-o-down"></i>
    {% endif %}
 </li>
-<li><b>Authenticate with SMS by default:</b> {% if user.strong_always_sms %}yes. You'll automatically receive SMS every time strong authentication is required. Do note that SMS does not work too well when traveling.{% else %}By default, you'll get to Authenticator page. However, you can always click "use SMS" link, if you want to.{% endif %}</li>
+<li><b>Authenticate with SMS by default:</b> {% if user.strong_sms_always %}yes. You'll automatically receive SMS every time strong authentication is required. Do note that SMS does not work too well when traveling.{% else %}By default, you'll get to Authenticator page. However, you can always click "use SMS" link, if you want to.{% endif %}</li>
 </ul>
 
 {% endblock %}

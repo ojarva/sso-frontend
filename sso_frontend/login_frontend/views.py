@@ -582,12 +582,18 @@ def configure_strong(request):
 
     if request.method == "POST":
         if request.POST.get("always_sms") == "on":
+            add_log_entry(request, "Switched to SMS authentication", "info")
+            custom_log(request, "Switched to SMS authentication", level="info")
             user.strong_configured = True
             user.strong_sms_always = True
             user.save()
-        # TODO: disabling always_sms without reconfiguring authenticator
-
-
+            return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
+        elif request.POST.get("always_sms") == "off":
+            add_log_entry(request, "Switched to Authenticator authentication", "info")
+            custom_log(request, "Switched to Authenticator authentication", level="info")
+            user.strong_sms_always = False
+            user.save()
+            return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
 
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
