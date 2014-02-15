@@ -1,5 +1,6 @@
 from StringIO import StringIO
 from django.contrib import auth as django_auth
+from django.contrib import messages
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -498,6 +499,7 @@ def sessions(request):
                         custom_log(request, "Signed out browser %s" % browser_logout.bid_public, level="info")
                         add_log_entry(request, "Signed out browser %s" % browser_logout.bid_public, "sign-out")
                         add_log_entry(request, "Signed out by browser %s" % request.browser.bid_public, "sign-out", bid_public=browser_logout.bid_public)
+                        messages.success(request, "Signed out browser %s" % browser_logout.get_readable_ua())
                 except Browser.DoesNotExist:
                     ret["message"] = "Invalid browser"
 
@@ -587,12 +589,14 @@ def configure_strong(request):
             user.strong_configured = True
             user.strong_sms_always = True
             user.save()
+            messages.success(request, "Switched to SMS authentication")
             return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
         elif request.POST.get("always_sms") == "off":
             add_log_entry(request, "Switched to Authenticator authentication", "info")
             custom_log(request, "Switched to Authenticator authentication", level="info")
             user.strong_sms_always = False
             user.save()
+            messages.success(request, "Default setting changed to Authenticator")
             return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
 
     ret["user"] = user
@@ -650,7 +654,11 @@ def configure_authenticator(request):
             user.save()
             custom_log(request, "Reconfigured Authenticator", level="info")
             add_log_entry(request, "Successfully configured Authenticator", "gear")
-            return redir_to_sso(request)
+            messages.success(request, "Successfully configured Authenticator")
+            redir = redir_to_sso(request, no_default=True)
+            if redir:
+                return redir_to_sso(request)
+            return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
         else:
             # Incorrect code. Don't regen secret.
             custom_log(request, "Entered invalid OTP during Authenticator configuration", level="info")

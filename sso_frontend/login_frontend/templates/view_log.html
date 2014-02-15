@@ -4,7 +4,6 @@
 
 {% block container %}
 
-
 <h1>Your log entries</h1>
 
 {% if this_browser %}
@@ -14,7 +13,17 @@
 {% endif %}
 
 {% if entries %}
+<div class="table-responsive">
 <table class="table table-striped">
+<thead>
+<tr>
+<th>Timestamp</th>
+<th>Location</th>
+<th></th>
+<th>Message</th>
+<th></th>
+</tr>
+</thead>
 <tbody>
 {% for entry in entries %}
 <tr>
@@ -27,6 +36,7 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 
 <p><small>This list includes only last 100 entries.</small></p>
 

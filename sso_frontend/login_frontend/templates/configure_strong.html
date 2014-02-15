@@ -85,12 +85,14 @@
 	{% else %}
 		{% if not user.strong_authenticator_used %}
 			<p>It seems you have generated configuration for Authenticator <span class="tooltip-link" title="{{ user.strong_authenticator_generated_at }}">{{ user.strong_authenticator_generated_at|timesince }} ago</span>, but never used it. If you want to, you can still switch to using Authenticator by default:</p>
-			<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
-			        {% csrf_token %}
-			        <input type="hidden" name="always_sms" value="off"><button class="btn btn-primary" type="submit">Prompt for Authenticator</button>
-			</form>
-
+		{% else %}
+			<p>You have generated configuration for Authenticator <span class="tooltip-link" title="{{ user.strong_authenticator_generated_at }}">{{ user.strong_authenticator_generated_at|timesince }} ago</span>, and successfully used it. If you want to, you can still switch to using Authenticator by default:</p>
 		{% endif %}
+		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+		        {% csrf_token %}
+		        <input type="hidden" name="always_sms" value="off"><button class="btn btn-primary" type="submit">Prompt for Authenticator</button>
+		</form>
+
 	{% endif %}
 
 {% endif %}
