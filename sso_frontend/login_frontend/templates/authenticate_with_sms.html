@@ -50,14 +50,6 @@ You should receive SMS containing one-time password shortly. Please enter it bel
   <div class="form-group">
        <button class="btn btn-large btn-primary" type="submit">Sign in <span class="glyphicon glyphicon-remove-circle"></span></button>
   </div>
-  <div class="form-group">
-      <div class="checkbox">
-        <label>
-          <input name="my_computer" {% if my_computer %} checked="on" {% endif %} type="checkbox"> <span class="tooltip-link" title="If you check this, you don't have to 
-login again after closing the browser. Only use on your own personal computer!">Remember me on this computer</span>
-        </label>
-      </div>
-  </div>
 </form>
 <p><form method="post" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">{% csrf_token %}<button class="btn btn-link">Not {{ first_name }}?</button></form></p>
 

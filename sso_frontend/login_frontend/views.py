@@ -185,6 +185,9 @@ def authenticate_with_password(request):
                 custom_log(request, "Marked browser as saved", level="info")
                 browser.save_browser = True
                 browser.save()
+            else:
+                browser.save_browser = False
+                browser.save()
 
             if auth_status == True:
                 # User authenticated successfully. Update AUTH_STATE and AUTH_LEVEL
