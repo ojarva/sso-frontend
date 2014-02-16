@@ -21,7 +21,7 @@ Unable to complete sign-in request.
 Your don't have access to requested resource.
 </div>
 
-<p>Unfortunately, you don't have access to "{{ back_url }}". If you want to, you can logout and login again with different user. If you got access to new groups, do the same.</p>
+<p>Unfortunately, you don't have access to <tt>{{ back_url }}</tt>. If you want to, you can logout and login again with different user. If you got access to new groups, do the same.</p>
 
 <form method="post" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">
 {% csrf_token %}
