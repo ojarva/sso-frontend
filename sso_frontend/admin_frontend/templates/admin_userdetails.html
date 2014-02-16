@@ -1,0 +1,85 @@
+{% extends "admin_base.html" %}
+
+{% block admin_content %}
+
+<h2>Details for {{ auser.username }}</h2>
+
+<p><form class="form-inline" role="form" method="post" action="?">{% csrf_token %}<button name="refresh" value="yes" type="submit" class="btn btn-primary">Refresh from FUM/LDAP</button></form> 
+<form role="form" class="form-inline" method="post" action="?">{% csrf_token %}
+<span class="tooltip-link" title="This will revoke Authenticator configuration and terminate all sessions for this user."><button name="revoke" value="yes" type="submit" class="btn btn-danger">Revoke Authenticator</button></span>
+</form></p>
+
+<table class="table table-striped table-responsive">
+<tbody>
+<tr>
+<th>Username</th>
+<td>{{ auser.username }}</td>
+</tr>
+
+<tr>
+<th>First name</th>
+<td>{{ duser.first_name }}</td>
+</tr>
+
+<tr>
+<th>Last name</th>
+<td>{{ duser.last_name }}</td>
+</tr>
+
+<tr>
+<th>email</th>
+<td>{{ auser.email }}</td>
+</tr>
+
+<tr>
+<th>Primary phone number</th>
+<td>{{ auser.primary_phone }} {% if auser.primary_phone %} - last changed <span class="tooltip-link" title="{{ auser.primary_phone_refresh|timesince }} ago">{{ auser.primary_phone_refresh }}</span>{% endif %}</td>
+</tr>
+
+<tr>
+<th>Secondary phone number</th>
+<td>{{ auser.secondary_phone }} {% if auser.secondary_phone %} - last changed <span class="tooltip-link" title="{{ auser.secondary_phone_refresh|timesince }} ago">{{ auser.secondary_phone_refresh }}</span>{% endif %}</td>
+</tr>
+
+<tr>
+<th>Strong authentication configured</th>
+<td>{{ auser.strong_configured }}</td>
+</tr>
+
+<tr>
+<th>Authenticator configured</th>
+<td>{% if auser.strong_authenticator_generated_at %}<span class="tooltip-link" title="{{ auser.strong_authenticator_generated_at|timesince }} ago">At {{ auser.strong_authenticator_generated_at }}</span>{% else %}No{% endif %}</td>
+</tr>
+
+<tr>
+<th><span class="tooltip-link" title="True, if Authenticator have been used successfully after previous reconfiguration">Authenticator used</span></th>
+<td>{{ auser.strong_authenticator_used }}</td>
+</tr>
+
+<tr>
+<th><span class="tooltip-link" title="True, if user has requested SMS authentication by default.">Always use SMS</span></th>
+<td>{{ auser.strong_sms_always }}</td>
+</tr>
+
+<tr>
+<th><span class="tooltip-link" title="True if user's strong authentication configuration was automatically revoked after primary phone was changed">Primary phone changed</span></th>
+<td>{{ auser.primary_phone_changed }}</td>
+</tr>
+
+<tr>
+<th><span class="tooltip-link" title="Only available after using pubtkt">pubtkt tokens</span></th>
+<td>{{ auser.user_tokens }}</td>
+</tr>
+</tbody>
+</table>
+
+
+<h2>Browsers</h2>
+
+{% include "snippets/admin_list_browsers.html" %}
+
+<h2>Logins</h2>
+
+{% include "snippets/admin_list_logins.html" %}
+
+{% endblock %}

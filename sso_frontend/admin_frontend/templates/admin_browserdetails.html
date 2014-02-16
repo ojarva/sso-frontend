@@ -1,0 +1,29 @@
+{% extends "admin_base.html" %}
+
+{% block admin_content %}
+
+<h2>{% for icon in abrowser.get_ua_icons %}<i class="fa fa-{{ icon }}"></i>{% endfor %} Details for <span class="tooltip-link" title="{{ abrowser.ua }}">{{ abrowser.get_readable_ua }}</span></h2>
+
+<p><a class="btn btn-info" href="{% url 'browser_logs' abrowser.bid_public %}">View logs</a></p>
+
+<table class="table table-striped table-responsive">
+<tbody>
+<tr>
+<th>Current user</th>
+<td>{% if abrowser.user %}<a href="{% url 'admin_frontend.views.admin_userdetails' abrowser.user.username %}">{{ abrowser.user.username }}</a>{% else %}-{% endif %}</td>
+</tr>
+
+<tr>
+<th>Browser first seen</th>
+<td><span class="tooltip-link" title="{{ abrowser.created|timesince }} ago">{{ abrowser.created }}</span></td>
+</tr>
+
+
+</tbody>
+</table>
+
+<h2>Logins</h2>
+
+{% include "snippets/admin_list_logins.html" %}
+
+{% endblock %}

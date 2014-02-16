@@ -228,10 +228,8 @@ INSTALLED_APPS = (
     'south',
     'huey.djhuey',
     'saml2idp',
-    # Uncomment the next line to enable the admin:
     'django.contrib.admin',
-    # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
+    'admin_frontend',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -263,7 +261,7 @@ LOGGING = {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/main",
-            'maxBytes': 5000000,
+            'maxBytes': 50000000,
             'backupCount': 10,
             'formatter': 'standard',
         },
@@ -272,7 +270,7 @@ LOGGING = {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/saml",
-            'maxBytes': 5000000,
+            'maxBytes': 50000000,
             'backupCount': 10,
             'formatter': 'standard',
         },
@@ -281,7 +279,7 @@ LOGGING = {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/openid",
-            'maxBytes': 5000000,
+            'maxBytes': 50000000,
             'backupCount': 10,
             'formatter': 'standard',
         },
@@ -290,7 +288,7 @@ LOGGING = {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/users",
-            'maxBytes': 5000000,
+            'maxBytes': 50000000,
             'backupCount': 10,
             'formatter': 'standard',
         },

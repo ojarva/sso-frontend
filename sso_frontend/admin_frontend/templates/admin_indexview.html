@@ -1,0 +1,25 @@
+{% extends "admin_base.html" %}
+
+{% block admin_content %}
+
+<div class="row">
+<div class="col-md-4">
+<h2><a href="{% url 'admin_frontend.views.admin_users' %}">Users</a></h2>
+
+<p>There's {{ users }} user{{ users|pluralize }}. {{ num_strong_configured }} have configured strong authentication.</p>
+</div>
+
+<div class="col-md-4">
+<h2><a href="{% url 'admin_frontend.views.admin_logins' %}">Logins</a></h2>
+
+<p>{{ active_logins }} login{{ active_logins|pluralize }}</p>
+</div>
+
+<div class="col-md-4">
+<h2><a href="{% url 'admin_frontend.views.admin_browsers' %}">Browsers</a></h2>
+
+<p>{{ browsers }} browser{{ browsers|pluralize }}</p>
+</div>
+
+<p>Do note that almost all pages contain private data, including IP addresses. All actions - including viewing entries - in admin pages are logged. Expect these logs to be available for others too.</p>
+{% endblock %}

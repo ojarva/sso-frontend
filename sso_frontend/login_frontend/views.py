@@ -2,7 +2,7 @@ from StringIO import StringIO
 from django.contrib import auth as django_auth
 from django.contrib import messages
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -78,6 +78,10 @@ def protect_view(current_step, **main_kwargs):
             else:
                 current_level = int(browser.get_auth_level())
 
+
+            if kwargs.get("admin_only", False):
+                if not (browser.user and browser.user.is_admin):
+                    raise PermissionDenied
 
             if current_level >= required_level:
                 # Authentication level is already satisfied

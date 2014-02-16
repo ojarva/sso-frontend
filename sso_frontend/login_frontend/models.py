@@ -89,12 +89,25 @@ def add_log_entry(request, message, status="question", **kwargs):
 class Log(models.Model):
     user = models.ForeignKey('User')
     timestamp = models.DateTimeField(auto_now_add=True)
-    bid_public = models.CharField(max_length=37)
+    bid_public = models.CharField(max_length=37, null=True, blank=True)
     remote_ip = models.CharField(max_length=47, null=True, blank=True)
     message = models.TextField()
     status = models.CharField(max_length=30, default="question")
 
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def __unicode__(self):
+        return u"%s %s@%s with %s: %s (%s)" % (self.timestamp, self.user, self.remote_ip, self.bid_public, self.message, self.status)
+
 class Browser(models.Model):
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __unicode__(self):
+        return u"%s: %s" % (self.bid_public, self.ua)
+
     L_UNAUTH = 0
     L_PUBLIC = 1
     L_BASIC = 2
@@ -357,6 +370,13 @@ class Browser(models.Model):
         return True
 
 class BrowserLogin(models.Model):
+
+    class Meta:
+        ordering = ["-auth_timestamp", "sso_provider", "remote_service"]
+
+    def __unicode__(self):
+        return u"%s with %s: %s to %s at %s" % (self.user.username, self.browser.get_readable_ua(), self.sso_provider, self.remote_service, self.auth_timestamp)
+
     browser = models.ForeignKey("Browser")
     user = models.ForeignKey("User")
 
@@ -372,6 +392,13 @@ class BrowserLogin(models.Model):
     signed_out = models.BooleanField(default=False, help_text="Session has been closed")
 
 class BrowserUsers(models.Model):
+
+    class Meta:
+        ordering = ["-auth_timestamp"]
+
+    def __unicode__(self):
+        return u"%s with %s at %s (%s)" % (self.user.username, self.browser.get_readable_ua(), self.auth_timestamp, self.max_auth_level)
+
     user = models.ForeignKey('User')
     browser = models.ForeignKey('Browser')
     auth_timestamp = models.DateTimeField(null=True, help_text="Timestamp of the latest authentication")
@@ -383,13 +410,24 @@ class BrowserUsers(models.Model):
 class UsedOTP(models.Model):
     """ Stores list of used OTPs."""
 
+    def __unicode__(self):
+        return u"%s: %s at %s from %s" % (self.user, self.code, self.used_at, self.used_from)
+
     user = models.ForeignKey('User')
     code = models.CharField(max_length=15)
     used_at = models.DateTimeField(auto_now_add=True)
     used_from = models.GenericIPAddressField(null=True, blank=True)
 
 class User(models.Model):
+
+    class Meta:
+        ordering = ["username"]
+
+    def __unicode__(self):
+        return u"%s" % self.username
+
     username = models.CharField(max_length=50, primary_key=True)
+    is_admin = models.BooleanField(default=False)
 
     strong_configured = models.BooleanField(default=False, help_text="True if user has saved strong authentication preferences")
     strong_authenticator_secret = models.CharField(max_length=30, null=True, blank=True, help_text="Secret for TOTP generation")
@@ -410,6 +448,13 @@ class User(models.Model):
     secondary_phone_refresh = models.DateTimeField(null=True)
 
     user_tokens = models.CharField(max_length=255, null=True, blank=True, help_text="List of pubtkt tokens")
+
+    def reset(self):
+        self.strong_configured = False
+        self.strong_authenticator_secret = None
+        self.strong_authenticator_generated_at = None
+        self.strong_authenticator_used = False
+        self.save()
 
     def gen_authenticator(self):
         """ Generates and stores new secret for authenticator. """

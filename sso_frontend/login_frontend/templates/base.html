@@ -29,6 +29,9 @@
 {% if username %}
 <li><a href="{% url 'login_frontend.views.sessions' %}">Sessions <span class="badge">{{ num_sessions }}</span></a></li>
 <li><a href="{% url 'login_frontend.views.configure_strong' %}">Settings</a></li>
+{% if user.is_admin %}
+<li><a href="{% url "admin_frontend.views.admin_indexview" %}">Admin</a></li>
+{% endif %}
 {% endif %}
 
           </ul>

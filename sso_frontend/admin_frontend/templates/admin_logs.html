@@ -1,0 +1,52 @@
+{% extends "admin_base.html" %}
+
+{% load ip_to_geoip %}
+
+{% block admin_content %}
+
+<h1>Log entries</h1>
+
+
+{% if entries %}
+<div class="table-responsive">
+<table class="table table-striped">
+<thead>
+<tr>
+<th>Timestamp</th>
+<th>User</th>
+<th>Location</th>
+<th></th>
+<th>Message</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for entry in entries %}
+<tr>
+<td><span class="tooltip-link" title="{{ entry.timestamp|timesince }} ago">{{ entry.timestamp }}</span></td>
+<td><a href="{% url 'admin_frontend.views.admin_userdetails' entry.user.username %}">{{ entry.user.username }}</a></td>
+<td><span class="tooltip-link" title="{{ entry.remote_ip }}">{{ entry.remote_ip|ip_to_geoip }}</span></td>
+<td><span class="tooltip-link" title="{{ entry.browser.ua }}">{% for icon in entry.browser.get_ua_icons %} <i class="fa fa-{{icon}}"></i>{% endfor %}</a></td>
+<td>{{ entry.message }}</td>
+<td><i class="fa fa-{{ entry.status }}"></i></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<p><small>This list includes only last 100 entries.</small></p>
+
+<p>
+{% for your_browser in browsers %}
+{% if not your_browser == this_browser %}
+<a href="{% url 'login_frontend.views.view_log' your_browser.bid_public %}">{{ your_browser.get_readable_ua }}</a>
+{% if not forloop.last %} - {% endif %}
+{% endif %}
+{% endfor %}
+</p>
+{% else %}
+<p>There isn't a single log entry for this filter.</p>
+{% endif %}
+
+{% endblock %}
