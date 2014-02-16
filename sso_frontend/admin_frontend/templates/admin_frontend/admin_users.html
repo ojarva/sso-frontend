@@ -1,4 +1,4 @@
-{% extends "admin_base.html" %}
+{% extends "admin_frontend/admin_base.html" %}
 
 {% block admin_content %}
 
@@ -18,7 +18,7 @@
 <tr>
 <td><a href="{% url 'admin_frontend.views.admin_userdetails' auser.username %}">{{ auser.username }}</a></td>
 <td>{% if auser.strong_configured %}Yes{% else %}No{% endif %}</td>
-<td>{% if auser.strong_authenticator_generated_at %}<span class="tooltip-link" title="{{ auser.strong_authenticator_generated_at|timesince }} ago">{{ auser.strong_authenticator_generated_at }}</span>{% endif %}</td>
+<td>{% if auser.strong_authenticator_generated_at %}<span class="tooltip-link" title="{{ auser.strong_authenticator_generated_at|timesince }} ago">{{ auser.strong_authenticator_generated_at }}</span>{% else %}No{% endif %}</td>
 <td>{% if auser.strong_authenticator_used %}Yes{% else %}No{% endif %}</td>
 <td>{% if auser.strong_sms_always %}Yes{% else %}No{% endif %}</td>
 <td>{{ auser.strong_skips_available }}</td>

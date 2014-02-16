@@ -1,11 +1,4 @@
-{% extends "admin_base.html" %}
-
 {% load ip_to_geoip %}
-
-{% block admin_content %}
-
-<h1>Log entries</h1>
-
 
 {% if entries %}
 <div class="table-responsive">
@@ -48,5 +41,3 @@
 {% else %}
 <p>There isn't a single log entry for this filter.</p>
 {% endif %}
-
-{% endblock %}

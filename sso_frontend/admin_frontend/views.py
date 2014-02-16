@@ -56,14 +56,23 @@ def admin_indexview(request):
     ret["browsers"] = Browser.objects.all().count()
     ret["active_logins"] = BrowserLogin.objects.filter(signed_out=False).filter(expires_at__gte=timezone.now()).count()
     ret["num_strong_configured"] = User.objects.filter(strong_configured=True).count()
-    return render_to_response("admin_indexview.html", ret, context_instance=RequestContext(request))
+
+    active_browsers = Browser.objects.exclude(user=None)
+    ret["active_browsers"] = []
+    for browser in active_browsers:
+        if browser.auth_level_valid_until > timezone.now() and browser.auth_state_valid_until > timezone.now() and browser.auth_level >= Browser.L_STRONG:
+            ret["active_browsers"].append(browser)
+
+    ret["last_logins"] = BrowserLogin.objects.all()[0:10]
+
+    return render_to_response("admin_frontend/admin_indexview.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG)
 def admin_users(request):
     custom_log(request, "Admin: users")
     ret = {}
     ret["users"] = User.objects.all().order_by('username')
-    return render_to_response("admin_users.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/admin_users.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG)
 def admin_userdetails(request, **kwargs):
@@ -77,51 +86,57 @@ def admin_userdetails(request, **kwargs):
             custom_log(request, "Admin: refreshed %s" % username)
             get_and_refresh_user(username)
             messages.info(request, "Successfully refreshed: %s" % username)
-        if request.POST.get("revoke") == "yes":
+        elif request.POST.get("signout"):
+            custom_log(request, "Admin: sign out %s" % username)
+            user = ret["auser"]
+            user.sign_out_all(admin_logout=request.browser.user.username)
+            log_entry = Log(user=user, message="%s signed out all sessions for this user" % request.browser.user.username, status="exclamation-circle")
+            log_entry.save()
+            messages.info(request, "Signed out all sessions for %s" % username)
+
+        elif request.POST.get("revoke") == "yes":
             custom_log(request, "Admin: revoked %s" % username)
             user = ret["auser"]
             user.reset()
-
-            browsers = Browser.objects.filter(user=user)
-            for browser in browsers:
-                browser.logout()
-                browser.forced_sign_out = True
-                browser.save()
-
+            user.sign_out_all(admin_logout=request.browser.user.username)
             log_entry = Log(user=user, message="%s revoked strong authentication settings and signed out all sessions" % request.browser.user.username, status="exclamation-circle")
             log_entry.save()
-            messages.info(request, "Revoked Authenticator configuration")
+            messages.info(request, "Revoked Authenticator configuration for %s" % username)
+        return HttpResponseRedirect("admin_frontend.views.admin_userdetails", (username, ))
 
+    ret["entries"] = Log.objects.filter(user=ret["auser"])[0:100]
 
     ret["duser"] = get_object_or_404(DjangoUser, username=username)
     ret["browsers"] = Browser.objects.filter(user=ret["auser"])
     ret["logins"] = BrowserLogin.objects.filter(user=ret["auser"])
-    return render_to_response("admin_userdetails.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/admin_userdetails.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG)
 def admin_logins(request):
     ret = {}
     custom_log(request, "Admin: list of logins")
     ret["logins"] = BrowserLogin.objects.all()
-    return render_to_response("admin_logins.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/admin_logins.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG)
 def admin_browsers(request):
     ret = {}
     custom_log(request, "Admin: list of browsers")
     ret["browsers"] = Browser.objects.all()
-    return render_to_response("admin_browsers.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/admin_browsers.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG)
 def admin_browserdetails(request, **kwargs):
     ret = {}
-    ret["abrowser"] = get_object_or_404(Browser, bid_public=kwargs.get("bid_public"))
+    bid_public = kwargs.get("bid_public")
+    ret["abrowser"] = get_object_or_404(Browser, bid_public=bid_public)
     ret["logins"] = BrowserLogin.objects.filter(browser=ret["abrowser"])
+    ret["entries"] = Log.objects.filter(bid_public=bid_public)[0:100]
     username = None
     if ret["abrowser"].user:
         username = ret["abrowser"].user.username
-    custom_log(request, "Admin: browser details for %s (%s)" % (kwargs.get("bid_public"), username))
-    return render_to_response("admin_browserdetails.html", ret, context_instance=RequestContext(request))
+    custom_log(request, "Admin: browser details for %s (%s)" % (bid_public, username))
+    return render_to_response("admin_frontend/admin_browserdetails.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG)
 def admin_logs(request, **kwargs):
@@ -147,4 +162,4 @@ def admin_logs(request, **kwargs):
     else:
         custom_log(request, "Admin: all entries")
         ret["entries"] = Log.objects.all()[0:1000]
-    return render_to_response("admin_logs.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/admin_logs.html", ret, context_instance=RequestContext(request))

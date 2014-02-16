@@ -15,7 +15,9 @@
 <td>{% for icon in abrowser.get_ua_icons %}<i class="fa fa-{{ icon }}"></i>{% endfor %}</td>
 <td><span class="tooltip-link" title="{{ abrowser.ua }}">{{ abrowser.get_readable_ua }}</span></td>
 <td><span class="tooltip-link" title="{{ abrowser.created|timesince }} ago">{{ abrowser.created }}</span></td>
-<td><a class="btn btn-sm btn-info" href="{% url 'admin_frontend.views.admin_browserdetails' abrowser.bid_public %}">Details</a> <button class="btn btn-sm btn-danger" disabled>Logout</button></td>
+<td><a class="btn btn-sm btn-info" href="{% url 'admin_frontend.views.admin_browserdetails' abrowser.bid_public %}">Details</a> 
+{% if abrowser.user %}<button class="btn btn-sm btn-danger" disabled>Logout</button>{% endif %}
+</td>
 </tr>
 {% endfor %}
 </tbody>

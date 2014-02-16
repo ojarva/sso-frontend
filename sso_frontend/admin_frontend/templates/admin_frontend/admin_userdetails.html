@@ -1,13 +1,24 @@
-{% extends "admin_base.html" %}
+{% extends "admin_frontend/admin_base.html" %}
 
 {% block admin_content %}
 
-<h2>Details for {{ auser.username }}</h2>
+<h2>Details for {{ duser.first_name }} {{ duser.last_name }} ({{ auser.username }})</h2>
 
-<p><form class="form-inline" role="form" method="post" action="?">{% csrf_token %}<button name="refresh" value="yes" type="submit" class="btn btn-primary">Refresh from FUM/LDAP</button></form> 
-<form role="form" class="form-inline" method="post" action="?">{% csrf_token %}
-<span class="tooltip-link" title="This will revoke Authenticator configuration and terminate all sessions for this user."><button name="revoke" value="yes" type="submit" class="btn btn-danger">Revoke Authenticator</button></span>
-</form></p>
+<p>
+
+<form class="inline-block" role="form" method="post" action="?">{% csrf_token %}
+<button name="refresh" value="yes" type="submit" class="btn btn-primary">Refresh from FUM/LDAP</button>
+</form> 
+
+<form role="form" class="inline-block" method="post" action="?">{% csrf_token %}
+<span class="tooltip-link" title="This will revoke Authenticator configuration and terminate all sessions for this user."><button name="revoke" value="yes" type="submit" class="btn btn-danger">Revoke Authenticator and sign out</button></span>
+</form>
+
+<form role="form" class="inline-block" method="post" action="?">{% csrf_token %}
+<span class="tooltip-link" title="This will terminate all sessions for this user"><button name="signout" value="yes" type="submit" class="btn btn-danger">Terminate all sessions</button></span>
+</form>
+
+</p>
 
 <table class="table table-striped table-responsive">
 <tbody>
@@ -52,6 +63,11 @@
 </tr>
 
 <tr>
+<th>Legacy mode</th>
+<td>{{ auser.emulate_legacy }}</td>
+</tr>
+
+<tr>
 <th>Authenticator configured</th>
 <td>{% if auser.strong_authenticator_generated_at %}<span class="tooltip-link" title="{{ auser.strong_authenticator_generated_at|timesince }} ago">At {{ auser.strong_authenticator_generated_at }}</span>{% else %}No{% endif %}</td>
 </tr>
@@ -81,10 +97,14 @@
 
 <h2>Browsers</h2>
 
-{% include "snippets/admin_list_browsers.html" %}
+{% include "admin_frontend/snippets/admin_list_browsers.html" %}
 
 <h2>Logins</h2>
 
-{% include "snippets/admin_list_logins.html" %}
+{% include "admin_frontend/snippets/admin_list_logins.html" %}
+
+<h2>Log entries</h2>
+
+{% include "admin_frontend/snippets/admin_list_logs.html" %}
 
 {% endblock %}

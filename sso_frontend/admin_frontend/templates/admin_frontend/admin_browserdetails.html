@@ -1,4 +1,4 @@
-{% extends "admin_base.html" %}
+{% extends "admin_frontend/admin_base.html" %}
 
 {% block admin_content %}
 
@@ -24,6 +24,10 @@
 
 <h2>Logins</h2>
 
-{% include "snippets/admin_list_logins.html" %}
+{% include "admin_frontend/snippets/admin_list_logins.html" %}
+
+<h2>Logs</h2>
+
+{% include "admin_frontend/snippets/admin_list_logs.html" %}
 
 {% endblock %}

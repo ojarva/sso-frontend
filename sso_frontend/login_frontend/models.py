@@ -496,6 +496,31 @@ class User(models.Model):
     user_tokens = models.CharField(max_length=255, null=True, blank=True, help_text="List of pubtkt tokens")
 
 
+    def sign_out_all(self, **kwargs):
+        browsers = Browser.objects.filter(user=self)
+        request = kwargs.get("request")
+
+        for browser in browsers:
+            browser.logout(request)
+
+            bid_public = browser.bid_public
+            if request:
+                remote_ip = request.META.get("REMOTE_ADDR")
+            else:
+                remote_ip = None
+
+            status = "sign-out"
+            message = "Signed out"
+            if kwargs.get("admin_logout"):
+                status = "exclamation-circle"
+                message = "%s remotely terminated this session" % kwargs.get("admin_logout")
+                browser.forced_sign_out = True
+                browser.save()
+            elif kwargs.get("remote_logout"):
+                message = "You remotely signed out this browser"
+            obj = Log.objects.create(user=self, bid_public=bid_public, status=status, message=message, remote_ip=remote_ip)
+            obj.save()
+
     def reset(self):
         self.strong_configured = False
         self.strong_authenticator_secret = None

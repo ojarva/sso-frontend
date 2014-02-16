@@ -626,7 +626,7 @@ def view_log(request, **kwargs):
 
     browsers = {}
     ret["browsers"] = []
-    list_of_browsers = Log.objects.filter(user=request.browser.user).values("bid_public").distinct()
+    list_of_browsers = Log.objects.filter(user=request.browser.user).order_by("bid_public").values("bid_public").distinct()
     for item in list_of_browsers:
         try:
             browser_item = Browser.objects.get(bid_public=item["bid_public"])
