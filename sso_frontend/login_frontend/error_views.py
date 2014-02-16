@@ -22,14 +22,14 @@ def error_csrf(request, reason="", **kwargs):
     ret = {}
     if len(request.COOKIES) == 0:
         ret["no_cookies"] = True
-    response = render_to_response("errors/csrf_fail.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/errors/csrf_fail.html", ret, context_instance=RequestContext(request))
     return response
 
 @require_http_methods(["GET", "POST"])
 def error_400(request, **kwargs):
     ret = {}
     ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
-    response = render_to_response("errors/400.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/errors/400.html", ret, context_instance=RequestContext(request))
 
     # Upon bad request, delete all session data.
     if request.browser:
@@ -49,7 +49,7 @@ def error_400(request, **kwargs):
 def error_403(request, **kwargs):
     ret = {}
     ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
-    response = render_to_response("errors/403.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/errors/403.html", ret, context_instance=RequestContext(request))
     return response
 
 
@@ -57,7 +57,7 @@ def error_403(request, **kwargs):
 def error_404(request, **kwargs):
     ret = {}
     ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
-    response = render_to_response("errors/404.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/errors/404.html", ret, context_instance=RequestContext(request))
     return response
 
 
@@ -65,6 +65,6 @@ def error_404(request, **kwargs):
 def error_500(request, **kwargs):
     ret = {}
     ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
-    response = render_to_response("errors/500.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/errors/500.html", ret, context_instance=RequestContext(request))
     return response
 

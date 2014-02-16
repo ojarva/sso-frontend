@@ -160,7 +160,7 @@ def indexview(request):
     ret["remembered"] = request.browser.save_browser
 
 
-    response = render_to_response("indexview.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/indexview.html", ret, context_instance=RequestContext(request))
     return response
 
 @protect_view("firststepauth", required_level=Browser.L_UNAUTH)
@@ -288,7 +288,7 @@ def authenticate_with_password(request):
     # Keep GET query parameters in form posts.
     ret["get_params"] = urllib.urlencode(request.GET)
     custom_log(request, "Query parameters: %s" % ret["get_params"], level="debug")
-    response = render_to_response("authenticate_with_password.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/authenticate_with_password.html", ret, context_instance=RequestContext(request))
     for cookie_name, cookie in cookies:
         custom_log(request, "Setting cookie %s=%s" % (cookie_name, cookie))
         response.set_cookie(cookie_name, **cookie)
@@ -418,7 +418,7 @@ def authenticate_with_authenticator(request):
     ret["my_computer"] = request.browser.save_browser
     request.session.set_test_cookie()
 
-    response = render_to_response("authenticate_with_authenticator.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/authenticate_with_authenticator.html", ret, context_instance=RequestContext(request))
     return response
        
 
@@ -440,7 +440,7 @@ def authenticate_with_sms(request):
     if not (user.primary_phone or user.secondary_phone):
         # Phone numbers are not available.
         custom_log(request, "No phone number available - unable to authenticate.", level="warning")
-        return render_to_response("no_phone_available.html", ret, context_instance=RequestContext(request))
+        return render_to_response("login_frontend/no_phone_available.html", ret, context_instance=RequestContext(request))
 
     skips_available = user.strong_skips_available
     ret["skips_available"] = skips_available
@@ -533,7 +533,7 @@ def authenticate_with_sms(request):
     ret["get_params"] = urllib.urlencode(request.GET)
     ret["my_computer"] = request.browser.save_browser
 
-    response = render_to_response("authenticate_with_sms.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/authenticate_with_sms.html", ret, context_instance=RequestContext(request))
     return response
 
 
@@ -616,7 +616,7 @@ def sessions(request):
     ret["num_sessions"] = len(sessions)
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
-    response = render_to_response("sessions.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/sessions.html", ret, context_instance=RequestContext(request))
     return response
 
 
@@ -658,7 +658,7 @@ def view_log(request, **kwargs):
 
     ret["entries"] = entries_out
 
-    response = render_to_response("view_log.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/view_log.html", ret, context_instance=RequestContext(request))
     return response
 
 
@@ -695,7 +695,7 @@ def configure_strong(request):
 
     if back_url:
         ret["back_url"] = back_url.url
-    response = render_to_response("configure_strong.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/configure_strong.html", ret, context_instance=RequestContext(request))
     return response
 
 
@@ -776,7 +776,7 @@ def configure_authenticator(request):
         ret["show_manual"] = True
 
     ret["get_params"] = urllib.urlencode(request.GET)
-    response = render_to_response("configure_authenticator.html", ret, context_instance=RequestContext(request))
+    response = render_to_response("login_frontend/configure_authenticator.html", ret, context_instance=RequestContext(request))
     return response
 
 @protect_view("authenticate_with_emergency", required_level=Browser.L_BASIC)
@@ -839,4 +839,4 @@ def logoutview(request):
             ret["not_logged_in"] = True
         elif request.browser.get_auth_level() < Browser.L_BASIC:
             ret["not_logged_in"] = True
-        return render_to_response("logout.html", ret, context_instance=RequestContext(request))
+        return render_to_response("login_frontend/logout.html", ret, context_instance=RequestContext(request))

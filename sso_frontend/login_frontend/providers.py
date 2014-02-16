@@ -50,7 +50,7 @@ def internal_login(request):
         django_login(request, user)
 
         ret["back_url"] = back_url
-        response = render_to_response("html_redirect.html", ret, context_instance=RequestContext(request))
+        response = render_to_response("login_frontend/html_redirect.html", ret, context_instance=RequestContext(request))
         return response
 
     return custom_redirect("login_frontend.views.firststepauth", params)
@@ -130,7 +130,7 @@ def pubtkt(request):
         log.info("Back URL was invalid")
 
     if show_error_page:
-        return render_to_response("pubtkt_error.html", ret, context_instance=RequestContext(request))
+        return render_to_response("login_frontend/pubtkt_error.html", ret, context_instance=RequestContext(request))
 
     # TODO: static auth level
     if browser.get_auth_level() >= Browser.L_STRONG:
@@ -141,7 +141,7 @@ def pubtkt(request):
         ticket = auth_pubtkt.create_ticket(privkey, browser.user.username, valid_until, tokens=tokens)
         cookies.append(("auth_pubtkt", {"value": urllib.quote(ticket), "secure": True, "httponly": True, "domain": ".futurice.com"}))
         ret["back_url"] = back_url
-        response = render_to_response("html_redirect.html", ret, context_instance=RequestContext(request))
+        response = render_to_response("login_frontend/html_redirect.html", ret, context_instance=RequestContext(request))
 
         # Add/update BrowserLogin
         d_valid_until = timezone.now() + datetime.timedelta(seconds=expiration_in_seconds)
