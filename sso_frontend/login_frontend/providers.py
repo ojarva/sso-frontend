@@ -42,7 +42,7 @@ def internal_login(request):
 
 
     # TODO: static auth level
-    if browser.get_auth_level() == Browser.L_STRONG:
+    if browser.get_auth_level() >= Browser.L_STRONG:
         log.debug("User is authenticated with strong authentication")
         back_url = request.GET.get("next")
         (user, created) = DjangoUser.objects.get_or_create(username=browser.user.username, defaults={"email": browser.user.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
@@ -133,7 +133,7 @@ def pubtkt(request):
         return render_to_response("pubtkt_error.html", ret, context_instance=RequestContext(request))
 
     # TODO: static auth level
-    if browser.get_auth_level() == Browser.L_STRONG:
+    if browser.get_auth_level() >= Browser.L_STRONG:
         # TODO: ticket expiration time
         expiration_in_seconds = 3600 * 9
         valid_until = int(time.time() + expiration_in_seconds)

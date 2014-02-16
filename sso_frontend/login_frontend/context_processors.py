@@ -9,7 +9,7 @@ def add_browser(request):
 def add_user(request):
     if request.browser and request.browser.user:
         user = request.browser.user
-        ret_dict = {"user": user, "username": user.username}
+        ret_dict = {"user": user, "username": user.username, "emulate_legacy": user.emulate_legacy}
         try:
             django_user = DjangoUser.objects.get(username=user.username)
             ret_dict["first_name"] = django_user.first_name

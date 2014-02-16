@@ -14,6 +14,9 @@ import geoip2.models
 import ipaddr
 import slumber
 import urllib
+import logging
+
+log = logging.getLogger(__name__)
 
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
@@ -36,19 +39,23 @@ def is_private_net(ip_address):
 
 
 def get_and_refresh_user(username):
+    log.info("Refreshing %s" % username)
     api = slumber.API(settings.FUM_API_ENDPOINT, auth=_slumber_auth.TokenAuth(settings.FUM_ACCESS_TOKEN))
     refresh_user(api.users().get(username=username))
 
 def refresh_user(user):
     username = user.get("username")
+    log.info("Updating %s" % username)
     first_name = user.get("first_name")
     last_name = user.get("last_name")
     email = user.get("email", "")
     phone1 = user.get("phone1", "")
     phone2 = user.get("phone2")
     if username is None or email is None:
+        log.debug("Username or email is none - skip")
         return
     if first_name is None or last_name is None:
+        log.debug("First name or last name is none - skip")
         return
 
     (user, created1) = DjangoUser.objects.get_or_create(username=username, 
@@ -61,6 +68,7 @@ def refresh_user(user):
     (obj, created2) = User.objects.get_or_create(username=username)
     changed = obj.refresh_strong(email, phone1, phone2, created=created2)
     if changed or created1 or created2:
+        log.info("Changed or created new objects")
         return True
 
 def get_geoip_string(ip_address):
@@ -82,5 +90,7 @@ def custom_redirect(url_name, get_params = None):
     if not get_params:
         return HttpResponseRedirect(url)
     params = urllib.urlencode(get_params)
-    return HttpResponseRedirect(url + "?%s" % params)
+    full_url = url + "?%s" % params
+    log.debug("Redirecting to %s" % full_url)
+    return HttpResponseRedirect(full_url)
 

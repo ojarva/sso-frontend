@@ -112,11 +112,13 @@ class Browser(models.Model):
     L_PUBLIC = 1
     L_BASIC = 2
     L_STRONG = 3
+    L_STRONG_SKIPPED = 4
     A_AUTH_LEVEL = (
       (L_UNAUTH, 'Unauthenticated'),
       (L_PUBLIC, 'Access to public content'),
       (L_BASIC, 'Basic authentication'),
-      (L_STRONG, 'Strong authentication')
+      (L_STRONG, 'Strong authentication'),
+      (L_STRONG_SKIPPED, 'Authenticated with strong authentication, but with skipped auth')
     )
 
 
@@ -178,9 +180,12 @@ class Browser(models.Model):
         # TODO: logic for determining proper timeouts
         self.auth_state = state
         if self.user.emulate_legacy:
-            validity_time = datetime.timedelta(hours=12)
+            validity_time = datetime.timedelta(hours=10)
         else:
-            validity_time = datetime.timedelta(days=1)
+            if self.save_browser:
+                validity_time = datetime.timedelta(days=14)
+            else:
+                validity_time = datetime.timedelta(days=1)
         self.auth_state_valid_until = timezone.now() + validity_time
         self.save()
 
@@ -188,9 +193,12 @@ class Browser(models.Model):
         # TODO: logic for determining proper timeouts
         self.auth_level = level
         if self.user.emulate_legacy:
-            validity_time = datetime.timedelta(hours=12)
+            validity_time = datetime.timedelta(hours=10)
         else:
-            validity_time = datetime.timedelta(days=1)
+            if self.save_browser:
+                validity_time = datetime.timedelta(days=14)
+            else:
+                validity_time = datetime.timedelta(days=1)
         self.auth_level_valid_until = timezone.now() + validity_time
         self.save()
 
@@ -204,14 +212,50 @@ class Browser(models.Model):
 
     def get_auth_state(self):
         # TODO: logic for determining proper authentication state
+        if not self.user:
+            return Browser.S_REQUEST_BASIC
+
+        if not self.auth_state_valid_until or self.auth_state_valid_until < timezone.now() or not self.auth_level_valid_until or self.auth_level_valid_until < timezone.now():
+            if self.auth_level == Browser.L_STRONG_SKIPPED:
+                # Authenticated to strong authentication, but with skipping. Request strong
+                # authentication again, except for legacy mode.
+                if self.user.emulate_legacy:
+                    # Emulating legacy mode - ask for basic authentication.
+                    self.auth_level = Browser.L_PUBLIC
+                    self.auth_state = Browser.S_REQUEST_BASIC
+                else:
+                    # User hit "skip". Ask for strong authentication again.
+                    self.auth_level = Browser.L_BASIC
+                    self.auth_state = Browser.S_REQUEST_STRONG
+
+            elif self.auth_level == Browser.L_STRONG:
+                # Strong authentication - request basic authentication again
+                self.auth_level = Browser.L_PUBLIC
+                self.auth_state = Browser.S_REQUEST_BASIC_ONLY
+                self.save()
+
+            elif self.auth_level == Browser.L_BASIC:
+                # Basic authentication - request both basic and strong authentication again.
+                self.auth_level = Browser.L_UNAUTH
+                self.auth_state = Browser.S_REQUEST_BASIC
+
+            else:
+                # Unauthenticated - request both basic and strong authentication.
+                self.auth_level = Browser.L_UNAUTH
+                self.auth_state = Browser.S_REQUEST_BASIC
+            self.auth_level_valid_until = timezone.now() + datetime.timedelta(hours=10)
+            self.auth_state_valid_until = timezone.now() + datetime.timedelta(hours=6)
+            self.save()
         return self.auth_state
 
     def get_auth_level(self):
-        # TODO: logic for determining proper authentication level
+        if not self.user:
+            return Browser.L_UNAUTH
+        self.get_auth_state()
         return self.auth_level
 
     def is_authenticated(self):
-        if self.get_auth_level() >= Browser.L_STRONG:
+        if self.get_auth_level() >= Browser.L_STRONG and self.get_auth_state() == Browser.S_AUTHENTICATED:
             return True
         return False
 
@@ -450,6 +494,7 @@ class User(models.Model):
     secondary_phone_refresh = models.DateTimeField(null=True)
 
     user_tokens = models.CharField(max_length=255, null=True, blank=True, help_text="List of pubtkt tokens")
+
 
     def reset(self):
         self.strong_configured = False

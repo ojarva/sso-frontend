@@ -31,7 +31,8 @@ import redis
 import time
 import urllib
 import logging
-
+import os
+import sys
 
 log = logging.getLogger(__name__)
 r = redis.Redis()
@@ -39,6 +40,24 @@ r = redis.Redis()
 user_log = logging.getLogger("users.%s" % __name__)
 
 def custom_log(request, message, **kwargs):
+    custom_log_inner(request, message, **kwargs)
+
+def custom_log_inner(request, message, **kwargs):
+    try:
+        raise Exception
+    except:
+        d = sys.exc_info()[2].tb_frame.f_back
+    if d is not None:
+        d = d.f_back
+    rv = "(unknown file)", 0, "(unknown function)"
+    while hasattr(d, "f_code"):
+        co = d.f_code
+        filename = os.path.normcase(co.co_filename)
+        filename = co.co_filename
+        lineno = d.f_lineno
+        co_name = co.co_name
+        break
+
     level = kwargs.get("level", "info")
     method = getattr(user_log, level)
     remote_addr = request.META.get("REMOTE_ADDR")
@@ -47,7 +66,7 @@ def custom_log(request, message, **kwargs):
         bid_public = request.browser.bid_public
         if request.browser.user:
             username = request.browser.user.username
-    method("%s - %s - %s - %s", remote_addr, username, bid_public, message)
+    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name, remote_addr, username, bid_public, message)
 
 
 def protect_view(current_step, **main_kwargs):
@@ -134,6 +153,8 @@ def indexview(request):
     auth_level = request.browser.get_auth_level()
     if auth_level == Browser.L_STRONG:
         ret["auth_level"] = "strong"
+    elif auth_level == Browser.L_STRONG_SKIPPED:
+        ret["auth_level"] = "strong_skipped"
     elif auth_level == Browser.L_BASIC:
         ret["auth_level"] = "basic"
     ret["remembered"] = request.browser.save_browser
@@ -164,11 +185,11 @@ def authenticate_with_password(request):
         custom_log(request, "Browser object exists", level="debug")
         browser = request.browser
         auth_state = browser.get_auth_state()
-        if browser.get_auth_state() in (Browser.S_REQUEST_STRONG, ):
+        if browser.get_auth_state() == Browser.S_REQUEST_STRONG:
             # User is already in strong authentication. Redirect them there.
             custom_log(request, "State: REQUEST_STRONG. Redirecting user", level="debug")
             return custom_redirect("login_frontend.views.secondstepauth", request.GET)
-        if browser.get_auth_state() in (Browser.S_AUTHENTICATED, ):
+        if browser.is_authenticated():
             # User is already authenticated. Redirect back to SSO service.
             custom_log(request, "User is already authenticated. Redirect back to SSO service.", level="debug")
             return redir_to_sso(request)
@@ -185,20 +206,16 @@ def authenticate_with_password(request):
 
     if request.method == 'POST':
         custom_log(request, "POST request", level="debug")
-        form = AuthWithPasswordForm(request.POST)
-        if form.is_valid():
-            custom_log(request, "Form is valid", level="debug")
-            username = form.cleaned_data["username"]
-            password = form.cleaned_data["password"]
+        username = request.POST.get("username")
+        if browser.get_auth_state() == Browser.S_REQUEST_BASIC_ONLY:
+            # Only basic authentication was requested. Take username from session.
+            username = browser.user.username
+        password = request.POST.get("password")
+        if username and password:
+            custom_log(request, "Both username and password exists", level="debug")
             auth = LdapLogin(username, password, r)
             auth_status = auth.login()
-            if browser.get_auth_state() == Browser.S_REQUEST_BASIC_ONLY:
-                 # Only basic authentication was requested. Validate username was not changed.
-                 if not (browser.user and username == browser.user.username):
-                     custom_log(request, "Username was changed for S_REQUEST_BASIC_ONLY.", level="warn")
-                     messages.warning(request, "Invalid request was encountered. Please sign in again.")
-                     browser.logout(request)
-                     return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+            username = auth.username # mapped from aliases (email address -> username)
 
             if request.POST.get("my_computer"):
                 custom_log(request, "Marked browser as saved", level="info")
@@ -232,7 +249,7 @@ def authenticate_with_password(request):
                     # This is a special case for emulating legacy system:
                     # - no two-factor authentication
                     # - all logins expire in 12 hours
-                    browser.set_auth_level(Browser.L_STRONG)
+                    browser.set_auth_level(Browser.L_STRONG_SKIPPED)
                     browser.set_auth_state(Browser.S_AUTHENTICATED)
                     browser.save()
                     custom_log(request, "Redirecting back to SSO service", level="info")
@@ -259,6 +276,9 @@ def authenticate_with_password(request):
                     ret["message"] = auth_status 
                     custom_log(request, "Authentication failed: %s" % auth_status, level="warn")
                     add_log_entry(request, "Authentication failed: %s" % auth_status, "warning")
+        else:
+            custom_log(request, "Either username or password is missing.", level="warn")
+            messages.warning(request, "Invalid request")
     else:
         custom_log(request, "GET request", level="debug")
         form = AuthWithPasswordForm(request.POST)
@@ -287,7 +307,7 @@ def secondstepauth(request):
     user = request.browser.user
 
     # If already authenticated with L_STRONG, redirect back to destination
-    if request.browser.get_auth_level() == Browser.L_STRONG or request.browser.get_auth_state() == Browser.S_AUTHENTICATED:
+    if request.browser.is_authenticated():
         custom_log(request, "User is already authenticated. Redirect back to SSO", level="info")
         return redir_to_sso(request)
 
@@ -315,7 +335,7 @@ def authenticate_with_authenticator(request):
     custom_log(request, "Requested authentication with Authenticator", level="debug")
 
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
-    if request.browser.get_auth_level() == Browser.L_STRONG or request.browser.get_auth_state() == Browser.S_AUTHENTICATED:
+    if request.browser.is_authenticated():
         custom_log(request, "User is already authenticated. Redirect back to SSO", level="info")
         return redir_to_sso(request)
 
@@ -409,7 +429,7 @@ def authenticate_with_sms(request):
     Accepts Authenticator codes too.
     """
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
-    if request.browser.get_auth_level() == Browser.L_STRONG or request.browser.get_auth_state() == Browser.S_AUTHENTICATED:
+    if request.browser.is_authenticated():
         custom_log(request, "User is already authenticated. Redirect back to SSO service", level="debug")
         return redir_to_sso(request)
 
