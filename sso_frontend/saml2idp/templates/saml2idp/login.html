@@ -1,34 +1,19 @@
 {% extends "saml2idp/base.html" %}
 {% load i18n %}
+
+{% block header %}
+<script src="/static/js/saml.js" type="text/javascript"></script>
+{% endblock %}
 {% block content %}
-<div id="logged_in_message">
-{% blocktrans %}You are now signed in at the Identity Provider.{% endblocktrans %}
-<br />
-<span id="logged_in_message_continue">
-{% blocktrans %}Click Continue to return to the Service Provider.{% endblocktrans %}
-</span>
-<span id="logged_in_message_automatic" style="display:none">
-{% blocktrans %}You will now be automatically redirected to the Service Provider.{% endblocktrans %}
-</span>
+<div class="alert alert-success">
+You're now signed in. Redirecting...
 </div>
+
+<p>You're being automatically redirected back to service you tried to access. This might take a few seconds. If nothing happens, you can try to retry by clicking "Continue" below.</p>
+
 <form id="logged_in_post_form" method="post" action="{{ acs_url }}">
     <input type="hidden" name="RelayState" value="{{ relay_state }}" />
     <input type="hidden" name="SAMLResponse" value="{{ saml_response }}" />
-    <input id="logged_in_button_continue" type="submit" value="{% trans "Continue" %}" />
+    <input id="logged_in_button_continue" class="btn btn-primary" type="submit" value="{% trans "Continue" %}" />
 </form>
-{% if autosubmit %}
-<script language="javascript">
-<!--
-/* Hide the submit button and message and automatically submit the form. */
-var msg = document.getElementById('logged_in_message_continue'),
-    aut = document.getElementById('logged_in_message_automatic'),
-    btn = document.getElementById('logged_in_button_continue'),
-    frm = document.getElementById('logged_in_post_form');
-msg.style.display = 'none';
-aut.style.display = 'block';
-btn.style.display = 'none';
-frm.submit();
-//-->
-</script>
-{% endif %}
 {% endblock content %}
