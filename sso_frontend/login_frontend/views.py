@@ -172,6 +172,13 @@ def authenticate_with_password(request):
     if browser.forced_sign_out:
         ret["forced_sign_out"] = True
 
+    if browser.get_auth_state() == Browser.S_REQUEST_BASIC_ONLY:
+        ret["basic_only"] = True
+        if not browser.user:
+            custom_log(request, "S_REQUEST_BASIC_ONLY was requested, but browser.user does not exist", level="warn")
+            messages.warning(request, "Invalid request was encountered. Please sign in again.")
+            return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+
     if request.method == 'POST':
         custom_log(request, "POST request", level="debug")
         form = AuthWithPasswordForm(request.POST)
@@ -181,6 +188,14 @@ def authenticate_with_password(request):
             password = form.cleaned_data["password"]
             auth = LdapLogin(username, password, r)
             auth_status = auth.login()
+            if browser.get_auth_state() == Browser.S_REQUEST_BASIC_ONLY:
+                 # Only basic authentication was requested. Validate username was not changed.
+                 if not (browser.user and username == browser.user.username):
+                     custom_log(request, "Username was changed for S_REQUEST_BASIC_ONLY.", level="warn")
+                     messages.warning(request, "Invalid request was encountered. Please sign in again.")
+                     browser.logout(request)
+                     return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+
             if request.POST.get("my_computer"):
                 custom_log(request, "Marked browser as saved", level="info")
                 browser.save_browser = True
@@ -190,6 +205,8 @@ def authenticate_with_password(request):
                 browser.save()
 
             if auth_status == True:
+                    
+
                 # User authenticated successfully. Update AUTH_STATE and AUTH_LEVEL
                 browser.forced_sign_out = False
  
@@ -218,7 +235,7 @@ def authenticate_with_password(request):
                     return redir_to_sso(request)
 
                 # TODO: no further authentication is necessarily needed. Determine these automatically.
-                if browser.get_auth_state == Browser.S_REQUEST_BASIC_ONLY:
+                if browser.get_auth_state() == Browser.S_REQUEST_BASIC_ONLY:
                     # Only basic authentication is required.
                     browser.set_auth_level(Browser.L_STRONG)
                     browser.set_auth_state(Browser.S_AUTHENTICATED)
