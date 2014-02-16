@@ -307,7 +307,12 @@ def authenticate_with_authenticator(request):
         custom_log(request, "Authenticator is not configured, but user accessed Authenticator view. Redirect back to secondstepauth", level="error")
         return custom_redirect("login_frontend.views.secondstepauth", request.GET)
 
-    if request.method == "POST":
+    if request.method == "POST" and not request.session.test_cookie_worked():
+        ret["enable_cookies"] = True
+
+    elif request.method == "POST":
+        request.session.delete_test_cookie()
+
         custom_log(request, "POST request", level="debug")
         form = OTPForm(request.POST)
         if form.is_valid():
@@ -351,6 +356,7 @@ def authenticate_with_authenticator(request):
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
     ret["my_computer"] = request.browser.save_browser
+    request.session.set_test_cookie()
 
     response = render_to_response("authenticate_with_authenticator.html", ret, context_instance=RequestContext(request))
     return response

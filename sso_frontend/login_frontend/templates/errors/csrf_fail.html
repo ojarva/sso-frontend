@@ -2,17 +2,28 @@
 
 {% block content %}
 
-<h1>Oops. CSRF failed.</h1>
+<h1>Oops.</h1>
+
+{% if no_cookies %}
+<div class="alert alert-danger">
+ It seems you don't have cookies enabled. This service does not work without cookies.
+</div>
+{% endif %}
 
 <p>Processing your request was aborted, as it was missing validation token. 
-This is a security feature designed to protect you against malicious external sites. 
-You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
+This is a security feature designed to protect you against malicious external sites.</p>
+
+<p><a class="btn btn-primary btn-lg" href="{% url 'login_frontend.views.indexview' %}">Continue</a></p>
 
 
 <hr/>
-<p>Technical details: Cross Site Request Forgery (CSRF) check failed. Your POST request did not include valid token. This might be either configuration error, or 
-improperly configured external site. Alternatively, it was (failed) attack attempt. This error has been logged, and we'll take a look into it.</p>
+<p>Technical details: Cross-Site Request Forgery (CSRF) check failed. Your POST request did not include valid token. This might be either configuration error, or 
+improperly configured external site. Alternatively, it was (failed) attack attempt. This error has been logged, and we'll take a look into it. For more information,
+you can read these pages:</p>
 
-<p>You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/Cross-site_request_forgery">Wikipedia</a></li>
+<li><a href="https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)">OWASP</a></li>
+</ul>
 
 {% endblock %}
