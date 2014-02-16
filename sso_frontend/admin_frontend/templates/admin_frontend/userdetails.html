@@ -1,4 +1,4 @@
-{% extends "admin_frontend/admin_base.html" %}
+{% extends "admin_frontend/base.html" %}
 
 {% block admin_content %}
 
@@ -97,14 +97,14 @@
 
 <h2>Browsers</h2>
 
-{% include "admin_frontend/snippets/admin_list_browsers.html" %}
+{% include "admin_frontend/snippets/list_browsers.html" %}
 
 <h2>Logins</h2>
 
-{% include "admin_frontend/snippets/admin_list_logins.html" %}
+{% include "admin_frontend/snippets/list_logins.html" %}
 
 <h2>Log entries</h2>
 
-{% include "admin_frontend/snippets/admin_list_logs.html" %}
+{% include "admin_frontend/snippets/list_logs.html" %}
 
 {% endblock %}

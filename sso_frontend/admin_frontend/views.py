@@ -67,14 +67,14 @@ def admin_indexview(request):
 
     ret["admins"] = User.objects.filter(is_admin=True)
 
-    return render_to_response("admin_frontend/admin_indexview.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/indexview.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
 def admin_users(request):
     custom_log(request, "Admin: users")
     ret = {}
     ret["users"] = User.objects.all().order_by('username')
-    return render_to_response("admin_frontend/admin_users.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/users.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
 def admin_userdetails(request, **kwargs):
@@ -111,21 +111,21 @@ def admin_userdetails(request, **kwargs):
     ret["duser"] = get_object_or_404(DjangoUser, username=username)
     ret["browsers"] = Browser.objects.filter(user=ret["auser"])
     ret["logins"] = BrowserLogin.objects.filter(user=ret["auser"])
-    return render_to_response("admin_frontend/admin_userdetails.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/userdetails.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
 def admin_logins(request):
     ret = {}
     custom_log(request, "Admin: list of logins")
     ret["logins"] = BrowserLogin.objects.all()
-    return render_to_response("admin_frontend/admin_logins.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/logins.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
 def admin_browsers(request):
     ret = {}
     custom_log(request, "Admin: list of browsers")
     ret["browsers"] = Browser.objects.all()
-    return render_to_response("admin_frontend/admin_browsers.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/browsers.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
 def admin_browserdetails(request, **kwargs):
@@ -138,7 +138,7 @@ def admin_browserdetails(request, **kwargs):
     if ret["abrowser"].user:
         username = ret["abrowser"].user.username
     custom_log(request, "Admin: browser details for %s (%s)" % (bid_public, username))
-    return render_to_response("admin_frontend/admin_browserdetails.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/browserdetails.html", ret, context_instance=RequestContext(request))
 
 @protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
 def admin_logs(request, **kwargs):
@@ -164,4 +164,4 @@ def admin_logs(request, **kwargs):
     else:
         custom_log(request, "Admin: all entries")
         ret["entries"] = Log.objects.all()[0:1000]
-    return render_to_response("admin_frontend/admin_logs.html", ret, context_instance=RequestContext(request))
+    return render_to_response("admin_frontend/logs.html", ret, context_instance=RequestContext(request))
