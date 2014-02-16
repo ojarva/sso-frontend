@@ -37,4 +37,9 @@
 </div>
 
 <p>Do note that almost all pages under this admin section contain private data, including IP addresses. All actions - including viewing entries - in admin pages are logged. Expect these logs to be available for others too.</p>
+
+<p>Only following users can access this admin section: 
+{% for admin in admins %}
+{% if not forloop.first %} - {% endif %}
+{{ admin.username }}{% endfor %}. 
 {% endblock %}
