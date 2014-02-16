@@ -249,8 +249,15 @@ class Browser(models.Model):
         return (self.sms_code_id, self.sms_code)
 
     def logout(self, request = None):
-        """ User requested logout. In practice, cleanup all associations between user and browser. """
-        log.info("Logging out: %s" % self.bid)
+        """ User requested logout.
+
+        This cleans up browser-specific information, including
+        - user object
+        - SMS authentication codes
+        - Authentication state
+        - If request object was provided, Django user object.
+        """
+        log.info("Logging out: bid=%s" % self.bid)
         self.revoke_sms()
         self.user = None
         self.save_browser = False
@@ -258,12 +265,13 @@ class Browser(models.Model):
         self.auth_state = Browser.S_REQUEST_BASIC
         self.auth_level_valid_until = None
         self.auth_state_valid_until = None
+        self.authenticator_qr_nonce = None
         if request is not None:
             django_logout(request)
         self.save()
 
-
     def get_readable_ua(self):
+        """ Returns user-agent in readable format """
         data = httpagentparser.detect(self.ua)
         browser = None
         os = None
@@ -316,6 +324,7 @@ class Browser(models.Model):
     }
 
     def get_ua_icons(self):
+        """ Returns Font Awesome icons for platform and OS """
         icon = ["question"] # By default, show unknown icon
         for (regex, icons) in self.UA_DETECT.iteritems():
             if re.match(regex, self.ua):
@@ -351,24 +360,24 @@ class BrowserLogin(models.Model):
     browser = models.ForeignKey("Browser")
     user = models.ForeignKey("User")
 
-    sso_provider = models.CharField(max_length=30)
-    remote_service = models.CharField(max_length=1000, null=True, blank=True)
-    message = models.CharField(max_length=1000, null=True, blank=True)
-    auth_timestamp = models.DateTimeField()
+    sso_provider = models.CharField(max_length=30, help_text="(Internal) name of SSO provider")
+    remote_service = models.CharField(max_length=1000, null=True, blank=True, help_text="URL to remote service, if available")
+    message = models.CharField(max_length=1000, null=True, blank=True, help_text="Optional user-readable information")
+    auth_timestamp = models.DateTimeField(help_text="Timestamp of authentication")
 
-    can_logout = models.BooleanField(default=False)
-    expires_at = models.DateTimeField(null=True)
-    expires_session = models.BooleanField(default=True)
+    can_logout = models.BooleanField(default=False, help_text="True if session can be closed remotely")
+    expires_at = models.DateTimeField(null=True, help_text="Ticket expiration time, if available")
+    expires_session = models.BooleanField(default=True, help_text="True if ticket/cookie expires when browser is closed")
 
-    signed_out = models.BooleanField(default=False)
+    signed_out = models.BooleanField(default=False, help_text="Session has been closed")
 
 class BrowserUsers(models.Model):
     user = models.ForeignKey('User')
     browser = models.ForeignKey('Browser')
-    auth_timestamp = models.DateTimeField(null=True)
-    max_auth_level = models.CharField(max_length=1, choices=Browser.A_AUTH_LEVEL, default=Browser.L_UNAUTH)
+    auth_timestamp = models.DateTimeField(null=True, help_text="Timestamp of the latest authentication")
+    max_auth_level = models.CharField(max_length=1, choices=Browser.A_AUTH_LEVEL, default=Browser.L_UNAUTH, help_text="Highest authentication level for this User/Browser combination")
 
-    remote_ip = models.GenericIPAddressField(null=True,blank=True)
+    remote_ip = models.GenericIPAddressField(null=True,blank=True, help_text="Last remote IP address")
     last_seen = models.DateTimeField(null=True)
 
 class UsedOTP(models.Model):
@@ -377,22 +386,22 @@ class UsedOTP(models.Model):
     user = models.ForeignKey('User')
     code = models.CharField(max_length=15)
     used_at = models.DateTimeField(auto_now_add=True)
-    used_from = models.CharField(max_length=46, null=True, blank=True) # TODO
+    used_from = models.GenericIPAddressField(null=True, blank=True)
 
 class User(models.Model):
     username = models.CharField(max_length=50, primary_key=True)
 
-    strong_configured = models.BooleanField(default=False)
-    strong_authenticator_secret = models.CharField(max_length=30, null=True, blank=True)
-    strong_authenticator_generated_at = models.DateTimeField(null=True)
-    strong_authenticator_used = models.BooleanField(default=False)
+    strong_configured = models.BooleanField(default=False, help_text="True if user has saved strong authentication preferences")
+    strong_authenticator_secret = models.CharField(max_length=30, null=True, blank=True, help_text="Secret for TOTP generation")
+    strong_authenticator_generated_at = models.DateTimeField(null=True, help_text="Timestamp of generating authenticator secret")
+    strong_authenticator_used = models.BooleanField(default=False, help_text="True if user has used authenticator")
 
-    strong_sms_always = models.BooleanField(default=False)
+    strong_sms_always = models.BooleanField(default=False, help_text="True if user wants to always use SMS")
 
     # If this is True, no strong authentication is required, and login is valid only for 12 hours
     emulate_legacy = models.BooleanField(default=False)
 
-    primary_phone_changed = models.BooleanField(default=False)
+    primary_phone_changed = models.BooleanField(default=False, help_text="True if users strong authentication preferences were revoked because primary phone number was changed")
 
     email = models.EmailField(null=True, blank=True)
     primary_phone = models.CharField(max_length=30, null=True, blank=True)
@@ -400,7 +409,7 @@ class User(models.Model):
     primary_phone_refresh = models.DateTimeField(null=True)
     secondary_phone_refresh = models.DateTimeField(null=True)
 
-    user_tokens = models.CharField(max_length=255, null=True, blank=True)
+    user_tokens = models.CharField(max_length=255, null=True, blank=True, help_text="List of pubtkt tokens")
 
     def gen_authenticator(self):
         """ Generates and stores new secret for authenticator. """
