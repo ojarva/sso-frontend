@@ -47,6 +47,11 @@
 </tr>
 
 <tr>
+<th>Strong authentication skips available</th>
+<td>{{ auser.strong_skips_available }}</td>
+</tr>
+
+<tr>
 <th>Authenticator configured</th>
 <td>{% if auser.strong_authenticator_generated_at %}<span class="tooltip-link" title="{{ auser.strong_authenticator_generated_at|timesince }} ago">At {{ auser.strong_authenticator_generated_at }}</span>{% else %}No{% endif %}</td>
 </tr>

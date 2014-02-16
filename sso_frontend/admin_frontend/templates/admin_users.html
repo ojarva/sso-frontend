@@ -10,6 +10,7 @@
 <th>Authenticator configured</th>
 <th>Authenticator used</th>
 <th>SMS always</th>
+<th><span class="tooltip-link" title="Number of strong authentication skips available. This is set to zero after configuring strong authentication">Skips available</th>
 </tr>
 </thead>
 <tbody>
@@ -20,6 +21,7 @@
 <td>{% if auser.strong_authenticator_generated_at %}<span class="tooltip-link" title="{{ auser.strong_authenticator_generated_at|timesince }} ago">{{ auser.strong_authenticator_generated_at }}</span>{% endif %}</td>
 <td>{% if auser.strong_authenticator_used %}Yes{% else %}No{% endif %}</td>
 <td>{% if auser.strong_sms_always %}Yes{% else %}No{% endif %}</td>
+<td>{{ auser.strong_skips_available }}</td>
 </tr>
 {% endfor %}
 </tbody>

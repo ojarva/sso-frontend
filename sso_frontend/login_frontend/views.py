@@ -323,10 +323,29 @@ def authenticate_with_authenticator(request):
     user = request.browser.user
     assert user != None, "Browser is authenticated but no User object exists."
 
+    skips_available = user.strong_skips_available
+    ret["skips_available"] = skips_available
+
     if not user.strong_authenticator_secret:
         # Authenticator is not configured. Redirect back to secondstep main screen
         custom_log(request, "Authenticator is not configured, but user accessed Authenticator view. Redirect back to secondstepauth", level="error")
         return custom_redirect("login_frontend.views.secondstepauth", request.GET)
+
+    if request.method == "POST" and request.POST.get("skip"):
+        if skips_available > 0:
+            user.strong_skips_available -= 1
+            user.save()
+            custom_log(request, "Skipped strong authentication: %s left" % user.strong_skips_available)
+            # TODO: determine the levels automatically.
+            request.browser.set_auth_level(Browser.L_STRONG_SKIPPED)
+            request.browser.set_auth_state(Browser.S_AUTHENTICATED)
+            request.browser.set_auth_level_valid_until = timezone.now() + datetime.timedelta(hours=12)
+
+            request.browser.save()
+            custom_log(request, "Redirecting back to SSO provider", level="debug")
+            return redir_to_sso(request)
+        else:
+            messages.warning(request, "You can't skip strong authentication anymore.")
 
     if request.method == "POST" and not request.session.test_cookie_worked():
         ret["enable_cookies"] = True
@@ -402,6 +421,24 @@ def authenticate_with_sms(request):
         # Phone numbers are not available.
         custom_log(request, "No phone number available - unable to authenticate.", level="warning")
         return render_to_response("no_phone_available.html", ret, context_instance=RequestContext(request))
+
+    skips_available = user.strong_skips_available
+    ret["skips_available"] = skips_available
+
+    if request.method == "POST" and request.POST.get("skip"):
+        if skips_available > 0:
+            user.strong_skips_available -= 1
+            user.save()
+            custom_log(request, "Skipped strong authentication: %s left" % user.strong_skips_available)
+            # TODO: determine the levels automatically.
+            request.browser.set_auth_level(Browser.L_STRONG)
+            request.browser.set_auth_state(Browser.S_AUTHENTICATED)
+            request.browser.set_auth_level_valid_until = timezone.now() + datetime.timedelta(hours=12)
+            request.browser.save()
+            custom_log(request, "Redirecting back to SSO provider", level="debug")
+            return redir_to_sso(request)
+        else:
+            messages.warning(request, "You can't skip strong authentication anymore.")
 
     if not user.strong_configured:
         custom_log(request, "Strong authentication is not configured yet.", level="debug")
@@ -618,6 +655,7 @@ def configure_strong(request):
             custom_log(request, "Switched to SMS authentication", level="info")
             user.strong_configured = True
             user.strong_sms_always = True
+            user.strong_skips_available = 0
             user.save()
             messages.success(request, "Switched to SMS authentication")
             return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
@@ -625,6 +663,7 @@ def configure_strong(request):
             add_log_entry(request, "Switched to Authenticator authentication", "info")
             custom_log(request, "Switched to Authenticator authentication", level="info")
             user.strong_sms_always = False
+            user.strong_skips_available = 0
             user.save()
             messages.success(request, "Default setting changed to Authenticator")
             return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
@@ -681,6 +720,7 @@ def configure_authenticator(request):
             user.strong_configured = True
             user.strong_authenticator_used = True
             user.strong_sms_always = False
+            user.strong_skips_available = 0
             user.save()
             custom_log(request, "Reconfigured Authenticator", level="info")
             add_log_entry(request, "Successfully configured Authenticator", "gear")

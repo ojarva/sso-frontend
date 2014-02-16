@@ -38,7 +38,15 @@ You have not configured strong authentication.
 You should receive SMS containing one-time password shortly. Please enter it below. It should be #{{ expected_sms_id }}.
 {% endif %}
 
-
+{% if skips_available > 0 %}
+<p>If you are in hurry, you can skip configuring this up to {{ skips_available }} time{{ skips_available|pluralize }}. Configuration only takes
+a few moments.</p>
+<form class="form" role="form" name="skip_form" method="POST" action="?{{ get_params }}">
+{% csrf_token %}
+<input type="hidden" name="skip" value="1">
+<button type="submit" class="btn btn-info">Skip until tomorrow</button>
+</form>
+{% endif %}
 
 <form role="form" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">
   {% csrf_token %}

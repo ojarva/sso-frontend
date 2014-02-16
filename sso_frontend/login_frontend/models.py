@@ -436,6 +436,8 @@ class User(models.Model):
 
     strong_sms_always = models.BooleanField(default=False, help_text="True if user wants to always use SMS")
 
+    strong_skips_available = models.IntegerField(default=6)
+
     # If this is True, no strong authentication is required, and login is valid only for 12 hours
     emulate_legacy = models.BooleanField(default=False)
 
