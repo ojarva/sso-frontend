@@ -6,6 +6,7 @@ from login_frontend import providers
 
 urlpatterns = patterns('',
     url(r'^$', views.main_redir),
+    url(r'^index.php$', views.indexview),
     url(r'^index$', views.indexview, name='index'),
 
     # First factor authentication
@@ -30,6 +31,7 @@ urlpatterns = patterns('',
     url(r'^view_log/(?P<bid_public>(.+))$', views.view_log),
     url(r'^configure_authenticator$', views.configure_authenticator),
     url(r'^configure_authenticator_qr/(?P<single_use_code>(.+))$', views.get_authenticator_qr),
+    url(r'^logout.php$', views.logoutview),
     url(r'^logout$', views.logoutview, name='logout'),
     url(r'^introduction$', TemplateView.as_view(template_name="login_frontend/introduction.html"), name='introduction'),
 )
