@@ -81,8 +81,10 @@ def openid_server(request):
                                       data,
                                       context_instance=RequestContext(request))
 
+    logger.debug("orequest.mode: %s" % orequest.mode)
+
     if orequest.mode in BROWSER_REQUEST_MODES:
-        if not (request.browser and request.browser.user and request.browser.is_authenticated()):
+        if not (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
             logger.debug('no local authentication, sending landing page')
             return landing_page(request, orequest)
 
@@ -116,21 +118,24 @@ def openid_server(request):
             return HttpResponseRedirect(reverse('openid-provider-decide'))
     else:
         oresponse = server.handleRequest(orequest)
-    if (request.browser and request.browser.user and request.browser.is_authenticated()):
+    if (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
         add_sreg_data(request, orequest, oresponse)
         if conf.AX_EXTENSION:
             add_ax_data(request, orequest, oresponse)
 
-    # Add/update BrowserLogin object.
-    (browser_login, _) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="openid", signed_out=False, remote_service=str(orequest.trust_root), defaults={"auth_timestamp": timezone.now()})
-    browser_login.auth_timestamp = timezone.now()
-    browser_login.save()
+    if (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
+        # Add/update BrowserLogin object.
+        (browser_login, _) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="openid", signed_out=False, remote_service=str(orequest.trust_root), defaults={"auth_timestamp": timezone.now()})
+        browser_login.auth_timestamp = timezone.now()
+        browser_login.save()
 
-    # Add entry to user log
-    add_log_entry(request, "Signed in with OpenID to %s" % orequest.trust_root, "share-square-o")
+        # Add entry to user log
+        add_log_entry(request, "Signed in with OpenID to %s" % orequest.trust_root, "share-square-o")
 
     # Convert a webresponse from the OpenID library in to a Django HttpResponse
     webresponse = server.encodeResponse(oresponse)
+    logger.debug("orequest.mode: %s" % orequest.mode)
+    logger.debug("webresponse.code: %s" % webresponse.code)
     if webresponse.code == 200 and orequest.mode in BROWSER_REQUEST_MODES:
         response = render_to_response('openid_provider/response.html', {
             'body': webresponse.body,
@@ -152,11 +157,13 @@ def openid_xrds(request, identity=False, id=None):
         if conf.AX_EXTENSION:
             types.append(ax.AXMessage.ns_uri)
     endpoints = [request.build_absolute_uri(reverse('openid-provider-root'))]
-    return render_to_response('openid_provider/xrds.xml', {
+    ret = {
         'host': request.build_absolute_uri('/'),
         'types': types,
         'endpoints': endpoints,
-    }, context_instance=RequestContext(request), mimetype=YADIS_CONTENT_TYPE)
+    }
+    logger.info("Options: %s" % ret)
+    return render_to_response('openid_provider/xrds.xml', ret, context_instance=RequestContext(request), content_type=YADIS_CONTENT_TYPE)
 
 def openid_decide(request):
     """
@@ -170,7 +177,7 @@ def openid_decide(request):
     orequest = server.decodeRequest(request.session.get('OPENID_REQUEST'))
     trust_root_valid = request.session.get('OPENID_TRUSTROOT_VALID')
 
-    if not (request.browser and request.browser.user and request.browser.is_authenticated()):
+    if not (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
         return landing_page(request, orequest)
 
     openid = openid_get_identity(request, orequest.identity)
@@ -249,7 +256,7 @@ def openid_is_authorized(request, identity_url, trust_root):
     Check that they own the given identity URL, and that the trust_root is 
     in their whitelist of trusted sites.
     """
-    if not (request.browser and request.browser.user and request.browser.is_authenticated()):
+    if not (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
         return None
 
     openid = openid_get_identity(request, identity_url)
