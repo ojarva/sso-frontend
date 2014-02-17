@@ -565,7 +565,11 @@ class User(models.Model):
             totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
             if str(code) == totp_code:
                 log.warn("User clock is off by %s seconds" % time_diff)
-                return (False, "Incorrect code. It seems your clock is off by about %s seconds." % time_diff)
+                message = "Incorrect code. It seems your clock is off by about %s seconds" % time_diff
+                if time_diff < 0:
+                    message += ", or you waited too long before entering the code"
+                message += "."
+                return (False, message)
 
         return (False, "Incorrect OTP code.")
 

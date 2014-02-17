@@ -19,13 +19,28 @@ contact IT team).</p>
 
 <p>You can get one-time passwords as SMS or by using Authenticator application on your mobile phone. Why? Authenticator works even if your phone is offline. Especially when traveling, there might be issues with SMS delivery.</p>
 
-<p>If you don't have app installed, depending on your phone OS, head over here: <a target="_window" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a>, 
-<a target="_window" href="https://itunes.apple.com/fi/app/google-authenticator/id388497605?mt=8">iPhone</a>, 
-<a target="_window" href="http://www.windowsphone.com/en-us/store/app/authenticator/e7994dbc-2336-4950-91ba-ca22d653759b">Windows Phone</a>. For more exotic devices, search for "Google Authenticator", ask from IT team or use SMS authentication.
-</p>
+<p>If you don't have Authenticator app installed, you can find it from here:
+
+<ul>
+<li><a target="_window" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a> <b>and</b> <a target="_window" href="https://play.google.com/store/apps/details?id=com.google.zxing.client.android">barcode scanner</a>. If you're signed in to your Google account, you can install these remotely from Play Store. If not, search for "Google Authenticator" and "barcode" on your phone.</li> 
+<li><a target="_window" href="https://itunes.apple.com/fi/app/google-authenticator/id388497605?mt=8">iPhone</a> (either install from iTunes, or search for "Google Authenticator")</li>
+<li><a target="_window" href="http://www.windowsphone.com/en-us/store/app/authenticator/e7994dbc-2336-4950-91ba-ca22d653759b">Windows Phone</a>. Either install remotely or search for "Authenticator", select one published by Microsoft.</li>
+<li><a target="_window" href="https://github.com/stozze/harbour-sgauth">Jolla</a> (search for SGAuth)</li>
+</ul>
+
+<p>For more exotic devices, search for "Google Authenticator", use SMS authentication, or ask from IT team.</p>
 
 <p>After installing the app, go to <a href="{% url 'login_frontend.views.configure_strong' %}">configure it</a>. If you're not happy with Authenticator, you can always disable it.</p>
 
 <p>This one-time password generation is based on <a href="http://tools.ietf.org/html/rfc6238">open standards</a>. Server and your mobile phone share secret string used to generate and validate OTPs.</p>
 
+<h2>What single sign-on providers are supported?</h2>
+
+<p>This service supports <a href="https://neon1.net/mod_auth_pubtkt/index.html">pubtkt</a>, <a href="http://openid.net/">OpenID</a> and <a href="http://en.wikipedia.org/wiki/SAML_2.0">SAML 2.0</a>.</p>
+
+<p>pubtkt is based on domain cookies, so it works only on the servers within the same domain, and over SSL. It does not require any configuration on the login server.</p>
+
+<p>OpenID identifier is available at <a href="{% url 'openid-provider-root' %}">separate page</a>. It supports both sreg and AX extensions for transmitting names, usernames and email addresses.</p>
+
+<p>SAML 2.0 is currently only configured to work with Google Apps. Other services could be added. SAML 2.0 implementation is based on <a href="https://code.google.com/p/django-saml2-idp/">django-saml2-idp</a> project.</p>
 {% endblock %}
