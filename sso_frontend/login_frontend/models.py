@@ -550,7 +550,7 @@ class User(models.Model):
         totp = pyotp.TOTP(self.strong_authenticator_secret)
         for timestamp in [time.time() - 30, time.time(), time.time() + 30]:
             totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
-            log.info("Comparing '%s' and '%s'" % (totp_code, code))
+            log.debug("Comparing '%s' and '%s'" % (totp_code, code))
             if str(code) == totp_code:
                 (obj, created) = UsedOTP.objects.get_or_create(user=self, code=code)
                 if created:
@@ -558,6 +558,15 @@ class User(models.Model):
                 else:
                     return (False, "OTP was already used. Please wait for 30 seconds and try again.")
                 return (True, None)
+        # Either timestamp is way off or user entered incorrect OTP.
+        log.info("Invalid OTP")
+        for time_diff in range(-900, 900, 30):
+            timestamp = time.time() + time_diff
+            totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
+            if str(code) == totp_code:
+                log.warn("User clock is off by %s seconds" % time_diff)
+                return (False, "Incorrect code. It seems your clock is off by about %s seconds." % time_diff)
+
         return (False, "Incorrect OTP code.")
 
 
