@@ -704,9 +704,12 @@ def get_authenticator_qr(request, **kwargs):
     """ Outputs QR code for Authenticator. Uses single_use_code to prevent
     reloading / linking. """
     if not request.browser.authenticator_qr_nonce == kwargs["single_use_code"]:
-        # TODO: render image
         custom_log(request, "Invalid one-time code for QR. Referrer: %s" % request.META.get("HTTP_REFERRER"), level="warn")
-        return HttpResponseForbidden("Invalid one-time code: unable to show QR")
+        return HttpResponseForbidden(open(settings.PROJECT_ROOT + "/static/img/invalid_nonce.png").read(), mimetype="image/png")
+
+    if not request.browser.user.strong_authenticator_secret:
+        custom_log(request, "Valid qr_nonce, but authenticator_secret is None", level="error")
+        return HttpResponseForbidden(open(settings.PROJECT_ROOT + "/static/img/valid_nonce_no_secret.png").read(), mimetype="image/png")
 
     # Delete QR nonce to prevent replay.
     request.browser.authenticator_qr_nonce = None
@@ -727,6 +730,7 @@ def configure_authenticator(request):
     user = request.browser.user
     if request.method != "POST":
         custom_log(request, "Tried to enter Authenticator configuration view with GET request. Redirecting back. Referer: %s" % request.META.get("HTTP_REFERRER"), level="info")
+        messages.info(request, "You can't access configuration page directly")
         return custom_redirect("login_frontend.views.configure_strong", request.GET)
 
     ret["back_url"] = redir_to_sso(request).url
