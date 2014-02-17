@@ -106,7 +106,10 @@ def openid_server(request):
         if openid is not None and (validated or trust_root_valid == 'Valid'):
             id_url = request.build_absolute_uri(
                 reverse('openid-provider-identity', args=[openid.openid]))
-            oresponse = orequest.answer(True, identity=id_url)
+            try:
+                oresponse = orequest.answer(True, identity=id_url)
+            except ValueError, e:
+                return render_to_response("openid_provider/error.html", {"title": "Invalid identity URL", "msg": e.message}, context_instance=RequestContext(request))
             logger.debug('orequest.answer(True, identity="%s")', id_url)
         elif orequest.immediate:
             logger.debug('checkid_immediate mode not supported')
