@@ -530,9 +530,12 @@ class User(models.Model):
 
     def gen_authenticator(self):
         """ Generates and stores new secret for authenticator. """
+        timestamp = timezone.now()
         self.strong_authenticator_secret = pyotp.random_base32()
-        self.strong_authenticator_generated_at = timezone.now()
+        self.strong_authenticator_generated_at = timestamp
         self.save()
+        authenticator_log = AuthenticatorCode.objects.create(user=self, generated_at=timestamp, authenticator_secret=self.strong_authenticator_secret)
+        authenticator_log.save()
         return self.strong_authenticator_secret
 
     def validate_authenticator_code(self, code):
@@ -558,6 +561,7 @@ class User(models.Model):
                 else:
                     return (False, "OTP was already used. Please wait for 30 seconds and try again.")
                 return (True, None)
+
         # Either timestamp is way off or user entered incorrect OTP.
         log.info("Invalid OTP")
         for time_diff in range(-900, 900, 30):
@@ -570,6 +574,21 @@ class User(models.Model):
                     message += ", or you waited too long before entering the code"
                 message += "."
                 return (False, message)
+
+        # No match from current authentication even with time offset. Try old codes.
+        old_authenticators = AuthenticatorCode.objects.filter(user=self)
+        for authenticator in old_authenticators:
+            log.debug("Testing authenticator configured at %s" % authenticator.generated_at)
+            totp = pyotp.TOTP(authenticator.authenticator_secret)
+            for time_diff in range(-900, 900, 30):
+                timestamp = time.time() + time_diff
+                totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
+                if str(code) == totp_code:
+                    if abs(time_diff) < 35:
+                        message = "You tried to use old Authenticator configuration, generated at %s. If you don't have newer configuration, please sign in with SMS and reconfigure Authenticator." % authenticator.generated_at
+                    else:
+                        message = "You tried to use old Authenticator configuration, generated at %s. If you don't have newer configuration, please sign in with SMS and reconfigure Authenticator. Also, your clock seems to be off by about %s seconds" % (authenticator.generated_at, time_diff)
+                    return (False, message)
 
         return (False, "Incorrect OTP code.")
 
@@ -606,3 +625,8 @@ class User(models.Model):
             self.strong_authenticator_used = False
         self.save()
         return changed
+
+class AuthenticatorCode(models.Model):
+    user = models.ForeignKey("User")
+    generated_at = models.DateTimeField()
+    authenticator_secret = models.CharField(max_length=30, help_text="Secret for TOTP generation")
