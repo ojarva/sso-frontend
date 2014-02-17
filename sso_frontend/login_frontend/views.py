@@ -355,17 +355,18 @@ def authenticate_with_authenticator(request):
         if skips_available > 0:
             user.strong_skips_available -= 1
             user.save()
+            add_log_entry(request, "Skipped strong authentication: %s left" % user.strong_skips_available, "meh-o")
             custom_log(request, "Skipped strong authentication: %s left" % user.strong_skips_available)
             # TODO: determine the levels automatically.
             request.browser.set_auth_level(Browser.L_STRONG_SKIPPED)
             request.browser.set_auth_state(Browser.S_AUTHENTICATED)
             request.browser.set_auth_level_valid_until = timezone.now() + datetime.timedelta(hours=12)
-
             request.browser.save()
             custom_log(request, "Redirecting back to SSO provider", level="debug")
             return redir_to_sso(request)
         else:
             messages.warning(request, "You can't skip strong authentication anymore.")
+            custom_log(request, "Tried to skip strong authentication with no skips available", level="warn")
 
     if request.method == "POST" and not request.session.test_cookie_worked():
         ret["enable_cookies"] = True
@@ -449,6 +450,7 @@ def authenticate_with_sms(request):
         if skips_available > 0:
             user.strong_skips_available -= 1
             user.save()
+            add_log_entry(request, "Skipped strong authentication: %s left" % user.strong_skips_available, "meh-o")
             custom_log(request, "Skipped strong authentication: %s left" % user.strong_skips_available)
             # TODO: determine the levels automatically.
             request.browser.set_auth_level(Browser.L_STRONG)
@@ -459,6 +461,7 @@ def authenticate_with_sms(request):
             return redir_to_sso(request)
         else:
             messages.warning(request, "You can't skip strong authentication anymore.")
+            custom_log(request, "Tried to skip strong authentication with no skips available", level="warn")
 
     if not user.strong_configured:
         custom_log(request, "Strong authentication is not configured yet.", level="debug")
@@ -487,8 +490,8 @@ def authenticate_with_sms(request):
 
             if status:
                 # Authentication succeeded.
-                custom_log(request, "Second-factor authentication succeeded")
-                add_log_entry(request, "Second-factor authentication succeeded", "lock")
+                custom_log(request, "Second-factor authentication with SMS succeeded")
+                add_log_entry(request, "Second-factor authentication with SMS succeeded", "lock")
                 # TODO: determine the levels automatically.
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
@@ -497,7 +500,7 @@ def authenticate_with_sms(request):
                 user.save()
                 if not user.strong_configured:
                     # Strong authentication is not configured. Go to configuration view.
-                    custom_log(request, "User has not configured strong authentication. Redirect to configuration view", level="debug")
+                    custom_log(request, "User has not configured strong authentication. Redirect to configuration view", level="info")
                     return custom_redirect("login_frontend.views.configure_strong", request.GET)
                 # Redirect back to SSO service
                 custom_log(request, "Redirecting back to SSO provider", level="debug")
