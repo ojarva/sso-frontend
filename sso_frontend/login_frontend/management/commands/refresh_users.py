@@ -24,7 +24,7 @@ class Command(BaseCommand):
             for user in data["results"]:
                 status = refresh_user(user)
                 if status:
-                    self.stdout.write('Refreshed %s (%s, %s, %s)' % (username, email, phone1, phone2))
+                    self.stdout.write('Refreshed %s (%s, %s, %s)' % (user.get("username"), user.get("email"), user.get("phone1"), user.get("phone2")))
             if "next" not in data or data["next"] is None:
                 break
             c += 1

@@ -606,6 +606,11 @@ class User(models.Model):
         if email != self.email:
             self.email = email
 
+        if phone1 == None and phone2 == None:
+            if not self.emulate_legacy:
+                self.emulate_legacy = True
+                changed = True
+
         if phone1 == self.primary_phone:
             # All is fine. Carry on.
             self.save()

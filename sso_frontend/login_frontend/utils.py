@@ -49,7 +49,7 @@ def refresh_user(user):
     first_name = user.get("first_name")
     last_name = user.get("last_name")
     email = user.get("email", "")
-    phone1 = user.get("phone1", "")
+    phone1 = user.get("phone1")
     phone2 = user.get("phone2")
     if username is None or email is None:
         log.debug("Username or email is none - skip")
