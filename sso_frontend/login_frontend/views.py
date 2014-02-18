@@ -175,6 +175,8 @@ def authenticate_with_password(request):
 
     ret = {}
     cookies = []
+    browser = None
+
     if request.browser is None:
         # No Browser object is initialized. Create one.
         custom_log(request, "No browser object exists. Create a new one. Cookies: %s" % request.COOKIES, level="debug")
@@ -194,15 +196,16 @@ def authenticate_with_password(request):
             custom_log(request, "User is already authenticated. Redirect back to SSO service.", level="debug")
             return redir_to_sso(request)
 
-    if browser.forced_sign_out:
-        ret["forced_sign_out"] = True
+    if browser:
+        if browser.forced_sign_out:
+            ret["forced_sign_out"] = True
 
-    if browser.get_auth_state() == Browser.S_REQUEST_BASIC_ONLY:
-        ret["basic_only"] = True
-        if not browser.user:
-            custom_log(request, "S_REQUEST_BASIC_ONLY was requested, but browser.user does not exist", level="warn")
-            messages.warning(request, "Invalid request was encountered. Please sign in again.")
-            return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+        if browser.get_auth_state() == Browser.S_REQUEST_BASIC_ONLY:
+            ret["basic_only"] = True
+            if not browser.user:
+                custom_log(request, "S_REQUEST_BASIC_ONLY was requested, but browser.user does not exist", level="warn")
+                messages.warning(request, "Invalid request was encountered. Please sign in again.")
+                return custom_redirect("login_frontend.views.indexview", request.GET.dict())
 
     if request.method == 'POST':
         custom_log(request, "POST request", level="debug")
@@ -211,6 +214,7 @@ def authenticate_with_password(request):
             # Only basic authentication was requested. Take username from session.
             username = browser.user.username
         password = request.POST.get("password")
+
         if username and password:
             custom_log(request, "Both username and password exists", level="debug")
             auth = LdapLogin(username, password, r)
@@ -286,9 +290,10 @@ def authenticate_with_password(request):
             messages.warning(request, "Invalid request")
     else:
         custom_log(request, "GET request", level="debug")
-        form = AuthWithPasswordForm(request.POST)
+    form = AuthWithPasswordForm(request.POST)
     ret["form"] = form
-    ret["my_computer"] = browser.save_browser
+    if browser:
+        ret["my_computer"] = browser.save_browser
 
     # Keep GET query parameters in form posts.
     ret["get_params"] = urllib.urlencode(request.GET)
