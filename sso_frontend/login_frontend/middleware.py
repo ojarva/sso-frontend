@@ -1,10 +1,18 @@
+from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from login_frontend.models import Browser, BrowserUsers, BrowserLogin, create_browser_uuid
 from login_frontend.providers import pubtkt_logout
 import logging
+import re
 
 log = logging.getLogger(__name__)
+
+DISALLOWED_UA = [
+ re.compile("^Wget/.*"),
+ re.compile("^Pingdom.com_bot_version.*"),
+ re.compile("^curl/.*")
+]
 
 def get_browser(request):
     bid = request.COOKIES.get(Browser.C_BID)
@@ -39,13 +47,13 @@ def get_browser(request):
 
 class BrowserMiddleware(object):
     def process_request(self, request):
+        ua = request.META.get("HTTP_USER_AGENT") 
+        for ua_re in DISALLOWED_UA:
+            if ua_re.match(ua):
+                return HttpResponse("OK. Your request was caught because you seem to be a bot. If this is by mistake, please contact admin@futurice.com")
+
         request.browser = get_browser(request)
-        if (request.browser and not request.browser.valid_session_bid
-                    and not request.browser.save_browser):
-            # Browser is not saved, and it was restarted.
-            # Ensure everything is removed.
-            # Browser ID does not change.
-            request.browser.logout(request)
+
 
     def process_response(self, request, response):
         # Browser from process_request is not available here.
