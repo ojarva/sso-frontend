@@ -6,7 +6,13 @@
 <div class="col-md-4">
 <h2><a href="{% url 'admin_frontend.views.admin_users' %}">Users</a></h2>
 
-<p>There's {{ users }} user{{ users|pluralize }}. {{ num_strong_configured }} have configured strong authentication.</p>
+<p>There's {{ users }} user{{ users|pluralize }}.</ul>
+
+<ul>
+<li>{{ num_strong_configured }} have configured strong authentication.</li>
+<li>{{ num_authenticator_used }} have used their latest Authenticator configuration successfully.</li>
+<li>{{ num_sms_always }} opted to primarily use SMS authentication.</li>
+<li>{{ num_strong_configured_not_used }} did configure Authenticator, but did not use it.</li>
 </div>
 
 <div class="col-md-4">

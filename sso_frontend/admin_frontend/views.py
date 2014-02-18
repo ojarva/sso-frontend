@@ -55,7 +55,11 @@ def admin_indexview(request):
     ret["users"] = User.objects.all().count()
     ret["browsers"] = Browser.objects.all().count()
     ret["active_logins"] = BrowserLogin.objects.filter(signed_out=False).filter(expires_at__gte=timezone.now()).count()
+
     ret["num_strong_configured"] = User.objects.filter(strong_configured=True).count()
+    ret["num_sms_always"] = User.objects.filter(strong_sms_always=True).count()
+    ret["num_authenticator_used"] = User.objects.filter(strong_authenticator_used=True).count()
+    ret["num_strong_configured_not_used"] = User.objects.exclude(strong_authenticator_generated_at=None).filter(strong_authenticator_used=False).count()
 
     active_browsers = Browser.objects.exclude(user=None)
     ret["active_browsers"] = []
@@ -155,7 +159,7 @@ def admin_logs(request, **kwargs):
                 username = ret["abrowser"].user.username
         except Browser.DoesNotExist:
             ret["missing_browser"] = True
-        custom_log(request, "Admin: entries for %s (%s)" % bid_public, username)
+        custom_log(request, "Admin: entries for %s (%s)" % (bid_public, username))
 
     elif username:
         ret["auser"] = get_object_or_404(username=username)
