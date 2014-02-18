@@ -86,6 +86,11 @@ If you can't scan this code, you can setup Authenticator manually.
 <div class="alert alert-danger">
 	{{ invalid_otp }} If trying again doesn't help, try reconfiguring your Authenticator. If you can't get this to work, please contact IT team.
 </div>
+
+<p>Having problems with "your clock is off"? Try syncing clock of your phone. 
+On some cell networks, operators clocks are off. In that case, on Android, go to "Settings > Time correction for codes > Sync now". 
+On Windows Phone, similar feature is enabled by default. On iPhone, you're out of luck.</p>
+
 {% endif %}
 
 <p>After configuring Authenticator, it should show 6-digit that changes every 30 seconds. The title should be <tt>{{ username }}@futu</tt>.</p>
