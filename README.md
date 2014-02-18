@@ -44,6 +44,12 @@ x-frame-options: DENY
 strict-transport-security: max-age=86400000; includeSubDomains
 ```
 
+And for ```/static```:
+
+```
+cache-control: "public, max-age=86400"
+```
+
 Font Content-Type headers
 -------------------------
 

@@ -1,6 +1,10 @@
 from django.contrib.auth.models import User as DjangoUser
 from models import Browser
 
+
+def add_static_timestamp(request):
+    return {"static_timestamp": 1}
+
 def add_browser(request):
     if request.browser:
         return {"browser": request.browser}

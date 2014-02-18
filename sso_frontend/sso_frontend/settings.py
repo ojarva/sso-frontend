@@ -191,7 +191,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 "django.contrib.messages.context_processors.messages",
 "login_frontend.context_processors.add_browser",
 "login_frontend.context_processors.add_user",
-"login_frontend.context_processors.session_info"
+"login_frontend.context_processors.session_info",
+"login_frontend.context_processors.add_static_timestamp"
 )
 
 
