@@ -147,6 +147,25 @@ def indexview(request):
 
     # TODO: "valid until"
     ret = {}
+
+    if request.method == "POST":
+        if request.POST.get("my_computer"):
+            save_browser = False
+            if request.POST.get("my_computer") == "on":
+                save_browser = True
+            if request.browser.save_browser != save_browser:
+                request.browser.save_browser = save_browser
+                request.browser.save()
+                if save_browser:
+                    custom_log(request, "Marked browser as remembered", level="info")
+                    add_log_entry(request, "Marked browser as remembered", "eye")
+                    messages.info(request, "You're now remembered on this browser")
+                else:
+                    custom_log(request, "Marked browser as not remembered", level="info")
+                    add_log_entry(request, "Marked browser as not remembered", "eye-slash")
+                    messages.info(request, "You're no longer remembered on this browser")
+                return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+
     ret["username"] = request.browser.user.username
     ret["user"] = request.browser.user
     ret["get_params"] = urllib.urlencode(request.GET)
@@ -158,7 +177,6 @@ def indexview(request):
     elif auth_level == Browser.L_BASIC:
         ret["auth_level"] = "basic"
     ret["remembered"] = request.browser.save_browser
-
 
     response = render_to_response("login_frontend/indexview.html", ret, context_instance=RequestContext(request))
     return response
@@ -221,13 +239,18 @@ def authenticate_with_password(request):
             auth_status = auth.login()
             username = auth.username # mapped from aliases (email address -> username)
 
+            save_browser = False
             if request.POST.get("my_computer"):
-                custom_log(request, "Marked browser as saved", level="info")
-                browser.save_browser = True
+                save_browser = True
+            if browser.save_browser != save_browser:
+                browser.save_browser = save_browser
                 browser.save()
-            else:
-                browser.save_browser = False
-                browser.save()
+                if save_browser:
+                    custom_log(request, "Marked browser as remembered", level="info")
+                    add_log_entry(request, "Marked browser as remembered", "eye")
+                else:
+                    custom_log(request, "Marked browser as not remembered", level="info")
+                    add_log_entry(request, "Marked browser as not remembered", "eye-slash")
 
             if auth_status == True:
                     
@@ -391,13 +414,19 @@ def authenticate_with_authenticator(request):
             otp = form.cleaned_data["otp"]
             custom_log(request, "Testing OTP code %s at %s" % (form.cleaned_data["otp"], time.time()), level="debug")
             (status, message) = user.validate_authenticator_code(form.cleaned_data["otp"])
+
+            save_browser = False
             if request.POST.get("my_computer"):
-                custom_log(request, "Marked browser as saved", level="info")
-                request.browser.save_browser = True
+                save_browser = True
+            if request.browser.save_browser != save_browser:
+                request.browser.save_browser = save_browser
                 request.browser.save()
-            else:
-                request.browser.save_browser = False
-                request.browser.save()
+                if save_browser:
+                    custom_log(request, "Marked browser as remembered", level="info")
+                    add_log_entry(request, "Marked browser as remembered", "eye")
+                else:
+                    custom_log(request, "Marked browser as not remembered", level="info")
+                    add_log_entry(request, "Marked browser as not remembered", "eye-slash")
 
             if not status:
                 # If authenticator code did not match, also try latest SMS (if available).
@@ -502,13 +531,19 @@ def authenticate_with_sms(request):
             custom_log(request, "Form is valid", level="debug")
             otp = form.cleaned_data["otp"]
             status, message = request.browser.validate_sms(otp)
+
+            save_browser = False
             if request.POST.get("my_computer"):
-                custom_log(request, "Marked browser as saved", level="info")
-                request.browser.save_browser = True
+                save_browser = True
+            if request.browser.save_browser != save_browser:
+                request.browser.save_browser = save_browser
                 request.browser.save()
-            else:
-                request.browser.save_browser = False
-                request.browser.save()
+                if save_browser:
+                    custom_log(request, "Marked browser as remembered", level="info")
+                    add_log_entry(request, "Marked browser as remembered", "eye")
+                else:
+                    custom_log(request, "Marked browser as not remembered", level="info")
+                    add_log_entry(request, "Marked browser as not remembered", "eye-slash")
 
             if not status:
                 # If OTP from SMS did not match, also test for Authenticator OTP.

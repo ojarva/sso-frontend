@@ -22,19 +22,36 @@ strong authentication</a>.</p>
 
 {% endif %}
 
-
+{% if auth_level != "strong_skipped" %}
 {% if remembered %}
-<p>You are <span class="popover-link" data-toggle="popover" data-trigger="hover"
-title="Remembered browser" data-content="You have indicated this is your private browser. Your authentication is remembered
-over browser restarts. You might need enter your credentials from time to time.">remembered on this browser</span>.</p>
+	<p>You are <span class="popover-link" data-toggle="popover" data-trigger="hover"
+	title="Remembered browser" data-content="You have indicated this is your private browser. Your authentication is remembered
+	over browser restarts. You might need enter your credentials from time to time.">remembered on this browser</span>.</p>
+
+	<form method="post" action="?{{ get_params }}">
+	{% csrf_token %}
+	<span class="tooltip-link" title="If you click this, your session will not persist over browser restarts">
+	<button class="btn btn-default" name="my_computer" value="off">Forget this browser</button>
+	</span>
+	</form>
+
 {% else %}
-<p>You will be signed out <span class="popover-link" data-toggle="popover" data-trigger="hover"
-title="Why?" data-content="You have not indicated you want to be remembered on this computer. When you click 'Sign out' below or
-close your browser, you will be signed out.">when you close the browser</span>.</p>
+	<p>You will be signed out <span class="popover-link" data-toggle="popover" data-trigger="hover"
+	title="Why?" data-content="You have not indicated you want to be remembered on this computer. When you click 'Sign out' below or
+	close your browser, you will be signed out.">when you close the browser</span>.</p>
+
+	<form method="post" action="?{{ get_params }}">
+	{% csrf_token %}
+	<span class="tooltip-link" title="If you click this, your session will persist over browser restarts">
+	<button class="btn btn-default" name="my_computer" value="on">Remember me on this browser</button>
+	</span>
+	</form>
 {% endif %}
+{% endif %}
+
 		<form action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}" method="POST">
 			{% csrf_token %}
-			<input class="btn btn-large" type="submit" name="logout" value="Sign out">
+			<input class="btn btn-lg" type="submit" name="logout" value="Sign out">
 		</form>
 </div>
 {% endblock %}
