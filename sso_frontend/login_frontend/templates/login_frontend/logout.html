@@ -38,7 +38,7 @@ You are now signed out.
 
 <form method="POST" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">
         {% csrf_token %}
-        <button class="btn btn-large btn-primary" type="submit">Sign out</button>
+        <button class="btn btn-lg btn-primary" type="submit">Sign out</button>
 </form>
 
 <p>Don't want to sign out? <a href="{% url 'login_frontend.views.indexview' %}?{{ get_params }}">Skip.</a></p>

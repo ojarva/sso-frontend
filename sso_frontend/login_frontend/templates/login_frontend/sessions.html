@@ -16,7 +16,7 @@
  <form method="post" action="{% url 'login_frontend.views.sessions' %}?{{ get_params }}">
   {% csrf_token %}
   <input type="hidden" name="logout" value="all">
-  <button type="submit" class="btn-large btn btn-danger">Sign out all my sessions</button>
+  <button type="submit" class="btn-lg btn btn-danger">Sign out all my sessions</button>
  </form>
 </p>
 

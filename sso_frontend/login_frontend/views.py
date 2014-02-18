@@ -867,7 +867,7 @@ def authenticate_with_emergency(request):
         pass
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='15/15s', ratekey='15s', block=True, method=["POST", "GET"], skip_if=is_authenticated)
+@ratelimit(rate='60/15s', ratekey='15s', block=True, method=["POST", "GET"], skip_if=is_authenticated)
 #@protect_view("logoutview", required_level=Browser.L_UNAUTH) # No authentication required to prevent silly sign-in - logout cycle.
 def logoutview(request):
     """ Handles logout as well as possible. 
