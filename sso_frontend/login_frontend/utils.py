@@ -52,17 +52,19 @@ def get_and_refresh_user(username):
 def refresh_user(user):
     username = user.get("username")
     log.info("Updating %s" % username)
-    first_name = user.get("first_name")
-    last_name = user.get("last_name")
+    first_name = user.get("first_name", "Unknown")
+    last_name = user.get("last_name", "Unknown")
     email = user.get("email", "")
     phone1 = user.get("phone1")
     phone2 = user.get("phone2")
     if username is None or email is None:
-        log.debug("Username or email is none - skip")
+        log.debug("%s - %s - Username or email is none - skip" % (username, email))
         return
-    if first_name is None or last_name is None:
-        log.debug("First name or last name is none - skip")
-        return
+
+    if first_name is None:
+        first_name = "Unknown"
+    if last_name is None:
+        last_name = "Unknown"
 
     (user, created1) = DjangoUser.objects.get_or_create(username=username, 
             defaults={"email": email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": timezone.now(), "date_joined": timezone.now()})
