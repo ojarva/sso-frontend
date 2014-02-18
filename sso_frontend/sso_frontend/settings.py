@@ -2,7 +2,7 @@ import os.path
 
 # Django settings for sso_frontend project.
 
-URL_PREFIX = "/v2"
+URL_PREFIX = ""
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -293,14 +293,41 @@ LOGGING = {
             'formatter': 'standard',
         },
 
+        'logfile_django': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/django",
+            'maxBytes': 50000000,
+            'backupCount': 10,
+            'formatter': 'standard',
+        },
+
+        'logfile_errors': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/errors",
+            'maxBytes': 50000000,
+            'backupCount': 10,
+            'formatter': 'standard',
+        },
+
+        'logfile_timing': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/timing",
+            'maxBytes': 500000000,
+            'backupCount': 100,
+            'formatter': 'standard',
+        },
+
     },
     'loggers': {
         'django': {
-          'handlers': ['logfile_main'],
-          'propagate': True,
+          'handlers': ['logfile_django'],
+          'propagate': False,
         },
         'django.request': {
-            'handlers': ['mail_admins'],
+            'handlers': ['mail_admins', 'logfile_errors'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -317,6 +344,11 @@ LOGGING = {
         'saml2idp': {
           'handlers': ['logfile_saml'],
           'propagate': True,
+          'level': 'DEBUG',
+        },
+        'timing_data': {
+          'handlers': ['logfile_timing'],
+          'propagate': False,
           'level': 'DEBUG',
         },
         '': {

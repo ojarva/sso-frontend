@@ -38,14 +38,12 @@ a few moments.</p>
 
 <form class="form" role="form" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">
   {% csrf_token %}
-  <div class="form-group control-group">
-    <label for="id_otp" control-label">One-time password</label>
-    <input class="form-control autofocus" id="id_otp" placeholder="123456" title="You should enter 6-digit one-time password here." name="otp" type="tel" data-len="5-6" pattern="[0-9 ]*" autocomplete='off' />
-    <span class="glyphicon form-control-feedback"></span>
-  </div>
+{% include 'login_frontend/snippets/otp_input.html' %}
   <div class="form-group">
        <button class="btn btn-large btn-primary" type="submit">Sign in <span class="glyphicon glyphicon-remove-circle"></span></button>
   </div>
+{% include 'login_frontend/snippets/remember_me.html' %}
+<input type="hidden" name="timing_data" value="" id="timing_data">
 </form>
 <p><form method="post" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">{% csrf_token %}<button class="btn btn-link">Not {{ first_name }}?</button></form></p>
 

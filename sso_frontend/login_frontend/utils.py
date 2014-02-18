@@ -8,6 +8,7 @@ from django.utils import timezone
 from models import Browser, User
 import _slumber_auth
 import geoip2
+import time
 import geoip2.database
 import geoip2.errors
 import geoip2.models
@@ -15,8 +16,10 @@ import ipaddr
 import slumber
 import urllib
 import logging
+import json
 
 log = logging.getLogger(__name__)
+timing_log = logging.getLogger("timing_data")
 
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
@@ -36,6 +39,9 @@ def is_private_net(ip_address):
             ip in network)):
             return description
     return False
+
+def save_timing_data(username, user_agent, timing_data, bid_public):
+    timing_log.info("%s - %s - %s - %s - %s" % (time.time(), username, user_agent, timing_data, bid_public))
 
 
 def get_and_refresh_user(username):

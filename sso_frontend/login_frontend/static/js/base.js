@@ -5,7 +5,7 @@ function login_ping() {
   }
  });
 
- setTimeout(login_ping, 30000);
+ setTimeout(login_ping, 300000);
 }
 
 $(document).ready(function() {
@@ -17,6 +17,6 @@ $(document).ready(function() {
   var destination_class = $("."+ $(this).data("open-class"));
   $(destination_class).toggleClass("hidden");
  });
- setTimeout(login_ping, 30000);
-
+ setTimeout(login_ping, 300000);
+ $(".track_content").timing({"destination": "#timing_data"});
 });
