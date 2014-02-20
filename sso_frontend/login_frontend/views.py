@@ -1,9 +1,11 @@
+from django.utils.safestring import mark_safe
 from StringIO import StringIO
 from django.contrib import auth as django_auth
 from django.contrib import messages
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render_to_response
@@ -382,6 +384,7 @@ def authenticate_with_authenticator(request):
     if not user.strong_authenticator_secret:
         # Authenticator is not configured. Redirect back to secondstep main screen
         custom_log(request, "Authenticator is not configured, but user accessed Authenticator view. Redirect back to secondstepauth", level="error")
+        messages.warning(request, "You tried to authenticate with Authenticator. However, according to our records, you don't have it configured. Please sign in and go to settings to do that.")
         return custom_redirect("login_frontend.views.secondstepauth", request.GET)
 
     if request.method == "POST" and request.POST.get("skip"):
@@ -448,6 +451,7 @@ def authenticate_with_authenticator(request):
                 # Mark authenticator configuration as valid. User might have configured
                 # authenticator but aborted without entering validation code.
                 user.strong_authenticator_used = True
+                user.strong_configured = True
                 user.save()
 
                 # TODO: determine the levels automatically.
@@ -457,8 +461,8 @@ def authenticate_with_authenticator(request):
                 custom_log(request, "Redirecting back to SSO provider", level="debug")
                 return redir_to_sso(request)
             else:
-                custom_log(request, "Incorrect OTP provided: %s" % message, level="warn")
-                add_log_entry(request, "Incorrect OTP provided: %s" % message, "warning")
+                custom_log(request, "Incorrect Authenticator OTP provided: %s" % message, level="warn")
+                add_log_entry(request, "Incorrect Authenticator OTP provided: %s" % message, "warning")
                 ret["invalid_otp"] = message
     else:
         custom_log(request, "GET request", level="debug")
@@ -492,7 +496,7 @@ def authenticate_with_sms(request):
     ret = {}
     if not (user.primary_phone or user.secondary_phone):
         # Phone numbers are not available.
-        custom_log(request, "No phone number available - unable to authenticate.", level="warning")
+        custom_log(request, "No phone number available - unable to authenticate.", level="error")
         return render_to_response("login_frontend/no_phone_available.html", ret, context_instance=RequestContext(request))
 
     skips_available = user.strong_skips_available
@@ -519,6 +523,9 @@ def authenticate_with_sms(request):
         custom_log(request, "Strong authentication is not configured yet.", level="debug")
         # No strong authentication is configured.
         ret["strong_not_configured"] = True
+        if user.strong_authenticator_secret:
+            ret["authenticator_generated"] = True
+
     if user.primary_phone_changed:
         custom_log(request, "Phone number has changed.", level="debug")
         # Phone number changed. For security reasons...
@@ -583,8 +590,8 @@ def authenticate_with_sms(request):
                     custom_log(request, "OTP login failed: %s" % message, level="warn")
                     add_log_entry(request, "OTP login failed: %s" % message, "warning")
                 else:
-                    custom_log(request, "Incorrect OTP", level="warn")
-                    add_log_entry(request, "Incorrect OTP", "warning")
+                    custom_log(request, "Incorrect SMS OTP", level="warn")
+                    add_log_entry(request, "Incorrect SMS OTP", "warning")
                     ret["authentication_failed"] = True
     else:
         custom_log(request, "GET request", level="debug")
@@ -596,13 +603,15 @@ def authenticate_with_sms(request):
         for phone in (user.primary_phone, user.secondary_phone):
             if phone:
                 status = send_sms(phone, sms_text)
-                custom_log(request, "Sent OTP to %s" % phone)
-                add_log_entry(request, "Sent OTP code to %s" % phone, "info")
                 if not status:
                     ret["message"] = "Sending SMS to %s failed." % phone
                     custom_log(request, "Sending SMS to %s failed" % phone, level="warn")
                     add_log_entry(request, "Sending SMS to %s failed" % phone)
-            
+                else:
+                    custom_log(request, "Sent OTP to %s" % phone)
+                    add_log_entry(request, "Sent OTP code to %s" % phone, "info")
+                    phone_redacted = "%s...%s" % (phone[0:6], phone[-4:])
+                    messages.info(request, mark_safe("Sent SMS to <span class='tooltip-link' title='This is redacted to protect your privacy'>%s</span>" % phone_redacted))
     ret["expected_sms_id"] = request.browser.sms_code_id
     ret["form"] = form
     ret["get_params"] = urllib.urlencode(request.GET)
@@ -651,6 +660,7 @@ def sessions(request):
                 try:
                     browser_logout = Browser.objects.get(bid_public=bid)
                     if browser_logout.user != user:
+                        custom_log(request, "Tried to sign out browser that belongs to another user", level="warn")
                         ret["message"] = "That browser belongs to another user."
                     else:
                         if browser_logout == request.browser:
@@ -660,7 +670,7 @@ def sessions(request):
                         browser_logout.save()
                         custom_log(request, "Signed out browser %s" % browser_logout.bid_public, level="info")
                         add_log_entry(request, "Signed out browser %s" % browser_logout.bid_public, "sign-out")
-                        add_log_entry(request, "Signed out by browser %s" % request.browser.bid_public, "sign-out", bid_public=browser_logout.bid_public)
+                        add_log_entry(request, "Signed out from browser %s" % request.browser.bid_public, "sign-out", bid_public=browser_logout.bid_public)
                         messages.success(request, "Signed out browser %s" % browser_logout.get_readable_ua())
                 except Browser.DoesNotExist:
                     ret["message"] = "Invalid browser"
@@ -719,8 +729,20 @@ def view_log(request, **kwargs):
         except Browser.DoesNotExist:
             pass
 
+    paginator = Paginator(entries, 100)
+    page = request.GET.get("page")
+    try:
+        entries = paginator.page(page)
+    except PageNotAnInteger:
+        entries = paginator.page(1)
+        page = 1
+    except EmptyPage:
+        entries = paginator.page(paginator.num_pages)
+        page = paginator.num_pages
+    entries.pagerange = range(1, paginator.num_pages+1)
+
     entries_out = []
-    for entry in entries[0:100]:
+    for entry in entries:
        browser = browsers.get(entry.bid_public)
        if not browser:
            try:
@@ -731,7 +753,7 @@ def view_log(request, **kwargs):
        entry.browser = browser
        entries_out.append(entry)
 
-    ret["entries"] = entries_out
+    ret["entries"] = entries
 
     response = render_to_response("login_frontend/view_log.html", ret, context_instance=RequestContext(request))
     return response
@@ -805,7 +827,7 @@ def configure_authenticator(request):
     user = request.browser.user
     if request.method != "POST":
         custom_log(request, "Tried to enter Authenticator configuration view with GET request. Redirecting back. Referer: %s" % request.META.get("HTTP_REFERRER"), level="info")
-        messages.info(request, "You can't access configuration page directly")
+        messages.info(request, "You can't access configuration page directly. Please click a link below to configure Authenticator.")
         return custom_redirect("login_frontend.views.configure_strong", request.GET)
 
     ret["back_url"] = redir_to_sso(request).url
@@ -850,9 +872,6 @@ def configure_authenticator(request):
     request.browser.authenticator_qr_nonce = create_browser_uuid()
     ret["authenticator_qr_nonce"] = request.browser.authenticator_qr_nonce
     request.browser.save()
-
-    if request.POST.get("show_manual") == "true":
-        ret["show_manual"] = True
 
     ret["get_params"] = urllib.urlencode(request.GET)
     response = render_to_response("login_frontend/configure_authenticator.html", ret, context_instance=RequestContext(request))

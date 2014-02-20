@@ -13,6 +13,26 @@
 {% endif %}
 
 {% if entries %}
+
+{% if entries.pagerange %}
+<ul class="pagination">   
+ {% if entries.has_previous %}
+ <li><a href="?page={{ entries.previous_page_number }}">&laquo;</a></li>
+ {% else %}
+ <li class="disabled"><a href="#">&laquo;</a></li>
+ {% endif %}
+ {% for page in entries.pagerange %}
+ <li{% if entries.number == page %} class="active"{% endif %}><a href="?page={{ page }}">{{ page }}</a></li>
+ {% endfor %}
+
+ {% if entries.has_next %}
+ <li><a href="?page={{ entries.next_page_number }}">&raquo;</a></li>
+ {% else %}
+ <li class="disabled"><a href="#">&raquo;</a></li>
+ {% endif %}
+</ul>
+{% endif %}
+
 <div class="table-responsive">
 <table class="table table-striped">
 <thead>
@@ -38,7 +58,24 @@
 </table>
 </div>
 
-<p><small>This list includes only last 100 entries.</small></p>
+{% if entries.pagerange %}
+<ul class="pagination">   
+ {% if entries.has_previous %}
+ <li><a href="?page={{ entries.previous_page_number }}">&laquo;</a></li>
+ {% else %}
+ <li class="disabled"><a href="#">&laquo;</a></li>
+ {% endif %}
+ {% for page in entries.pagerange %}
+ <li{% if entries.number == page %} class="active"{% endif %}><a href="?page={{ page }}">{{ page }}</a></li>
+ {% endfor %}
+
+ {% if entries.has_next %}
+ <li><a href="?page={{ entries.next_page_number }}">&raquo;</a></li>
+ {% else %}
+ <li class="disabled"><a href="#">&raquo;</a></li>
+ {% endif %}
+</ul>
+{% endif %}
 
 <p>
 {% for your_browser in browsers %}
