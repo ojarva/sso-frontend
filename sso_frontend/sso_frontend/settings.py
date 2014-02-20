@@ -366,4 +366,30 @@ LOGGING = {
     }
 }
 
-from local_settings import *
+
+
+
+from M2Crypto import DSA
+IP_NETWORKS = [
+]
+
+
+PUBTKT_PRIVKEY = None
+PUBTKT_ALLOWED_DOMAINS=[]
+
+FUM_API_ENDPOINT=None
+FUM_ACCESS_TOKEN=None
+
+OPENID_PROVIDER_AX_EXTENSION=True
+OPENID_FAILED_DISCOVERY_AS_VALID=True
+OPENID_TRUSTED_ROOTS=[]
+
+
+try:
+    from local_settings import *
+except ImportError:
+    pass
+
+if PUBTKT_PRIVKEY is None:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("PUBTKT_PRIVKEY is not defined.")
