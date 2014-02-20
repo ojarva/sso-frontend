@@ -53,7 +53,7 @@
 	</form>
 
 	{% if not user.strong_sms_always %}
-		<p>If you don't want to make your life easier, you can opt for always receiving SMS messages:</p>
+		<p>If you want to live dangerously, you can opt for always receiving SMS messages:</p>
 
 		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
 		        {% csrf_token %}

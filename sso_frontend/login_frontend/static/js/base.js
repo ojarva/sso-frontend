@@ -13,6 +13,7 @@ $(document).ready(function() {
  $(".tooltip-link").tooltip();
  $(".autofocus").focus();
  $(".autoselect").focus(function() {$(this).select();});
+ $(".autosubmit").submit();
  $(".toggle").click(function() {
   var destination_class = $("."+ $(this).data("open-class"));
   $(destination_class).toggleClass("hidden");

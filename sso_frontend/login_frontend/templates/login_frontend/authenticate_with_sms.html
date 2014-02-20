@@ -27,6 +27,9 @@ Your phone number has changed. For security reasons, you must reconfigure strong
 {% elif strong_not_configured %}
 <div class="alert alert-warning">
 You have not configured strong authentication.
+{% if authenticator_generated %}
+You seem to have Authenticator generated, but not validated. If you have it configured, you can <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">proceed with it</a>.
+{% endif %}
 </div>
 
 <p>You should receive SMS message with one-time password #{{ expected_sms_id }} shortly. Please enter it below. On the next step, you can set your preferences for authentication. After that, you'll be redirected back to service you tried to access.</p>
