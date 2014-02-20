@@ -95,6 +95,10 @@ def openid_server(request):
         trust_root_valid = trust_root_validation(orequest)
         validated = False
 
+        # Allow per-url exceptions for trust roots.
+        if orequest.trust_root in settings.OPENID_TRUSTED_ROOTS:
+            validated = True
+
         if conf.FAILED_DISCOVERY_AS_VALID:
             if trust_root_valid == 'DISCOVERY_FAILED':
                 validated = True
