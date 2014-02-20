@@ -2,13 +2,21 @@
 
 
 {% block container %}
+<div>
+<form role="form" class="form-inline" method="get" action="{% url 'admin_frontend.views.search' %}">
+<div class="form-group">
+ <input class="form-control" type="search" name="q" placeholder="Search" value="{{ q }}">
+</div>
+</form>
+</div>
+
       <div class="masthead">
         <ul class="nav nav-justified">
-          <li><a href="{% url 'admin_frontend.views.admin_indexview' %}">Main</a></li>
-          <li><a href="{% url 'admin_frontend.views.admin_users' %}">Users</a></li>
-          <li><a href="{% url 'admin_frontend.views.admin_logins' %}">Logins</a></li>
-          <li><a href="{% url 'admin_frontend.views.admin_browsers' %}">Browsers</a></li>
-          <li><a href="{% url 'admin_frontend.views.admin_logs' %}">Logs</a></li>
+          <li><a href="{% url 'admin_frontend.views.indexview' %}">Main</a></li>
+          <li><a href="{% url 'admin_frontend.views.users' %}">Users</a></li>
+          <li><a href="{% url 'admin_frontend.views.logins' %}">Logins</a></li>
+          <li><a href="{% url 'admin_frontend.views.browsers' %}">Browsers</a></li>
+          <li><a href="{% url 'admin_frontend.views.logs' %}">Logs</a></li>
         </ul>
       </div>
 

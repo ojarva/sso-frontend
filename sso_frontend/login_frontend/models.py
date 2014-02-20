@@ -163,6 +163,17 @@ class Browser(models.Model):
 
     forced_sign_out = models.BooleanField(default=False)
 
+    def has_any_activity(self):
+        if self.user != None:
+            return True
+        if BrowserUsers.objects.filter(browser=self).count() > 0:
+            return True
+        if BrowserLogin.objects.filter(browser=self).count() > 0:
+            return True
+        if Log.objects.filter(bid_public=self.bid_public).count() > 0:
+            return True
+
+
     def get_cookie(self):
         return [
            (Browser.C_BID, {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),

@@ -4,7 +4,7 @@
 
 <div class="row">
 <div class="col-md-4">
-<h2><a href="{% url 'admin_frontend.views.admin_users' %}">Users</a></h2>
+<h2><a href="{% url 'admin_frontend.views.users' %}">Users</a></h2>
 
 <p>There's {{ users }} user{{ users|pluralize }}.</ul>
 
@@ -13,29 +13,30 @@
 <li>{{ num_authenticator_used }} have used their latest Authenticator configuration successfully.</li>
 <li>{{ num_sms_always }} opted to primarily use SMS authentication.</li>
 <li>{{ num_strong_configured_not_used }} did configure Authenticator, but did not use it.</li>
+<li>{{ num_skips }} have skipped 2-factor authentication and did not configure it.</li>
 </div>
 
 <div class="col-md-4">
-<h2><a href="{% url 'admin_frontend.views.admin_logins' %}">Logins</a></h2>
+<h2><a href="{% url 'admin_frontend.views.logins' %}">Logins</a></h2>
 
 <p>{{ active_logins }} active SSO authorization{{ active_logins|pluralize }}. Last 10 logins:</p>
 
 <ul>
 {% for alogin in last_logins %}
-<li><a href="{% url 'admin_frontend.views.admin_userdetails' alogin.user.username %}">{{ alogin.user.username }}</a> with {{ alogin.sso_provider }} <span class="tooltip-link" title="{{ alogin.auth_timestamp }}">{{ alogin.auth_timestamp|timesince }} ago</span></li>
+<li><a href="{% url 'admin_frontend.views.userdetails' alogin.user.username %}">{{ alogin.user.username }}</a> with {{ alogin.sso_provider }} <span class="tooltip-link" title="{{ alogin.auth_timestamp }}">{{ alogin.auth_timestamp|timesince }} ago</span></li>
 {% endfor %}
 </ul>
 
 </div>
 
 <div class="col-md-4">
-<h2><a href="{% url 'admin_frontend.views.admin_browsers' %}">Browsers</a></h2>
+<h2><a href="{% url 'admin_frontend.views.browsers' %}">Browsers</a></h2>
 
 <p>{{ browsers }} browser{{ browsers|pluralize }}. Browsers with currently active users:</p>
 
 <ul>
 {% for abrowser in active_browsers %}
-<li><a href="{% url 'admin_frontend.views.admin_userdetails' abrowser.user.username %}">{{ abrowser.user.username }}</a> - <a href="{% url "browser_logs" abrowser.bid_public %}">{{ abrowser.get_readable_ua }}</a></li>
+<li><a href="{% url 'admin_frontend.views.userdetails' abrowser.user.username %}">{{ abrowser.user.username }}</a> - <a href="{% url "browser_logs" abrowser.bid_public %}">{{ abrowser.get_readable_ua }}</a></li>
 {% endfor %}
 </ul>
 

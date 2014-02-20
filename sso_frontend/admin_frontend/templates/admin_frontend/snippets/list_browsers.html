@@ -11,11 +11,11 @@
 <tbody>
 {% for abrowser in browsers %}
 <tr>
-<td>{% if abrowser.user %}<a href="{% url 'admin_frontend.views.admin_userdetails' abrowser.user.username %}">{{ abrowser.user.username }}</a>{% endif %}</td>
+<td>{% if abrowser.user %}<a href="{% url 'admin_frontend.views.userdetails' abrowser.user.username %}">{{ abrowser.user.username }}</a>{% endif %}</td>
 <td>{% for icon in abrowser.get_ua_icons %}<i class="fa fa-{{ icon }}"></i>{% endfor %}</td>
 <td><span class="tooltip-link" title="{{ abrowser.ua }}">{{ abrowser.get_readable_ua }}</span></td>
 <td><span class="tooltip-link" title="{{ abrowser.created|timesince }} ago">{{ abrowser.created }}</span></td>
-<td><a class="btn btn-sm btn-info" href="{% url 'admin_frontend.views.admin_browserdetails' abrowser.bid_public %}">Details</a> 
+<td><a class="btn btn-sm btn-info" href="{% url 'admin_frontend.views.browserdetails' abrowser.bid_public %}">Details</a> 
 {% if abrowser.user %}<button class="btn btn-sm btn-danger" disabled>Logout</button>{% endif %}
 </td>
 </tr>

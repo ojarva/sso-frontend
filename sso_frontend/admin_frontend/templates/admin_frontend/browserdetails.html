@@ -10,7 +10,7 @@
 <tbody>
 <tr>
 <th>Current user</th>
-<td>{% if abrowser.user %}<a href="{% url 'admin_frontend.views.admin_userdetails' abrowser.user.username %}">{{ abrowser.user.username }}</a>{% else %}-{% endif %}</td>
+<td>{% if abrowser.user %}<a href="{% url 'admin_frontend.views.userdetails' abrowser.user.username %}">{{ abrowser.user.username }}</a>{% else %}-{% endif %}</td>
 </tr>
 
 <tr>

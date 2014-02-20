@@ -1,0 +1,54 @@
+{% extends "admin_frontend/base.html" %}
+
+{% block admin_content %}
+
+<h2>Search results for {{ q }}</h2>
+
+<h2>Users</h2>
+
+{% if users %}
+<ul>
+{% for auser in users %}
+<li><a href="{% url 'admin_frontend.views.userdetails' auser.username %}">{{ auser.username }}</a></li>
+{% endfor %}
+</ul>
+{% else %}
+<p>No users matching this query.</p>
+{% endif %}
+
+{% if active_browsers_for_user %}
+<h2>Active browsers for {{ q }}</h2>
+<ul>
+{% for abrowser in active_browsers_for_user %}
+<li><a href="{% url 'admin_frontend.views.browserdetails' abrowser.bid_public %}">{{ abrowser.get_readable_ua }}</a></li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if all_browsers_for_user %}
+<h2>All browsers for {{ q }}</h2>
+<ul>
+{% for abrowser in all_browsers_for_user %}
+<li><a href="{% url 'admin_frontend.views.browserdetails' abrowser.browser.bid_public %}">{{ abrowser.browser.get_readable_ua }}</a>, last seen <span class="tooltip-link" title="At {{ abrowser.last_seen }}">{{ abrowser.last_seen|timesince }} ago</span></li>
+{% endfor %}
+</ul>
+{% endif %}
+
+
+
+<h2>Browsers</h2>
+
+{% if browsers %}
+<ul>
+{% for abrowser in browsers %}
+<li><a href="{% url 'admin_frontend.views.browserdetails' abrowser.bid_public %}">{{ abrowser.get_readable_ua }}{% if abrowser.user %}, {{ abrowser.user.username }}{% endif %}</a></li>
+{% endfor %}
+</ul>
+
+{% else %}
+<p>No browsers matching this query.</p>
+{% endif %}
+
+
+
+{% endblock %}

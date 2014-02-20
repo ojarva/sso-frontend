@@ -1,6 +1,26 @@
 {% load ip_to_geoip %}
 
 {% if entries %}
+
+{% if entries.pagerange %}
+<ul class="pagination">
+ {% if entries.has_previous %}
+ <li><a href="?page={{ entries.previous_page_number }}">&laquo;</a></li>
+ {% else %}
+ <li class="disabled"><a href="#">&laquo;</a></li>
+ {% endif %}
+ {% for page in entries.pagerange %}
+ <li{% if entries.number == page %} class="active"{% endif %}><a href="?page={{ page }}">{{ page }}</a></li>
+ {% endfor %}
+
+ {% if entries.has_next %}
+ <li><a href="?page={{ entries.next_page_number }}">&raquo;</a></li>
+ {% else %}
+ <li class="disabled"><a href="#">&raquo;</a></li>
+ {% endif %}
+</ul>
+{% endif %}
+
 <div class="table-responsive">
 <table class="table table-striped">
 <thead>
@@ -17,7 +37,7 @@
 {% for entry in entries %}
 <tr>
 <td><span class="tooltip-link" title="{{ entry.timestamp|timesince }} ago">{{ entry.timestamp }}</span></td>
-<td><a href="{% url 'admin_frontend.views.admin_userdetails' entry.user.username %}">{{ entry.user.username }}</a></td>
+<td><a href="{% url 'admin_frontend.views.userdetails' entry.user.username %}">{{ entry.user.username }}</a></td>
 <td><span class="tooltip-link" title="{{ entry.remote_ip }}">{{ entry.remote_ip|ip_to_geoip }}</span></td>
 <td><span class="tooltip-link" title="{{ entry.browser.ua }}">{% for icon in entry.browser.get_ua_icons %} <i class="fa fa-{{icon}}"></i>{% endfor %}</a></td>
 <td>{{ entry.message }}</td>
@@ -27,8 +47,6 @@
 </tbody>
 </table>
 </div>
-
-<p><small>This list includes only last 100 entries.</small></p>
 
 <p>
 {% for your_browser in browsers %}

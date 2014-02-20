@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render_to_response
@@ -12,6 +13,7 @@ from django.template import RequestContext
 from django.utils import timezone
 from django.utils.timesince import timeuntil
 from django.views.decorators.http import require_http_methods
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from login_frontend.helpers import *
 from login_frontend.models import *
 from ratelimit.decorators import ratelimit
@@ -48,8 +50,8 @@ def custom_log(request, message, **kwargs):
     method("%s - %s - %s - %s", remote_addr, username, bid_public, message)
 
 
-@protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
-def admin_indexview(request):
+@protect_view("indexview", required_level=Browser.L_STRONG, admin_only=True)
+def indexview(request):
     custom_log(request, "Admin: frontpage")
     ret = {}
     ret["users"] = User.objects.all().count()
@@ -60,6 +62,7 @@ def admin_indexview(request):
     ret["num_sms_always"] = User.objects.filter(strong_sms_always=True).count()
     ret["num_authenticator_used"] = User.objects.filter(strong_authenticator_used=True).count()
     ret["num_strong_configured_not_used"] = User.objects.exclude(strong_authenticator_generated_at=None).filter(strong_authenticator_used=False).count()
+    ret["num_skips"] = User.objects.filter(strong_skips_available__gt=0).filter(strong_skips_available__lt=6).filter(strong_configured=False).count()
 
     active_browsers = Browser.objects.exclude(user=None)
     ret["active_browsers"] = []
@@ -73,15 +76,27 @@ def admin_indexview(request):
 
     return render_to_response("admin_frontend/indexview.html", ret, context_instance=RequestContext(request))
 
-@protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
-def admin_users(request):
+@protect_view("users", required_level=Browser.L_STRONG, admin_only=True)
+def users(request):
     custom_log(request, "Admin: users")
     ret = {}
     ret["users"] = User.objects.all().order_by('username')
     return render_to_response("admin_frontend/users.html", ret, context_instance=RequestContext(request))
 
-@protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
-def admin_userdetails(request, **kwargs):
+@protect_view("search", required_level=Browser.L_STRONG, admin_only=True)
+def search(request):
+    q = request.GET.get("q")
+    ret = {}
+    ret["q"] = q
+    ret["browsers"] = Browser.objects.filter(Q(bid_public=q) | Q(ua__icontains=q))[0:100]
+    ret["active_browsers_for_user"] = Browser.objects.filter(user__username=q)
+    ret["all_browsers_for_user"] = BrowserUsers.objects.filter(user__username=q)
+    ret["users"] = User.objects.filter(Q(username=q) | Q(email=q) | Q(primary_phone__contains=q) | Q(secondary_phone__contains=q))[0:100]
+
+    return render_to_response("admin_frontend/search.html", ret, context_instance=RequestContext(request))
+
+@protect_view("userdetails", required_level=Browser.L_STRONG, admin_only=True)
+def userdetails(request, **kwargs):
     ret = {}
     username = kwargs.get("username")
     ret["auser"] = get_object_or_404(User, username=username)
@@ -108,7 +123,7 @@ def admin_userdetails(request, **kwargs):
             log_entry = Log(user=user, message="%s revoked strong authentication settings and signed out all sessions" % request.browser.user.username, status="exclamation-circle")
             log_entry.save()
             messages.info(request, "Revoked Authenticator configuration for %s" % username)
-        return HttpResponseRedirect("admin_frontend.views.admin_userdetails", (username, ))
+        return HttpResponseRedirect("admin_frontend.views.userdetails", (username, ))
 
     ret["entries"] = Log.objects.filter(user=ret["auser"])[0:100]
 
@@ -117,22 +132,35 @@ def admin_userdetails(request, **kwargs):
     ret["logins"] = BrowserLogin.objects.filter(user=ret["auser"])
     return render_to_response("admin_frontend/userdetails.html", ret, context_instance=RequestContext(request))
 
-@protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
-def admin_logins(request):
+@protect_view("logins", required_level=Browser.L_STRONG, admin_only=True)
+def logins(request):
     ret = {}
-    custom_log(request, "Admin: list of logins")
-    ret["logins"] = BrowserLogin.objects.all()
+    custom_log(request, "Admin: list of active logins")
+    logins = BrowserLogin.objects.filter(signed_out=False).filter(expires_at__lte=timezone.now())
+    paginator = Paginator(logins, 100)
+    page = request.GET.get("page")
+    try:
+        logins = paginator.page(page)
+    except PageNotAnInteger:
+        logins = paginator.page(1)
+        page = 1
+    except EmptyPage:
+        logins = paginator.page(paginator.num_pages)
+        page = paginator.num_pages
+    logins.pagerange = range(1, paginator.num_pages+1)
+    ret["logins"] = logins
+
     return render_to_response("admin_frontend/logins.html", ret, context_instance=RequestContext(request))
 
-@protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
-def admin_browsers(request):
+@protect_view("browsers", required_level=Browser.L_STRONG, admin_only=True)
+def browsers(request):
     ret = {}
     custom_log(request, "Admin: list of browsers")
     ret["browsers"] = Browser.objects.all()
     return render_to_response("admin_frontend/browsers.html", ret, context_instance=RequestContext(request))
 
-@protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
-def admin_browserdetails(request, **kwargs):
+@protect_view("browserdetails", required_level=Browser.L_STRONG, admin_only=True)
+def browserdetails(request, **kwargs):
     ret = {}
     bid_public = kwargs.get("bid_public")
     ret["abrowser"] = get_object_or_404(Browser, bid_public=bid_public)
@@ -144,14 +172,14 @@ def admin_browserdetails(request, **kwargs):
     custom_log(request, "Admin: browser details for %s (%s)" % (bid_public, username))
     return render_to_response("admin_frontend/browserdetails.html", ret, context_instance=RequestContext(request))
 
-@protect_view("admin_indexview", required_level=Browser.L_STRONG, admin_only=True)
-def admin_logs(request, **kwargs):
+@protect_view("logs", required_level=Browser.L_STRONG, admin_only=True)
+def logs(request, **kwargs):
     ret = {}
     custom_log(request, "Admin: logs")
     bid_public = kwargs.get("bid_public")
     username = kwargs.get("username")
     if bid_public:
-        ret["entries"] = Log.objects.filter(bid_public=bid_public)[0:1000]
+        entries = Log.objects.filter(bid_public=bid_public)
         username = None
         try:
             ret["abrowser"] = Browser.objects.get(bid_public=bid_public)
@@ -163,9 +191,24 @@ def admin_logs(request, **kwargs):
 
     elif username:
         ret["auser"] = get_object_or_404(username=username)
-        ret["entries"] = Log.objects.filter(user=ret["auser"])[0:1000]
+        entries = Log.objects.filter(user=ret["auser"])
         custom_log(request, "Admin: entries for %s" % username)
     else:
         custom_log(request, "Admin: all entries")
-        ret["entries"] = Log.objects.all()[0:1000]
+        entries = Log.objects.all()
+
+    paginator = Paginator(entries, 100)
+    page = request.GET.get("page")
+    try:
+        entries = paginator.page(page)
+    except PageNotAnInteger:
+        entries = paginator.page(1)
+        page = 1
+    except EmptyPage:
+        entries = paginator.page(paginator.num_pages)
+        page = paginator.num_pages
+    entries.pagerange = range(1, paginator.num_pages+1)
+    ret["entries"] = entries
+
+
     return render_to_response("admin_frontend/logs.html", ret, context_instance=RequestContext(request))
