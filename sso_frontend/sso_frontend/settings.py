@@ -4,7 +4,7 @@ import os.path
 
 URL_PREFIX = ""
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -155,7 +155,9 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    'compressor.finders.CompressorFinder',
 )
+
 
 
 # List of callables that know how to import templates from various sources.
@@ -217,6 +219,9 @@ TEMPLATE_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
+COMPRESS_ENABLED = True
+#COMPRESS_OFFLINE = True
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -224,6 +229,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'compressor',
     'login_frontend',
     'openid_provider',
     'south',
