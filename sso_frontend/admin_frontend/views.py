@@ -51,7 +51,7 @@ def custom_log(request, message, **kwargs):
 
 
 @protect_view("indexview", required_level=Browser.L_STRONG, admin_only=True)
-def indexview(request):
+def indexview(request, **kwargs):
     custom_log(request, "Admin: frontpage")
     ret = {}
     ret["users"] = User.objects.all().count()
@@ -74,6 +74,9 @@ def indexview(request):
 
     ret["admins"] = User.objects.filter(is_admin=True)
 
+    if kwargs.get("body_only"):
+        return render_to_response("admin_frontend/snippets/indexview.html", ret, context_instance=RequestContext(request))
+     
     return render_to_response("admin_frontend/indexview.html", ret, context_instance=RequestContext(request))
 
 @protect_view("users", required_level=Browser.L_STRONG, admin_only=True)
@@ -125,7 +128,7 @@ def userdetails(request, **kwargs):
             messages.info(request, "Revoked Authenticator configuration for %s" % username)
         return HttpResponseRedirect("admin_frontend.views.userdetails", (username, ))
 
-    ret["entries"] = Log.objects.filter(user=ret["auser"])[0:100]
+    ret["entries"] = Log.objects.filter(user=ret["auser"])[0:25]
 
     ret["duser"] = get_object_or_404(DjangoUser, username=username)
     ret["browsers"] = Browser.objects.filter(user=ret["auser"])
@@ -147,7 +150,7 @@ def logins(request):
     except EmptyPage:
         logins = paginator.page(paginator.num_pages)
         page = paginator.num_pages
-    logins.pagerange = range(1, paginator.num_pages+1)
+    logins.pagerange = range(max(1, logins.number - 5), min(paginator.num_pages, logins.number + 5))
     ret["logins"] = logins
 
     return render_to_response("admin_frontend/logins.html", ret, context_instance=RequestContext(request))
@@ -207,7 +210,7 @@ def logs(request, **kwargs):
     except EmptyPage:
         entries = paginator.page(paginator.num_pages)
         page = paginator.num_pages
-    entries.pagerange = range(1, paginator.num_pages+1)
+    entries.pagerange = range(max(1, entries.number - 5), min(paginator.num_pages, entries.number + 5))
     ret["entries"] = entries
 
 

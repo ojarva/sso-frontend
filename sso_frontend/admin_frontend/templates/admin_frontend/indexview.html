@@ -1,52 +1,12 @@
 {% extends "admin_frontend/base.html" %}
+{% block header %}
+<script src="/static/js/admin_indexview.js" type="text/javascript"></script>
+{% endblock %}
 
 {% block admin_content %}
 
-<div class="row">
-<div class="col-md-4">
-<h2><a href="{% url 'admin_frontend.views.users' %}">Users</a></h2>
-
-<p>There's {{ users }} user{{ users|pluralize }}.</ul>
-
-<ul>
-<li>{{ num_strong_configured }} have configured strong authentication.</li>
-<li>{{ num_authenticator_used }} have used their latest Authenticator configuration successfully.</li>
-<li>{{ num_sms_always }} opted to primarily use SMS authentication.</li>
-<li>{{ num_strong_configured_not_used }} did configure Authenticator, but did not use it.</li>
-<li>{{ num_skips }} have skipped 2-factor authentication and did not configure it.</li>
+<div id="admin_contents">
+{% include "admin_frontend/snippets/indexview.html" %}
 </div>
 
-<div class="col-md-4">
-<h2><a href="{% url 'admin_frontend.views.logins' %}">Logins</a></h2>
-
-<p>{{ active_logins }} active SSO authorization{{ active_logins|pluralize }}. Last 10 logins:</p>
-
-<ul>
-{% for alogin in last_logins %}
-<li><a href="{% url 'admin_frontend.views.userdetails' alogin.user.username %}">{{ alogin.user.username }}</a> with {{ alogin.sso_provider }} <span class="tooltip-link" title="{{ alogin.auth_timestamp }}">{{ alogin.auth_timestamp|timesince }} ago</span></li>
-{% endfor %}
-</ul>
-
-</div>
-
-<div class="col-md-4">
-<h2><a href="{% url 'admin_frontend.views.browsers' %}">Browsers</a></h2>
-
-<p>{{ browsers }} browser{{ browsers|pluralize }}. Browsers with currently active users:</p>
-
-<ul>
-{% for abrowser in active_browsers %}
-<li><a href="{% url 'admin_frontend.views.userdetails' abrowser.user.username %}">{{ abrowser.user.username }}</a> - <a href="{% url "browser_logs" abrowser.bid_public %}">{{ abrowser.get_readable_ua }}</a></li>
-{% endfor %}
-</ul>
-
-</div>
-</div>
-
-<p>Do note that almost all pages under this admin section contain private data, including IP addresses. All actions - including viewing entries - in admin pages are logged. Expect these logs to be available for others too.</p>
-
-<p>Only following users can access this admin section: 
-{% for admin in admins %}
-{% if not forloop.first %} - {% endif %}
-{{ admin.username }}{% endfor %}. 
 {% endblock %}

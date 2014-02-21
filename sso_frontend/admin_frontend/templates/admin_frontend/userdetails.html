@@ -105,6 +105,8 @@
 
 <h2>Log entries</h2>
 
+<p><a class="btn btn-info" href="{% url 'user_logs' auser.username %}">View all</a></p>
+
 {% include "admin_frontend/snippets/list_logs.html" %}
 
 {% endblock %}
