@@ -97,6 +97,7 @@
 
 {% endif %}
 
+<h3>Properties</h3>
 <ul>
 <li><span class="tooltip-link" title="Want to change this? Please contact IT team"><b>Primary phone number:</b> {{ user.primary_phone }} (last changed {{ user.primary_phone_refresh|timesince }} ago)</span></li>
 {% if user.secondary_phone %}<li><b>Secondary phone number:</b> {{ user.secondary_phone }} (last changed {{ user.secondary_phone_refresh|timesince }} ago)</li>{% endif %}
@@ -114,5 +115,13 @@
 </li>
 <li><b>Authenticate with SMS by default:</b> {% if user.strong_sms_always %}yes. You'll automatically receive SMS every time strong authentication is required. Do note that SMS does not work too well when traveling.{% else %}By default, you'll get to Authenticator page. However, you can always click "use SMS" link, if you want to.{% endif %}</li>
 </ul>
+
+{% if csp_violations %}
+<h3>CSP problems</h3>
+
+<p>Your browsers have reported {{ csp_violations }} blocked action{{ csp_violations|pluralize }}. Usually these are caused by browser extensions that modify contents of the page.
+If you want to, you can <a href="{% url 'cspreporting.views.view_reports' %}">review these reports</a>.</p>
+
+{% endif %}
 
 {% endblock %}

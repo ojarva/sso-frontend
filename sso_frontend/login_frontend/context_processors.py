@@ -14,7 +14,8 @@ def add_browser(request):
     return {}
 
 def add_user(request):
-    if request.browser and request.browser.user:
+    try:
+     if request.browser and request.browser.user:
         user = request.browser.user
         ret_dict = {"user": user, "username": user.username, "emulate_legacy": user.emulate_legacy}
         try:
@@ -24,11 +25,16 @@ def add_user(request):
         except DjangoUser.DoesNotExist:
             pass
         return ret_dict
+    except:
+     pass
     return {}
 
 def session_info(request):
     ret = {}
-    if request.browser and request.browser.user:
+    try:
+     if request.browser and request.browser.user:
         # TODO: filter out expired sessions
         ret["num_sessions"] = Browser.objects.filter(user=request.browser.user).count()
+    except:
+     pass
     return ret

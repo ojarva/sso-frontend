@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, url
 
 urlpatterns = patterns('admin_frontend.views',
+    url(r'^ping/internal/admin_/indexview$', 'indexview', {"body_only": True}, name="admin-indexview-body"),
     url(r'^admin_/$', 'indexview'),
     url(r'^admin_/users$', 'users'),
     url(r'^admin_/user/(?P<username>(.+))$', 'userdetails'),

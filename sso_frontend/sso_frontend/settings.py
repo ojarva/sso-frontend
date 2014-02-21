@@ -237,6 +237,7 @@ INSTALLED_APPS = (
     'saml2idp',
     'django.contrib.admin',
     'admin_frontend',
+    'cspreporting',
 )
 
 # A sample logging configuration. The only tangible logging

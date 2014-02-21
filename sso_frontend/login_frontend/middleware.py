@@ -23,6 +23,10 @@ def get_browser(request):
         log.info("Unknown browser id '%s' from '%s'", bid, request.META.get("REMOTE_ADDR"))
         return None
 
+    if request.path.startswith("/csp-report"):
+        log.debug("Browser '%s' from '%s' reporting CSP - skip sign-out processing", bid, request.META.get("REMOTE_ADDR"))
+        return browser
+
     if request.COOKIES.get(Browser.C_BID_SESSION) == browser.bid_session:
         browser.valid_session_bid = True
     else:
@@ -35,6 +39,7 @@ def get_browser(request):
             session.save()
         if not browser.save_browser:
             # Browser was restarted, and save_browser is not set. Logout.
+            log.info("Browser bid_public=%s was restarted. Logging out.", browser.bid_public)
             browser.logout(request)
 
     if browser.user:
@@ -65,9 +70,10 @@ class BrowserMiddleware(object):
         if not browser:
             return response
 
-        if not browser.valid_session_bid:
+        if hasattr(browser, "valid_session_bid") and not browser.valid_session_bid:
             # No valid session ID exists. Regen it first.
             browser.bid_session = create_browser_uuid()
+            log.info("Session bid does not exist. Regenerating. bid_public=%s" % browser.bid_public)
             browser.save()
             cookies = browser.get_cookie()
             for cookie_name, cookie in cookies:

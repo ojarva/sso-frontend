@@ -9,6 +9,7 @@ urlpatterns = patterns('',
     url(r'^', include('openid_provider.urls')),
     url(r'^', include('login_frontend.urls')),
     url(r'^', include('admin_frontend.urls')),
+    url(r'^', include('cspreporting.urls')),
     url(r'^', include('saml2idp.urls')),
     # url(r'^sso_frontend/', include('sso_frontend.foo.urls')),
 

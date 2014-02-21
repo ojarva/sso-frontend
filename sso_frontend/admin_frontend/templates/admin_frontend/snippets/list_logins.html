@@ -1,21 +1,21 @@
 {% if logins %}
 
 
-{% if logins.pagerange %}
+{% if logins.page_range %}
 <ul class="pagination">
  {% if logins.has_previous %}
- <li><a href="?page={{ logins.previous_page_number }}">&laquo;</a></li>
+ <li><a href="?page={{ logins.previous_page_number }}">&laquo; Newer</a></li>
  {% else %}
- <li class="disabled"><a href="#">&laquo;</a></li>
+ <li class="disabled"><a href="#">&laquo; Newer</a></li>
  {% endif %}
- {% for page in logins.pagerange %}
+ {% for page in logins.page_range %}
  <li{% if logins.number == page %} class="active"{% endif %}><a href="?page={{ page }}">{{ page }}</a></li>
  {% endfor %}
 
  {% if logins.has_next %}
- <li><a href="?page={{ logins.next_page_number }}">&raquo;</a></li>
+ <li><a href="?page={{ logins.next_page_number }}">Older &raquo;</a></li>
  {% else %}
- <li class="disabled"><a href="#">&raquo;</a></li>
+ <li class="disabled"><a href="#">Older &raquo;</a></li>
  {% endif %}
 </ul>
 {% endif %}
