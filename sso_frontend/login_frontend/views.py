@@ -17,6 +17,7 @@ from helpers import *
 from ldap_auth import LdapLogin
 from login_frontend.forms import *
 from models import *
+from cspreporting.models import CSPReport
 from providers import pubtkt_logout
 from ratelimit.decorators import ratelimit
 from ratelimit.helpers import is_ratelimited
@@ -789,6 +790,7 @@ def configure_strong(request):
     ret["get_params"] = urllib.urlencode(request.GET)
     back_url = redir_to_sso(request, no_default=True)
     ret["num_sessions"] = Browser.objects.filter(user=user).count()
+    ret["csp_violations"] = CSPReport.objects.filter(username=user.username).count()
 
     if back_url:
         ret["back_url"] = back_url.url
