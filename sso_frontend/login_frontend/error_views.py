@@ -23,6 +23,8 @@ def error_csrf(request, reason="", **kwargs):
     if len(request.COOKIES) == 0:
         ret["no_cookies"] = True
     response = render_to_response("login_frontend/errors/csrf_fail.html", ret, context_instance=RequestContext(request))
+    response.status_code = "403"
+    response.reason_phrase = "Forbidden"
     return response
 
 @require_http_methods(["GET", "POST"])
@@ -42,6 +44,8 @@ def error_400(request, **kwargs):
     response.delete_cookie("csrftoken")
     response.delete_cookie("sessionid")
     response.delete_cookie("slogin")
+    response.status_code = "400"
+    response.reason_phrase = "Bad Request"
     return response
 
 
@@ -50,6 +54,8 @@ def error_403(request, **kwargs):
     ret = {}
     ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
     response = render_to_response("login_frontend/errors/403.html", ret, context_instance=RequestContext(request))
+    response.status_code = "403"
+    response.reason_phrase = "Forbidden"
     return response
 
 
@@ -58,6 +64,8 @@ def error_404(request, **kwargs):
     ret = {}
     ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
     response = render_to_response("login_frontend/errors/404.html", ret, context_instance=RequestContext(request))
+    response.status_code = "404"
+    response.reason_phrase = "Not Found"
     return response
 
 
@@ -66,5 +74,7 @@ def error_500(request, **kwargs):
     ret = {}
     ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
     response = render_to_response("login_frontend/errors/500.html", ret, context_instance=RequestContext(request))
+    response.status_code = "500"
+    response.reason_phrase = "Internal Server Error"
     return response
 
