@@ -459,8 +459,11 @@ class BrowserUsers(models.Model):
     auth_timestamp = models.DateTimeField(null=True, help_text="Timestamp of the latest authentication")
     max_auth_level = models.CharField(max_length=1, choices=Browser.A_AUTH_LEVEL, default=Browser.L_UNAUTH, help_text="Highest authentication level for this User/Browser combination")
 
-    remote_ip = models.GenericIPAddressField(null=True, blank=True, help_text="Last remote IP address")
+    remote_ip = models.GenericIPAddressField(null=True, blank=True, help_text="Last remote IP address (active)")
     last_seen = models.DateTimeField(null=True)
+
+    remote_ip_passive = models.GenericIPAddressField(null=True, blank=True, help_text="Last remote IP address")
+    last_seen_passive = models.DateTimeField(null=True)
 
 class UsedOTP(models.Model):
     """ Stores list of used OTPs."""

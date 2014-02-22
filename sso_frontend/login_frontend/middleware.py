@@ -66,8 +66,12 @@ def get_browser(request):
 
     if browser.user:
         user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)
-        user_to_browser.remote_ip = request.META.get("REMOTE_ADDR")
-        user_to_browser.last_seen = timezone.now()
+        if request.path.startswith("/ping"):
+            user_to_browser.remote_ip_passive = request.META.get("REMOTE_ADDR")
+            user_to_browser.last_seen_passive = timezone.now()
+        else:
+            user_to_browser.remote_ip = request.META.get("REMOTE_ADDR")
+            user_to_browser.last_seen = timezone.now()
         user_to_browser.save()
     return browser
 
