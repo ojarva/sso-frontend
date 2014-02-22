@@ -169,13 +169,16 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
+    'login_frontend.middleware.InLoggingMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'login_frontend.middleware.OutLoggingMiddleware', # logging middleware should be before browsermiddleware, as browsermiddleware might abort on process_request.
     'login_frontend.middleware.BrowserMiddleware',
+    'login_frontend.middleware.ViewLoggingMiddleware',
 )
 
 from django.contrib import messages
@@ -279,7 +282,7 @@ LOGGING = {
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/saml",
             'maxBytes': 50000000,
-            'backupCount': 10,
+            'backupCount': 100,
             'formatter': 'standard',
         },
 
@@ -288,7 +291,7 @@ LOGGING = {
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/openid",
             'maxBytes': 50000000,
-            'backupCount': 10,
+            'backupCount': 100,
             'formatter': 'standard',
         },
 
@@ -297,7 +300,7 @@ LOGGING = {
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/users",
             'maxBytes': 50000000,
-            'backupCount': 10,
+            'backupCount': 100,
             'formatter': 'standard',
         },
 
@@ -306,7 +309,7 @@ LOGGING = {
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/django",
             'maxBytes': 50000000,
-            'backupCount': 10,
+            'backupCount': 100,
             'formatter': 'standard',
         },
 
@@ -315,7 +318,7 @@ LOGGING = {
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/errors",
             'maxBytes': 50000000,
-            'backupCount': 10,
+            'backupCount': 100,
             'formatter': 'standard',
         },
 
@@ -323,6 +326,15 @@ LOGGING = {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/timing",
+            'maxBytes': 500000000,
+            'backupCount': 100,
+            'formatter': 'standard',
+        },
+
+        'logfile_request_timing': {
+            'level':'INFO',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/request_timing",
             'maxBytes': 500000000,
             'backupCount': 100,
             'formatter': 'standard',
@@ -338,6 +350,11 @@ LOGGING = {
             'handlers': ['mail_admins', 'logfile_errors'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'request_timing': {
+          'handlers': ['logfile_request_timing'],
+          'propagate': False,
+          'level': 'INFO',
         },
         'users': {
           'handlers': ['logfile_main', 'logfile_users'],

@@ -16,8 +16,11 @@ from login_frontend.models import Browser, BrowserUsers, BrowserLogin, create_br
 from login_frontend.providers import pubtkt_logout
 import logging
 import re
+import time
 
 log = logging.getLogger(__name__)
+
+timing_log = logging.getLogger("request_timing")
 
 DISALLOWED_UA = [
  re.compile("^Wget/.*"),
@@ -111,4 +114,22 @@ class BrowserMiddleware(object):
             for cookie_name, cookie in cookies:
                 response.set_cookie(cookie_name, **cookie)
 
+        return response
+
+
+def log_request_timing(phase, request):
+    timing_log.info("%s: %.5f - %s - %s - [%s]", phase, time.time(), request.META.get("REMOTE_ADDR"), request.get_full_path(), request.META.get("HTTP_USER_AGENT"))
+    
+
+class InLoggingMiddleware(object):
+    def process_request(self, request):
+        log_request_timing("process_request.first", request)
+
+class ViewLoggingMiddleware(object):
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        log_request_timing("process_view.last", request)
+
+class OutLoggingMiddleware(object):
+    def process_response(self, request, response):
+        log_request_timing("process_response.last", request)
         return response
