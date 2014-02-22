@@ -1,24 +1,24 @@
+#pylint: disable-msg=C0301
 from distutils.version import LooseVersion
-from django.conf import settings
+from django.contrib.auth import logout as django_logout
 from django.db import models
 from django.utils import timezone
-from django.utils.timesince import timeuntil
 from random import choice, randint
-from django.contrib.auth import logout as django_logout
 import datetime
 import httpagentparser
-import phonenumbers
+import logging
 import pyotp
 import re
 import subprocess
 import time
 import uuid
-import logging
 
 log = logging.getLogger(__name__)
 
+__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_log_entry", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode"]
 
 def create_browser_uuid():
+    """ Returns 37 characters unique ID as a string """
     return str(uuid.uuid4())
 
 
@@ -150,7 +150,7 @@ class Browser(models.Model):
     save_browser = models.BooleanField(default=False)
 
     auth_level = models.DecimalField(max_digits=2, decimal_places=0, choices=A_AUTH_LEVEL, default=L_UNAUTH)
-    auth_level_valid_until = models.DateTimeField(null=True,blank=True)
+    auth_level_valid_until = models.DateTimeField(null=True, blank=True)
 
     auth_state = models.DecimalField(max_digits=2, decimal_places=0, choices=A_AUTH_STATE, default=S_REQUEST_BASIC)
     auth_state_valid_until = models.DateTimeField(null=True, blank=True)
@@ -309,7 +309,7 @@ class Browser(models.Model):
         id for code, to avoid confusion with duplicate/old messages. """
         code = ""
         for _ in range(length):
-            code += str(randint(0,9))
+            code += str(randint(0, 9))
         self.sms_code = code
         self.sms_code_generated_at = timezone.now()
         self.sms_code_id = randint(0, 999)
@@ -344,7 +344,7 @@ class Browser(models.Model):
         browser = None
         os = None
         if "browser" in data and "name" in data["browser"]:
-                browser = data["browser"]["name"]
+            browser = data["browser"]["name"]
         if "dist" in data and "name" in data["dist"]:
             if "version" in data["dist"]:
                 os = "%s (%s)" % (data["dist"]["name"], data["dist"]["version"])
@@ -372,7 +372,6 @@ class Browser(models.Model):
         ".*Opera.*Windows.*Mini": ["windows", "mobile"],
         ".*Opera.*iPhone": ["apple", "mobile"],
         ".*Opera.*iPad": ["apple", "tablet"],
-        ".*Opera.*Android": ["android", "mobile"],
         ".*Android.*Mobile": ["android", "mobile"],
         "^.*Android((?!Mobile).)*$": ["android", "tablet"],
         ".*\(iPad": ["apple", "tablet"],
@@ -397,6 +396,7 @@ class Browser(models.Model):
         for (regex, icons) in self.UA_DETECT.iteritems():
             if re.match(regex, self.ua):
                 return icons
+        return icon
 
     def compare_ua(self, ua):
         # TODO: Validate this code.
@@ -459,7 +459,7 @@ class BrowserUsers(models.Model):
     auth_timestamp = models.DateTimeField(null=True, help_text="Timestamp of the latest authentication")
     max_auth_level = models.CharField(max_length=1, choices=Browser.A_AUTH_LEVEL, default=Browser.L_UNAUTH, help_text="Highest authentication level for this User/Browser combination")
 
-    remote_ip = models.GenericIPAddressField(null=True,blank=True, help_text="Last remote IP address")
+    remote_ip = models.GenericIPAddressField(null=True, blank=True, help_text="Last remote IP address")
     last_seen = models.DateTimeField(null=True)
 
 class UsedOTP(models.Model):

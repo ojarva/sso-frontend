@@ -2,6 +2,8 @@
 import ldap
 from ldap_local_settings import *
 
+__all__ = ["LdapLogin"]
+
 class LdapLogin:
     """ LDAP authentication module """
 

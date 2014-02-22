@@ -4,28 +4,21 @@
 This is not integrated to Django admin.
 """
 
-from django.contrib.auth.models import User as DjangoUser
 from django.contrib import messages
+from django.contrib.auth.models import User as DjangoUser
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from login_frontend.helpers import *
-from login_frontend.models import *
-from login_frontend.utils import *
-import datetime
-import dateutil.parser
-import json
-import pyotp
-import redis
-import time
-import urllib
-import logging
-from django.shortcuts import get_object_or_404
+from login_frontend.models import Browser, User, BrowserLogin, BrowserUsers, Log
+from login_frontend.utils import get_and_refresh_user
 from login_frontend.views import protect_view
+import logging
+import redis
 
 
 log = logging.getLogger(__name__)

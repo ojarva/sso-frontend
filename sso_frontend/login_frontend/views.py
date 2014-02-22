@@ -19,14 +19,14 @@ from django.template import RequestContext
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
+from login_frontend.forms import OTPForm
 from login_frontend.helpers import redir_to_sso
 from login_frontend.ldap_auth import LdapLogin
-from login_frontend.forms import OTPForm
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
-from ratelimit.decorators import ratelimit
 from login_frontend.send_sms import send_sms
-from login_frontend.utils import *
+from login_frontend.utils import save_timing_data, get_geoip_string, redirect_with_get_params
+from ratelimit.decorators import ratelimit
 import datetime
 import json
 import logging
@@ -120,31 +120,32 @@ def protect_view(current_step, **main_kwargs):
             # Authentication level is not satisfied. Determine correct step for next page.
             if browser is None:
                 # User is not authenticated. Go to first step.
-                return redir_view("firststepauth", custom_redirect('login_frontend.views.firststepauth', get_params))
+                return redir_view("firststepauth", redirect_with_get_params('login_frontend.views.firststepauth', get_params))
 
             if browser.auth_state == Browser.S_REQUEST_STRONG:
                 # The next step is strong authentication. Check state validity.
                 if browser.auth_state_valid_until < timezone.now():
                     # Authentication timed out. Go back to first step.
-                    return redir_view("firststepauth", custom_redirect('login_frontend.view.firststepauth', get_params))
+                    return redir_view("firststepauth", redirect_with_get_params('login_frontend.view.firststepauth', get_params))
                 # Login is still valid. Go to second step authentication
-                return redir_view("secondstepauth", custom_redirect("login_frontend.views.secondstepauth", get_params))
+                return redir_view("secondstepauth", redirect_with_get_params("login_frontend.views.secondstepauth", get_params))
 
             # Requested authentication level is not satisfied, and user is not proceeding to the second step.
             # Start from the beginning.
-            return redir_view("firststepauth", custom_redirect("login_frontend.views.firststepauth", get_params))
+            return redir_view("firststepauth", redirect_with_get_params("login_frontend.views.firststepauth", get_params))
 
         return inner
     return wrap
 
+@require_http_methods(["GET", "POST"])
 def main_redir(request):
     """ Hack to enable backward compatibility with pubtkt.
     If "back" parameter is specified, forward to pubtkt provider. Otherwise,
     go to index page
     """
     if request.GET.get("back") != None:
-        return custom_redirect("login_frontend.providers.pubtkt", request.GET)
-    return custom_redirect("login_frontend.views.indexview", request.GET)
+        return redirect_with_get_params("login_frontend.providers.pubtkt", request.GET)
+    return redirect_with_get_params("login_frontend.views.indexview", request.GET)
 
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='30/15s', ratekey="15s", block=True, method=["POST", "GET"])
@@ -174,7 +175,7 @@ def indexview(request):
                     custom_log(request, "Marked browser as not remembered", level="info")
                     add_log_entry(request, "Marked browser as not remembered", "eye-slash")
                     messages.info(request, "You're no longer remembered on this browser")
-                return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+                return redirect_with_get_params("login_frontend.views.indexview", request.GET.dict())
 
     ret["username"] = request.browser.user.username
     ret["user"] = request.browser.user
@@ -191,12 +192,14 @@ def indexview(request):
     response = render_to_response("login_frontend/indexview.html", ret, context_instance=RequestContext(request))
     return response
 
+@require_http_methods(["GET", "POST"])
 @protect_view("firststepauth", required_level=Browser.L_UNAUTH)
 def firststepauth(request):
     """ Redirects user to appropriate first factor authentication.
     Currently only username/password query """
-    return custom_redirect("login_frontend.views.authenticate_with_password", request.GET)
+    return redirect_with_get_params("login_frontend.views.authenticate_with_password", request.GET)
 
+@require_http_methods(["GET", "POST"])
 @protect_view("authenticate_with_password", required_level=Browser.L_UNAUTH)
 def authenticate_with_password(request):
     """ Authenticate with username and password """
@@ -217,7 +220,7 @@ def authenticate_with_password(request):
         if browser.get_auth_state() == Browser.S_REQUEST_STRONG:
             # User is already in strong authentication. Redirect them there.
             custom_log(request, "State: REQUEST_STRONG. Redirecting user", level="debug")
-            return custom_redirect("login_frontend.views.secondstepauth", request.GET)
+            return redirect_with_get_params("login_frontend.views.secondstepauth", request.GET)
         if browser.is_authenticated():
             # User is already authenticated. Redirect back to SSO service.
             custom_log(request, "User is already authenticated. Redirect back to SSO service.", level="debug")
@@ -232,7 +235,7 @@ def authenticate_with_password(request):
             if not browser.user:
                 custom_log(request, "S_REQUEST_BASIC_ONLY was requested, but browser.user does not exist", level="warn")
                 messages.warning(request, "Invalid request was encountered. Please sign in again.")
-                return custom_redirect("login_frontend.views.indexview", request.GET.dict())
+                return redirect_with_get_params("login_frontend.views.indexview", request.GET.dict())
 
     if request.method == 'POST':
         custom_log(request, "POST request", level="debug")
@@ -307,7 +310,7 @@ def authenticate_with_password(request):
                     browser.set_auth_state(Browser.S_REQUEST_STRONG)
                 browser.save()
 
-                return custom_redirect("login_frontend.views.secondstepauth", request.GET)
+                return redirect_with_get_params("login_frontend.views.secondstepauth", request.GET)
             else:
                 if auth_status == "invalid_credentials":
                     ret["authentication_failed"] = True
@@ -335,6 +338,7 @@ def authenticate_with_password(request):
     return response
 
 
+@require_http_methods(["GET", "POST"])
 @protect_view("secondstepauth", required_level=Browser.L_BASIC)
 def secondstepauth(request):
     """ Determines proper second step authentication method """
@@ -354,20 +358,21 @@ def secondstepauth(request):
     if not user.strong_configured:
         # User has not configured any authentication. Go to that pipe.
         custom_log(request, "Strong authentication is not configured. Go to SMS authentication", level="info")
-        return custom_redirect("login_frontend.views.authenticate_with_sms", get_params)
+        return redirect_with_get_params("login_frontend.views.authenticate_with_sms", get_params)
 
     if user.strong_sms_always:
         # Strong authentication has been configured, and user has requested to get SMS message.
         custom_log(request, "User has requested SMS authentication.", level="info")
-        return custom_redirect("login_frontend.views.authenticate_with_sms", get_params)
+        return redirect_with_get_params("login_frontend.views.authenticate_with_sms", get_params)
 
     if user.strong_authenticator_secret:
         custom_log(request, "Authenticator is properly configured. Redirect.", level="info")
-        return custom_redirect("login_frontend.views.authenticate_with_authenticator", get_params)
+        return redirect_with_get_params("login_frontend.views.authenticate_with_authenticator", get_params)
 
     custom_log(request, "No proper redirect configured.", level="error")
     return HttpResponse("Second step auth: no proper redirect configured.")
 
+@require_http_methods(["GET", "POST"])
 @protect_view("authenticate_with_authenticator", required_level=Browser.L_BASIC)
 def authenticate_with_authenticator(request):
     """ Authenticates user with Google Authenticator """
@@ -390,7 +395,7 @@ def authenticate_with_authenticator(request):
         # Authenticator is not configured. Redirect back to secondstep main screen
         custom_log(request, "Authenticator is not configured, but user accessed Authenticator view. Redirect back to secondstepauth", level="error")
         messages.warning(request, "You tried to authenticate with Authenticator. However, according to our records, you don't have it configured. Please sign in and go to settings to do that.")
-        return custom_redirect("login_frontend.views.secondstepauth", request.GET)
+        return redirect_with_get_params("login_frontend.views.secondstepauth", request.GET)
 
     if request.method == "POST" and request.POST.get("skip"):
         if skips_available > 0:
@@ -485,6 +490,7 @@ def authenticate_with_authenticator(request):
        
 
 
+@require_http_methods(["GET", "POST"])
 @protect_view("authenticate_with_sms", required_level=Browser.L_BASIC)
 def authenticate_with_sms(request):
     """ Authenticate user with SMS. 
@@ -585,7 +591,7 @@ def authenticate_with_sms(request):
                 if not user.strong_configured:
                     # Strong authentication is not configured. Go to configuration view.
                     custom_log(request, "User has not configured strong authentication. Redirect to configuration view", level="info")
-                    return custom_redirect("login_frontend.views.configure_strong", request.GET)
+                    return redirect_with_get_params("login_frontend.views.configure_strong", request.GET)
                 # Redirect back to SSO service
                 custom_log(request, "Redirecting back to SSO provider", level="debug")
                 return redir_to_sso(request)
@@ -626,6 +632,7 @@ def authenticate_with_sms(request):
     return response
 
 
+@require_http_methods(["GET"]) 
 def js_ping(request, **kwargs):
     """ Handles time browser queries, and updates browser status when required. """
     ret = {}
@@ -644,7 +651,7 @@ def js_ping(request, **kwargs):
         pubtkt_logout(request, response)
     return response
 
-
+@require_http_methods(["GET", "POST"])
 @protect_view("sessions", required_level=Browser.L_STRONG)
 def sessions(request):
     """ Shows sessions to the user. """
@@ -685,8 +692,8 @@ def sessions(request):
             if self_logout:
                 get_params = request.GET.dict()
                 get_params["logout"] = "on"
-                return custom_redirect("login_frontend.views.logoutview", get_params)
-            return custom_redirect("login_frontend.views.sessions", request.GET)
+                return redirect_with_get_params("login_frontend.views.logoutview", get_params)
+            return redirect_with_get_params("login_frontend.views.sessions", request.GET)
 
 
     browsers = Browser.objects.filter(user=user)
@@ -712,6 +719,7 @@ def sessions(request):
     return response
 
 
+@require_http_methods(["GET"])
 @protect_view("view_log", required_level=Browser.L_STRONG)
 def view_log(request, **kwargs):
     """ Shows log entries to the user """
@@ -768,6 +776,7 @@ def view_log(request, **kwargs):
 
 
 
+@require_http_methods(["GET", "POST"])
 @protect_view("configure_strong", required_level=Browser.L_STRONG)
 def configure_strong(request):
     """ Configuration view for general options. """
@@ -783,7 +792,7 @@ def configure_strong(request):
             user.strong_skips_available = 0
             user.save()
             messages.success(request, "Switched to SMS authentication")
-            return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
+            return redirect_with_get_params("login_frontend.views.configure_strong", request.GET.dict())
         elif request.POST.get("always_sms") == "off":
             add_log_entry(request, "Switched to Authenticator authentication", "info")
             custom_log(request, "Switched to Authenticator authentication", level="info")
@@ -791,7 +800,7 @@ def configure_strong(request):
             user.strong_skips_available = 0
             user.save()
             messages.success(request, "Default setting changed to Authenticator")
-            return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
+            return redirect_with_get_params("login_frontend.views.configure_strong", request.GET.dict())
 
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
@@ -804,7 +813,7 @@ def configure_strong(request):
     response = render_to_response("login_frontend/configure_strong.html", ret, context_instance=RequestContext(request))
     return response
 
-
+@require_http_methods(["GET"])
 @protect_view("get_authenticator_qr", required_level=Browser.L_STRONG)
 def get_authenticator_qr(request, **kwargs):
     """ Outputs QR code for Authenticator. Uses single_use_code to prevent
@@ -829,6 +838,7 @@ def get_authenticator_qr(request, **kwargs):
     custom_log(request, "Downloaded Authenticator secret QR code", level="info")
     return HttpResponse(stringio.read(), content_type="image/png")
 
+@require_http_methods(["GET", "POST"])
 @protect_view("configure_authenticator", required_level=Browser.L_STRONG)
 def configure_authenticator(request):
     """ Google Authenticator configuration view. Only POST requests are allowed. """
@@ -837,7 +847,7 @@ def configure_authenticator(request):
     if request.method != "POST":
         custom_log(request, "Tried to enter Authenticator configuration view with GET request. Redirecting back. Referer: %s" % request.META.get("HTTP_REFERRER"), level="info")
         messages.info(request, "You can't access configuration page directly. Please click a link below to configure Authenticator.")
-        return custom_redirect("login_frontend.views.configure_strong", request.GET)
+        return redirect_with_get_params("login_frontend.views.configure_strong", request.GET)
 
     ret["back_url"] = redir_to_sso(request).url
 
@@ -858,7 +868,7 @@ def configure_authenticator(request):
             redir = redir_to_sso(request, no_default=True)
             if redir:
                 return redir_to_sso(request)
-            return custom_redirect("login_frontend.views.configure_strong", request.GET.dict())
+            return redirect_with_get_params("login_frontend.views.configure_strong", request.GET.dict())
         else:
             # Incorrect code. Don't regen secret.
             custom_log(request, "Entered invalid OTP during Authenticator configuration", level="info")
@@ -925,7 +935,7 @@ def logoutview(request):
         django_auth.logout(request)
         request.session["active_sessions"] = active_sessions
         request.session["logout"] = True
-        return custom_redirect("login_frontend.views.logoutview", ret_dict)
+        return redirect_with_get_params("login_frontend.views.logoutview", ret_dict)
     else:
         ret = {}
         if request.GET.get("logout") == "on":

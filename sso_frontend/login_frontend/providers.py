@@ -14,7 +14,7 @@ from django.template import RequestContext
 from django.utils import timezone
 from login_frontend.models import Browser, BrowserLogin, add_log_entry
 from urlparse import urlparse
-from login_frontend.utils import custom_redirect
+from login_frontend.utils import redirect_with_get_params
 import auth_pubtkt
 import datetime
 import json
@@ -26,6 +26,8 @@ privkey = settings.PUBTKT_PRIVKEY
 
 log = logging.getLogger(__name__)
 
+__all__ = ["internal_login", "pubtkt_logout", "pubtkt"]
+
 def internal_login(request):
     """ Internal login using Django authentication framework """
     log.debug("Internal login requested")
@@ -35,7 +37,7 @@ def internal_login(request):
     browser = request.browser
     if browser is None:
         log.debug("Browser is None. Redirect to first step authentication")
-        return custom_redirect("login_frontend.views.firststepauth", params)
+        return redirect_with_get_params("login_frontend.views.firststepauth", params)
 
     if request.GET.get("next") is None:
         # No back url is defined. Go to front page.
@@ -56,7 +58,7 @@ def internal_login(request):
         response = render_to_response("login_frontend/html_redirect.html", ret, context_instance=RequestContext(request))
         return response
 
-    return custom_redirect("login_frontend.views.firststepauth", params)
+    return redirect_with_get_params("login_frontend.views.firststepauth", params)
 
 
 def pubtkt_logout(request, response = None):
@@ -113,7 +115,7 @@ def pubtkt(request):
 
     browser = request.browser
     if browser is None:
-        return custom_redirect("login_frontend.views.firststepauth", params)
+        return redirect_with_get_params("login_frontend.views.firststepauth", params)
 
     show_error_page = False
 
@@ -165,4 +167,4 @@ def pubtkt(request):
         log.debug("Redirecting to %s with html redirect" % back_url)
         return response
 
-    return custom_redirect("login_frontend.views.firststepauth", params)
+    return redirect_with_get_params("login_frontend.views.firststepauth", params)

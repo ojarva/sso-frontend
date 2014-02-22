@@ -24,7 +24,7 @@ timing_log = logging.getLogger("timing_data")
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
 
-__all__ = ["is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "custom_redirect"]
+__all__ = ["is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params"]
 
 def is_private_net(ip_address):
     """ Returns True if specified in private networks, imported from
@@ -99,7 +99,7 @@ def get_geoip_string(ip_address):
         return "%s" % country
     return "%s (%s)" % (country, city)
 
-def custom_redirect(url_name, get_params = None):
+def redirect_with_get_params(url_name, get_params = None):
     """ Returns HttpResponseRedirect with query string. """
     url = reverse(url_name)
     if not get_params:

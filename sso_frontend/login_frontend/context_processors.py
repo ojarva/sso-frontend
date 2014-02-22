@@ -14,6 +14,8 @@ from django.contrib.auth.models import User as DjangoUser
 from login_frontend.models import Browser
 
 
+__all__ = ["add_static_timestamp", "add_browser", "add_user", "session_info"]
+
 def add_static_timestamp(request):
     """ Adds unique number used for static files. """
     #TODO: determine automatically

@@ -7,22 +7,21 @@ Stores reports in database, and outputs Django logging.
 In database, only non-duplicate records are added.
 """
 
+from cspreporting.models import CSPReport
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import HttpResponse
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render_to_response
-from django.http import HttpResponse
-from django.template import RequestContext
 from django.views.decorators.http import require_http_methods
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from login_frontend.models import Browser
-import json
-import re
-import logging
 from login_frontend.views import protect_view
-from cspreporting.models import CSPReport
+import json
+import logging
+import re
 
 log = logging.getLogger(__name__)
-
 user_log = logging.getLogger(__name__)
 
 @require_http_methods(["GET"])

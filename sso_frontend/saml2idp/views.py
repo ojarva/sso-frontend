@@ -21,7 +21,7 @@ import registry
 import saml2idp_metadata
 import xml_signing
 
-from login_frontend.utils import custom_redirect
+from login_frontend.utils import redirect_with_get_params
 from login_frontend.models import BrowserLogin, add_log_entry
 
 from django.utils import timezone
@@ -114,7 +114,7 @@ def logout(request):
     returns a standard logged-out page. (SalesForce and others use this method,
     though it's technically not SAML 2.0).
     """
-    return custom_redirect("login_frontend.views.logoutview", request.GET)
+    return redirect_with_get_params("login_frontend.views.logoutview", request.GET)
 
 @login_required
 @csrf_exempt
@@ -128,7 +128,7 @@ def slo_logout(request):
         return render_to_response('saml2idp/error.html', {"missing_fields": True},
                                   context_instance=RequestContext(request))
 
-    return custom_redirect("login_frontend.views.logoutview", request.GET)
+    return redirect_with_get_params("login_frontend.views.logoutview", request.GET)
     request.session['SAMLRequest'] = request.POST['SAMLRequest']
     #TODO: Parse SAML LogoutRequest from POST data, similar to login_process().
     #TODO: Add a URL dispatch for this view.
