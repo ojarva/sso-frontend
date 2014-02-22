@@ -6,7 +6,8 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -69,7 +70,8 @@ def custom_log_inner(request, message, **kwargs):
         bid_public = request.browser.bid_public
         if request.browser.user:
             username = request.browser.user.username
-    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name, remote_addr, username, bid_public, message)
+    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name, 
+                            remote_addr, username, bid_public, message)
 
 
 def protect_view(current_step, **main_kwargs):
@@ -90,7 +92,9 @@ def protect_view(current_step, **main_kwargs):
             get_params = request.GET.dict()
             if get_params.get("_sso") is None:
                 # Avoid redirect loops
-                if current_step not in ("firststepauth", "secondstepauth", "authenticate_with_sms", "authenticate_with_password", "authenticate_with_authenticator"):
+                if current_step not in ("firststepauth", "secondstepauth", 
+                     "authenticate_with_sms", "authenticate_with_password",
+                     "authenticate_with_authenticator"):
                     get_params["_sso"] = "internal"
                     get_params["next"] = request.build_absolute_uri()
 
@@ -744,15 +748,15 @@ def view_log(request, **kwargs):
 
     entries_out = []
     for entry in entries:
-       browser = browsers.get(entry.bid_public)
-       if not browser:
-           try:
-               browser = Browser.objects.get(bid_public=entry.bid_public)
-               browsers[entry.bid_public] = browser
-           except Browser.DoesNotExist:
-               pass
-       entry.browser = browser
-       entries_out.append(entry)
+        browser = browsers.get(entry.bid_public)
+        if not browser:
+            try:
+                browser = Browser.objects.get(bid_public=entry.bid_public)
+                browsers[entry.bid_public] = browser
+            except Browser.DoesNotExist:
+                pass
+        entry.browser = browser
+        entries_out.append(entry)
 
     ret["entries"] = entries
 
