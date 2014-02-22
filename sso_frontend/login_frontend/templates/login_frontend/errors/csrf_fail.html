@@ -26,4 +26,10 @@ you can read these pages:</p>
 <li><a href="https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)">OWASP</a></li>
 </ul>
 
+{% if reason %}
+<hr/>
+
+<p><small>{{ reason }}</small></p>
+{% endif %}
+
 {% endblock %}

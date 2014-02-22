@@ -1,42 +1,42 @@
-from django.utils.safestring import mark_safe
+#pylint: disable-msg=C0301
+"""
+Views for SSO service frontend.
+
+This does not include error views (see error_views.py) or admin UI (see admin_frontend module).
+"""
+
 from StringIO import StringIO
+from cspreporting.models import CSPReport
+from django.conf import settings
 from django.contrib import auth as django_auth
 from django.contrib import messages
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
-from django.core.urlresolvers import reverse
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse
-from django.http import HttpResponseRedirect
-from django.shortcuts import redirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
-from django.utils.timesince import timeuntil
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
-from helpers import *
-from ldap_auth import LdapLogin
-from login_frontend.forms import *
-from models import *
-from cspreporting.models import CSPReport
-from providers import pubtkt_logout
+from login_frontend.helpers import redir_to_sso
+from login_frontend.ldap_auth import LdapLogin
+from login_frontend.forms import OTPForm
+from login_frontend.models import *
+from login_frontend.providers import pubtkt_logout
 from ratelimit.decorators import ratelimit
-from ratelimit.helpers import is_ratelimited
-from send_sms import send_sms
-from utils import *
-import Cookie
-import auth_pubtkt
+from login_frontend.send_sms import send_sms
+from login_frontend.utils import *
 import datetime
-import dateutil.parser
 import json
+import logging
+import os
 import pyotp
 import qrcode
 import redis
+import sys
 import time
 import urllib
-import logging
-import os
-import sys
 
 log = logging.getLogger(__name__)
 r = redis.Redis()
@@ -44,21 +44,22 @@ r = redis.Redis()
 user_log = logging.getLogger("users.%s" % __name__)
 
 def custom_log(request, message, **kwargs):
+    """ Automatically logs username, remote IP and bid_public """
     custom_log_inner(request, message, **kwargs)
 
 def custom_log_inner(request, message, **kwargs):
+    """ Additional method call to get proper entry from call stack. """
     try:
         raise Exception
     except:
-        d = sys.exc_info()[2].tb_frame.f_back
-    if d is not None:
-        d = d.f_back
-    rv = "(unknown file)", 0, "(unknown function)"
-    while hasattr(d, "f_code"):
-        co = d.f_code
+        stack = sys.exc_info()[2].tb_frame.f_back
+    if stack is not None:
+        stack = stack.f_back
+    while hasattr(stack, "f_code"):
+        co = stack.f_code
         filename = os.path.normcase(co.co_filename)
         filename = co.co_filename
-        lineno = d.f_lineno
+        lineno = stack.f_lineno
         co_name = co.co_name
         break
 
@@ -82,11 +83,13 @@ def protect_view(current_step, **main_kwargs):
     """
 
     def redir_view(next_view, resp):
+        """ Returns response if current step is not
+            the next view - i.e only redirect if view is going to change """
         if current_step == next_view:
             return None
         return resp
 
-    def wrap(f):
+    def wrap(inner_func):
         def inner(request, *args, **kwargs):
             required_level = main_kwargs.get("required_level", Browser.L_STRONG)
             get_params = request.GET.dict()
@@ -112,7 +115,7 @@ def protect_view(current_step, **main_kwargs):
             if current_level >= required_level:
                 # Authentication level is already satisfied
                 # Execute requested method.
-                return f(request, *args, **kwargs)
+                return inner_func(request, *args, **kwargs)
 
             # Authentication level is not satisfied. Determine correct step for next page.
             if browser is None:
@@ -211,7 +214,6 @@ def authenticate_with_password(request):
     else:
         custom_log(request, "Browser object exists", level="debug")
         browser = request.browser
-        auth_state = browser.get_auth_state()
         if browser.get_auth_state() == Browser.S_REQUEST_STRONG:
             # User is already in strong authentication. Redirect them there.
             custom_log(request, "State: REQUEST_STRONG. Redirecting user", level="debug")
@@ -273,7 +275,7 @@ def authenticate_with_password(request):
 
                 if browser.user is None:
                     custom_log(request, "browser.user is None", level="debug")
-                    (user, created) = User.objects.get_or_create(username=auth.username)
+                    (user, _) = User.objects.get_or_create(username=auth.username)
                     user.user_tokens = json.dumps(auth.get_auth_tokens())
                     custom_log(request, "User tokens: %s" % user.user_tokens, level="info")
                     user.save()
@@ -320,8 +322,6 @@ def authenticate_with_password(request):
             messages.warning(request, "Invalid request")
     else:
         custom_log(request, "GET request", level="debug")
-    form = AuthWithPasswordForm(request.POST)
-    ret["form"] = form
     if browser:
         ret["my_computer"] = browser.save_browser
 
@@ -420,8 +420,8 @@ def authenticate_with_authenticator(request):
         if form.is_valid():
             custom_log(request, "Form is valid", level="debug")
             otp = form.cleaned_data["otp"]
-            custom_log(request, "Testing OTP code %s at %s" % (form.cleaned_data["otp"], time.time()), level="debug")
-            (status, message) = user.validate_authenticator_code(form.cleaned_data["otp"])
+            custom_log(request, "Testing OTP code %s at %s" % (otp, time.time()), level="debug")
+            (status, message) = user.validate_authenticator_code(otp)
 
             save_browser = False
             if request.POST.get("my_computer"):
@@ -627,6 +627,7 @@ def authenticate_with_sms(request):
 
 
 def js_ping(request, **kwargs):
+    """ Handles time browser queries, and updates browser status when required. """
     ret = {}
     sign_out = False
     if not request.browser:
@@ -646,6 +647,7 @@ def js_ping(request, **kwargs):
 
 @protect_view("sessions", required_level=Browser.L_STRONG)
 def sessions(request):
+    """ Shows sessions to the user. """
     user = request.browser.user
     ret = {}
     if request.method == "POST":
@@ -712,6 +714,7 @@ def sessions(request):
 
 @protect_view("view_log", required_level=Browser.L_STRONG)
 def view_log(request, **kwargs):
+    """ Shows log entries to the user """
     ret = {}
 
     browsers = {}
@@ -885,6 +888,7 @@ def configure_authenticator(request):
 
 @protect_view("authenticate_with_emergency", required_level=Browser.L_BASIC)
 def authenticate_with_emergency(request):
+    """ TODO: emergency code authentication """
     try:
         codes = EmergencyCodes.objects.get(user=request.browser.user)
     except EmergencyCodes.DoesNotExist:
@@ -892,8 +896,6 @@ def authenticate_with_emergency(request):
         pass
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='60/15s', ratekey='15s', block=True, method=["POST", "GET"], skip_if=is_authenticated)
-#@protect_view("logoutview", required_level=Browser.L_UNAUTH) # No authentication required to prevent silly sign-in - logout cycle.
 def logoutview(request):
     """ Handles logout as well as possible. 
 

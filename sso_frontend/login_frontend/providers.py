@@ -1,30 +1,33 @@
-from M2Crypto import DSA
+#pylint: disable-msg=C0301
+
+"""
+SSO providers
+"""
+
 from django.conf import settings
 from django.contrib.auth import login as django_login
 from django.contrib.auth.models import User as DjangoUser
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
-from models import Browser, BrowserLogin, add_log_entry
+from login_frontend.models import Browser, BrowserLogin, add_log_entry
 from urlparse import urlparse
-from utils import custom_redirect
-import Cookie
+from login_frontend.utils import custom_redirect
 import auth_pubtkt
-import base64
 import datetime
 import json
 import logging
 import time
 import urllib
 
-#TODO: store private key path in settings.
 privkey = settings.PUBTKT_PRIVKEY
 
 log = logging.getLogger(__name__)
 
 def internal_login(request):
+    """ Internal login using Django authentication framework """
     log.debug("Internal login requested")
     params = request.GET.dict()
     params["_sso"] = "internal"
@@ -45,7 +48,7 @@ def internal_login(request):
     if browser.get_auth_level() >= Browser.L_STRONG:
         log.debug("User is authenticated with strong authentication")
         back_url = request.GET.get("next")
-        (user, created) = DjangoUser.objects.get_or_create(username=browser.user.username, defaults={"email": browser.user.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
+        (user, _) = DjangoUser.objects.get_or_create(username=browser.user.username, defaults={"email": browser.user.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
         user.backend = 'django.contrib.auth.backends.ModelBackend' # Horrible hack.
         django_login(request, user)
 
@@ -57,6 +60,7 @@ def internal_login(request):
 
 
 def pubtkt_logout(request, response = None):
+    """ Sets pubtkt logout cookie. """
     if response:
         log.info("Unsetting pubtkt cookie: %s" % request.META.get("REMOTE_ADDR"))
         response.set_cookie("auth_pubtkt", **{"value": "invalid", "secure": True, "httponly": True, "domain": ".futurice.com"})
@@ -80,7 +84,9 @@ def pubtkt_logout(request, response = None):
     return response
 
 def pubtkt(request):
+    """ pubtkt login """
     def is_valid_back_url(back_url):
+        """ Returns true if back_url should be okay """
         valid_domains = settings.PUBTKT_ALLOWED_DOMAINS
         parsed_url = urlparse(back_url)
         if parsed_url.scheme != "https":

@@ -1,3 +1,4 @@
+#pylint: disable-msg=C0301
 # -*- coding: utf-8 -*-
 # some code from http://www.djangosnippets.org/snippets/310/ by simon
 # and from examples/djopenid from python-openid-2.2.4
@@ -297,7 +298,7 @@ def openid_get_identity(request, identity_url):
         if request.user.openid_set.count() > 0:
             return request.user.openid_set.all()[0]
 
-    (user, created) = DjangoUser.objects.get_or_create(username=request.browser.user.username, defaults={"email": request.browser.user.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
+    (user, _) = DjangoUser.objects.get_or_create(username=request.browser.user.username, defaults={"email": request.browser.user.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
     user.backend = 'django.contrib.auth.backends.ModelBackend' # Horrible hack.
     django_login(request, user)
     logger.debug("Creating new OpenID association for %s", user.username)

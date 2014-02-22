@@ -1,31 +1,25 @@
-from StringIO import StringIO
+#pylint: disable-msg=C0301
+""" Admin frontend views for login.
+
+This is not integrated to Django admin.
+"""
+
 from django.contrib.auth.models import User as DjangoUser
-from django.contrib import auth as django_auth
 from django.contrib import messages
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
-from django.utils.timesince import timeuntil
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from login_frontend.helpers import *
 from login_frontend.models import *
-from ratelimit.decorators import ratelimit
-from ratelimit.helpers import is_ratelimited
 from login_frontend.utils import *
-import Cookie
-import auth_pubtkt
 import datetime
 import dateutil.parser
 import json
 import pyotp
-import qrcode
 import redis
 import time
 import urllib
@@ -39,6 +33,7 @@ r = redis.Redis()
 
 user_log = logging.getLogger(__name__)
 def custom_log(request, message, **kwargs):
+    """ Automatically adds remote IP address and public browser ID to log entries """
     level = kwargs.get("level", "info")
     method = getattr(user_log, level)
     remote_addr = request.META.get("REMOTE_ADDR")
@@ -49,9 +44,10 @@ def custom_log(request, message, **kwargs):
             username = request.browser.user.username
     method("%s - %s - %s - %s", remote_addr, username, bid_public, message)
 
-
+@require_http_methods(["GET"])
 @protect_view("indexview", required_level=Browser.L_STRONG, admin_only=True)
 def indexview(request, **kwargs):
+    """ Main page. If keyword argument body_only is set, returns only main content, excluding menus. """
     custom_log(request, "Admin: frontpage")
     ret = {}
     ret["users"] = User.objects.all().count()
@@ -79,15 +75,28 @@ def indexview(request, **kwargs):
      
     return render_to_response("admin_frontend/indexview.html", ret, context_instance=RequestContext(request))
 
+@require_http_methods(["GET"])
 @protect_view("users", required_level=Browser.L_STRONG, admin_only=True)
 def users(request):
+    """ Returns list of users.
+    TODO: pagination
+    """
     custom_log(request, "Admin: users")
     ret = {}
     ret["users"] = User.objects.all().order_by('username')
     return render_to_response("admin_frontend/users.html", ret, context_instance=RequestContext(request))
 
+@require_http_methods(["GET"])
 @protect_view("search", required_level=Browser.L_STRONG, admin_only=True)
 def search(request):
+    """ Search view. Shows
+
+    - active browsers for user (if keyword is username)
+    - all browsers where either public browser ID or user agent (wildcard) matches.
+    - All browsers user have ever used, if keyword is username
+    - All users with matching username, email, primary or secondary phone
+    """
+
     q = request.GET.get("q")
     ret = {}
     ret["q"] = q
@@ -98,8 +107,13 @@ def search(request):
 
     return render_to_response("admin_frontend/search.html", ret, context_instance=RequestContext(request))
 
+@require_http_methods(["GET", "POST"])
 @protect_view("userdetails", required_level=Browser.L_STRONG, admin_only=True)
 def userdetails(request, **kwargs):
+    """ Shows details for a single user. Allows refreshing (from LDAP),
+        signing out sessions (log entries to user visible log is added)
+        and revoking configuration for user (including Authenticator)
+    """
     ret = {}
     username = kwargs.get("username")
     ret["auser"] = get_object_or_404(User, username=username)
@@ -135,35 +149,43 @@ def userdetails(request, **kwargs):
     ret["logins"] = BrowserLogin.objects.filter(user=ret["auser"])
     return render_to_response("admin_frontend/userdetails.html", ret, context_instance=RequestContext(request))
 
+@require_http_methods(["GET"])
 @protect_view("logins", required_level=Browser.L_STRONG, admin_only=True)
 def logins(request):
+    """ Shows list of active logins for all users. """
     ret = {}
     custom_log(request, "Admin: list of active logins")
-    logins = BrowserLogin.objects.filter(signed_out=False).filter(expires_at__lte=timezone.now())
+    entries = BrowserLogin.objects.filter(signed_out=False).filter(expires_at__lte=timezone.now())
     paginator = Paginator(logins, 100)
     page = request.GET.get("page")
     try:
-        logins = paginator.page(page)
+        entries = paginator.page(page)
     except PageNotAnInteger:
-        logins = paginator.page(1)
+        entries = paginator.page(1)
         page = 1
     except EmptyPage:
-        logins = paginator.page(paginator.num_pages)
+        entries = paginator.page(paginator.num_pages)
         page = paginator.num_pages
-    logins.pagerange = range(max(1, logins.number - 5), min(paginator.num_pages, logins.number + 5))
+    entries.pagerange = range(max(1, entries.number - 5), min(paginator.num_pages, entries.number + 5))
     ret["logins"] = logins
 
     return render_to_response("admin_frontend/logins.html", ret, context_instance=RequestContext(request))
 
+@require_http_methods(["GET"])
 @protect_view("browsers", required_level=Browser.L_STRONG, admin_only=True)
 def browsers(request):
+    """ Shows list of all browsers.
+    TODO: pagination
+    """
     ret = {}
     custom_log(request, "Admin: list of browsers")
     ret["browsers"] = Browser.objects.all()
     return render_to_response("admin_frontend/browsers.html", ret, context_instance=RequestContext(request))
 
+@require_http_methods(["GET"])
 @protect_view("browserdetails", required_level=Browser.L_STRONG, admin_only=True)
 def browserdetails(request, **kwargs):
+    """ Shows details for a single browser """
     ret = {}
     bid_public = kwargs.get("bid_public")
     ret["abrowser"] = get_object_or_404(Browser, bid_public=bid_public)
@@ -175,8 +197,10 @@ def browserdetails(request, **kwargs):
     custom_log(request, "Admin: browser details for %s (%s)" % (bid_public, username))
     return render_to_response("admin_frontend/browserdetails.html", ret, context_instance=RequestContext(request))
 
+@require_http_methods(["GET"])
 @protect_view("logs", required_level=Browser.L_STRONG, admin_only=True)
 def logs(request, **kwargs):
+    """ Shows log entries for browser, user or for all users """
     ret = {}
     custom_log(request, "Admin: logs")
     bid_public = kwargs.get("bid_public")
@@ -193,7 +217,7 @@ def logs(request, **kwargs):
         custom_log(request, "Admin: entries for %s (%s)" % (bid_public, username))
 
     elif username:
-        ret["auser"] = get_object_or_404(username=username)
+        ret["auser"] = get_object_or_404(User, username=username)
         entries = Log.objects.filter(user=ret["auser"])
         custom_log(request, "Admin: entries for %s" % username)
     else:

@@ -1,12 +1,13 @@
-from django.conf import settings
+"""
+Utility functions
+"""
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.utils import timezone
-from models import Browser, User
-import _slumber_auth
+from login_frontend.models import User
+import login_frontend._slumber_auth as _slumber_auth
 import geoip2
 import time
 import geoip2.database
@@ -16,13 +17,14 @@ import ipaddr
 import slumber
 import urllib
 import logging
-import json
 
 log = logging.getLogger(__name__)
 timing_log = logging.getLogger("timing_data")
 
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
+
+__all__ = ["is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "custom_redirect"]
 
 def is_private_net(ip_address):
     """ Returns True if specified in private networks, imported from
@@ -32,7 +34,7 @@ def is_private_net(ip_address):
     except:
         return False
 
-    for (network, country, city, description) in IP_NETWORKS:
+    for (network, _, _, description) in IP_NETWORKS:
         if ((isinstance(network, ipaddr.IPv4Address) and
             ip is network) or
            (isinstance(network, ipaddr.IPv4Network) and
@@ -41,15 +43,18 @@ def is_private_net(ip_address):
     return False
 
 def save_timing_data(username, user_agent, timing_data, bid_public):
+    """ Saves timing data with username, UA and bid. """
     timing_log.info("%s - %s - %s - %s - %s" % (time.time(), username, user_agent, timing_data, bid_public))
 
 
 def get_and_refresh_user(username):
+    """ Loads and refreshes user information from LDAP """
     log.info("Refreshing %s" % username)
     api = slumber.API(settings.FUM_API_ENDPOINT, auth=_slumber_auth.TokenAuth(settings.FUM_ACCESS_TOKEN))
     refresh_user(api.users().get(username=username))
 
 def refresh_user(user):
+    """ Refreshes user details, if necessary. """
     username = user.get("username")
     log.info("Updating %s" % username)
     first_name = user.get("first_name", "Unknown")
@@ -80,6 +85,7 @@ def refresh_user(user):
         return True
 
 def get_geoip_string(ip_address):
+    """ Returns short location string for IP address. """
     private_net = is_private_net(ip_address)
     if private_net:
         return private_net
@@ -94,6 +100,7 @@ def get_geoip_string(ip_address):
     return "%s (%s)" % (country, city)
 
 def custom_redirect(url_name, get_params = None):
+    """ Returns HttpResponseRedirect with query string. """
     url = reverse(url_name)
     if not get_params:
         return HttpResponseRedirect(url)

@@ -1,4 +1,15 @@
-from django.http import HttpResponseForbidden, HttpResponse, HttpResponseRedirect
+#pylint: disable-msg=C0301
+
+"""
+Middleware classes.
+
+BrowserMiddleware adds request.browser, and automatically signs user out,
+if browser was restarted, and not saved.
+
+Also, session cookie is automatically added if it does not exist yet.
+"""
+
+from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from login_frontend.models import Browser, BrowserUsers, BrowserLogin, create_browser_uuid
@@ -14,14 +25,25 @@ DISALLOWED_UA = [
  re.compile("^curl/.*")
 ]
 
-def get_browser(request):
+__all__ = ["get_browser", "BrowserMiddleware"]
+
+def __get_browser(request):
     bid = request.COOKIES.get(Browser.C_BID)
-    if not bid: return None
+    if not bid:
+        return None
     try:
         browser = Browser.objects.get(bid=bid)
     except ObjectDoesNotExist:
         log.info("Unknown browser id '%s' from '%s'", bid, request.META.get("REMOTE_ADDR"))
         return None
+
+    return browser
+
+def get_browser(request):
+    browser = __get_browser(request)
+    if browser is None:
+        return None
+    bid = browser.bid_public
 
     if request.path.startswith("/csp-report"):
         log.debug("Browser '%s' from '%s' reporting CSP - skip sign-out processing", bid, request.META.get("REMOTE_ADDR"))
@@ -51,18 +73,24 @@ def get_browser(request):
 
 
 class BrowserMiddleware(object):
+    """ Adds request.browser. """ 
+
     def process_request(self, request):
+        """ Adds request.browser. Filters out monitoring bots. """
         ua = request.META.get("HTTP_USER_AGENT") 
         for ua_re in DISALLOWED_UA:
             if ua_re.match(ua):
+                #TODO: futurice
                 return HttpResponse("OK. Your request was caught because you seem to be a bot. If this is by mistake, please contact admin@futurice.com")
 
         request.browser = get_browser(request)
 
 
     def process_response(self, request, response):
+        """ Automatically adds session cookie if old one is not available. """
+        
         # Browser from process_request is not available here.
-        browser = get_browser(request)
+        browser = __get_browser(request)
 
         if not browser or browser.get_auth_level() < Browser.L_STRONG:
             response = pubtkt_logout(request, response)
@@ -77,6 +105,6 @@ class BrowserMiddleware(object):
             browser.save()
             cookies = browser.get_cookie()
             for cookie_name, cookie in cookies:
-               response.set_cookie(cookie_name, **cookie)
+                response.set_cookie(cookie_name, **cookie)
 
         return response
