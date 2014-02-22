@@ -27,7 +27,7 @@ DISALLOWED_UA = [
 
 __all__ = ["get_browser", "BrowserMiddleware"]
 
-def __get_browser(request):
+def get_browser_instance(request):
     bid = request.COOKIES.get(Browser.C_BID)
     if not bid:
         return None
@@ -40,7 +40,7 @@ def __get_browser(request):
     return browser
 
 def get_browser(request):
-    browser = __get_browser(request)
+    browser = get_browser_instance(request)
     if browser is None:
         return None
     bid = browser.bid_public
@@ -90,7 +90,7 @@ class BrowserMiddleware(object):
         """ Automatically adds session cookie if old one is not available. """
         
         # Browser from process_request is not available here.
-        browser = __get_browser(request)
+        browser = get_browser_instance(request)
 
         if not browser or browser.get_auth_level() < Browser.L_STRONG:
             response = pubtkt_logout(request, response)
