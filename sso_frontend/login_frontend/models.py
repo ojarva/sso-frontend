@@ -10,12 +10,46 @@ import logging
 import pyotp
 import re
 import subprocess
+import sys
+import os
 import time
 import uuid
 
 log = logging.getLogger(__name__)
 
-__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_log_entry", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode"]
+__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode"]
+
+def custom_log(request, message, **kwargs):
+    """ Automatically logs username, remote IP and bid_public """
+    custom_log_inner(request, message, **kwargs)
+
+def custom_log_inner(request, message, **kwargs):
+    """ Additional method call to get proper entry from call stack. """
+    try:
+        raise Exception
+    except:
+        stack = sys.exc_info()[2].tb_frame.f_back
+    if stack is not None:
+        stack = stack.f_back
+    while hasattr(stack, "f_code"):
+        co = stack.f_code
+        filename = os.path.normcase(co.co_filename)
+        filename = co.co_filename
+        lineno = stack.f_lineno
+        co_name = co.co_name
+        break
+
+    level = kwargs.get("level", "info")
+    method = getattr(log, level)
+    remote_addr = request.META.get("REMOTE_ADDR")
+    bid_public = username = ""
+    if request.browser:
+        bid_public = request.browser.bid_public
+        if request.browser.user:
+            username = request.browser.user.username
+    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
+                            remote_addr, username, bid_public, message)
+
 
 def create_browser_uuid():
     """ Returns 37 characters unique ID as a string """
@@ -77,7 +111,7 @@ class EmergencyCode(models.Model):
         unique_together = (("codegroup", "code_id"), ("codegroup", "code_val"))
 
 
-def add_log_entry(request, message, status="question", **kwargs):
+def add_user_log(request, message, status="question", **kwargs):
     if request.browser is None or request.browser.user is None:
         return
     bid_public = kwargs.get("bid_public")
@@ -175,6 +209,7 @@ class Browser(models.Model):
 
 
     def get_cookie(self):
+        # TODO: futurice
         return [
            (Browser.C_BID, {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
            (Browser.C_BID_PUBLIC, {"value": self.bid_public, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
@@ -325,7 +360,10 @@ class Browser(models.Model):
         - Authentication state
         - If request object was provided, Django user object.
         """
-        log.info("Logging out: bid=%s" % self.bid)
+        if request:
+            custom_log(request, "Logging out")
+        else:
+            log.info("Logging out: bid=%s" % self.bid)
         self.revoke_sms()
         self.user = None
         self.save_browser = False
@@ -532,8 +570,7 @@ class User(models.Model):
                 browser.save()
             elif kwargs.get("remote_logout"):
                 message = "You remotely signed out this browser"
-            obj = Log.objects.create(user=self, bid_public=bid_public, status=status, message=message, remote_ip=remote_ip)
-            obj.save()
+            Log.objects.create(user=self, bid_public=bid_public, status=status, message=message, remote_ip=remote_ip)
 
     def reset(self):
         self.strong_configured = False
@@ -548,11 +585,10 @@ class User(models.Model):
         self.strong_authenticator_secret = pyotp.random_base32()
         self.strong_authenticator_generated_at = timestamp
         self.save()
-        authenticator_log = AuthenticatorCode.objects.create(user=self, generated_at=timestamp, authenticator_secret=self.strong_authenticator_secret)
-        authenticator_log.save()
+        AuthenticatorCode.objects.create(user=self, generated_at=timestamp, authenticator_secret=self.strong_authenticator_secret)
         return self.strong_authenticator_secret
 
-    def validate_authenticator_code(self, code):
+    def validate_authenticator_code(self, code, request):
         """ Validates authenticator OTP. 
 
         Returns (status, message) tuple.
@@ -560,29 +596,33 @@ class User(models.Model):
         - message is either None or user-readable string
           describing the problem.
         """
- 
+
         if not self.strong_authenticator_secret:
             return (False, "Authenticator is not configured")
 
         totp = pyotp.TOTP(self.strong_authenticator_secret)
         for timestamp in [time.time() - 30, time.time(), time.time() + 30]:
             totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
-            log.debug("Comparing '%s' and '%s'" % (totp_code, code))
+            custom_log(request, "Comparing '%s' and '%s'" % (totp_code, code), level="debug")
             if str(code) == totp_code:
                 (obj, created) = UsedOTP.objects.get_or_create(user=self, code=code)
                 if created:
-                    obj.save()
+                    if request:
+                        obj.used_from = request.META.get("REMOTE_ADDR")
+                        obj.save()
                 else:
                     return (False, "OTP was already used. Please wait for 30 seconds and try again.")
                 return (True, None)
 
         # Either timestamp is way off or user entered incorrect OTP.
-        log.info("Invalid OTP")
+        custom_log(request, "Invalid OTP - does not match to current Authenticator code", level="info")
+
         for time_diff in range(-900, 900, 30):
             timestamp = time.time() + time_diff
             totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
             if str(code) == totp_code:
-                log.warn("User clock is off by %s seconds" % time_diff)
+                custom_log(request, "User clock is off by %s seconds" % time_diff, level="warn")
+                add_user_log(request, "Clock of your mobile phone is off by %s seconds" % time_diff, status="clock-o")
                 message = "Incorrect code. It seems your clock is off by about %s seconds" % time_diff
                 if time_diff < 0:
                     message += ", or you waited too long before entering the code"
@@ -592,16 +632,17 @@ class User(models.Model):
         # No match from current authentication even with time offset. Try old codes.
         old_authenticators = AuthenticatorCode.objects.filter(user=self)
         for authenticator in old_authenticators:
-            log.debug("Testing authenticator configured at %s" % authenticator.generated_at)
             totp = pyotp.TOTP(authenticator.authenticator_secret)
             for time_diff in range(-900, 900, 30):
                 timestamp = time.time() + time_diff
                 totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
                 if str(code) == totp_code:
+                    custom_log(request, "User tried to use authenticator configured at %s" % authenticator.generated_at, level="info")
                     if abs(time_diff) < 35:
                         message = "You tried to use old Authenticator configuration, generated at %s. If you don't have newer configuration, please sign in with SMS and reconfigure Authenticator." % authenticator.generated_at
                     else:
                         message = "You tried to use old Authenticator configuration, generated at %s. If you don't have newer configuration, please sign in with SMS and reconfigure Authenticator. Also, your clock seems to be off by about %s seconds" % (authenticator.generated_at, time_diff)
+                        custom_log(request, "User clock is off by %s seconds" % time_diff, level="warn")
                     return (False, message)
 
         return (False, "Incorrect OTP code.")

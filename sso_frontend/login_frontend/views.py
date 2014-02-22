@@ -169,11 +169,11 @@ def indexview(request):
                 request.browser.save()
                 if save_browser:
                     custom_log(request, "Marked browser as remembered", level="info")
-                    add_log_entry(request, "Marked browser as remembered", "eye")
+                    add_user_log(request, "Marked browser as remembered", "eye")
                     messages.info(request, "You're now remembered on this browser")
                 else:
                     custom_log(request, "Marked browser as not remembered", level="info")
-                    add_log_entry(request, "Marked browser as not remembered", "eye-slash")
+                    add_user_log(request, "Marked browser as not remembered", "eye-slash")
                     messages.info(request, "You're no longer remembered on this browser")
                 return redirect_with_get_params("login_frontend.views.indexview", request.GET.dict())
 
@@ -259,10 +259,10 @@ def authenticate_with_password(request):
                 browser.save()
                 if save_browser:
                     custom_log(request, "Marked browser as remembered", level="info")
-                    add_log_entry(request, "Marked browser as remembered", "eye")
+                    add_user_log(request, "Marked browser as remembered", "eye")
                 else:
                     custom_log(request, "Marked browser as not remembered", level="info")
-                    add_log_entry(request, "Marked browser as not remembered", "eye-slash")
+                    add_user_log(request, "Marked browser as not remembered", "eye-slash")
 
             if auth_status == True:
                     
@@ -286,7 +286,7 @@ def authenticate_with_password(request):
 
                 request.browser = browser
 
-                add_log_entry(request, "Successfully logged in using username and password", "sign-in")
+                add_user_log(request, "Successfully logged in using username and password", "sign-in")
                 custom_log(request, "Successfully logged in using username and password")
                 if browser.user.emulate_legacy:
                     custom_log(request, "Emulating legacy SSO", level="info")
@@ -315,11 +315,11 @@ def authenticate_with_password(request):
                 if auth_status == "invalid_credentials":
                     ret["authentication_failed"] = True
                     custom_log(request, "Authentication failed. Invalid credentials", level="warn")
-                    add_log_entry(request, "Authentication failed. Invalid credentials", "warning")
+                    add_user_log(request, "Authentication failed. Invalid credentials", "warning")
                 else:
                     ret["message"] = auth_status 
                     custom_log(request, "Authentication failed: %s" % auth_status, level="warn")
-                    add_log_entry(request, "Authentication failed: %s" % auth_status, "warning")
+                    add_user_log(request, "Authentication failed: %s" % auth_status, "warning")
         else:
             custom_log(request, "Either username or password is missing.", level="warn")
             messages.warning(request, "Invalid request")
@@ -401,7 +401,7 @@ def authenticate_with_authenticator(request):
         if skips_available > 0:
             user.strong_skips_available -= 1
             user.save()
-            add_log_entry(request, "Skipped strong authentication: %s left" % user.strong_skips_available, "meh-o")
+            add_user_log(request, "Skipped strong authentication: %s left" % user.strong_skips_available, "meh-o")
             custom_log(request, "Skipped strong authentication: %s left" % user.strong_skips_available)
             # TODO: determine the levels automatically.
             request.browser.set_auth_level(Browser.L_STRONG_SKIPPED)
@@ -426,7 +426,7 @@ def authenticate_with_authenticator(request):
             custom_log(request, "Form is valid", level="debug")
             otp = form.cleaned_data["otp"]
             custom_log(request, "Testing OTP code %s at %s" % (otp, time.time()), level="debug")
-            (status, message) = user.validate_authenticator_code(otp)
+            (status, message) = user.validate_authenticator_code(otp, request)
 
             save_browser = False
             if request.POST.get("my_computer"):
@@ -436,10 +436,10 @@ def authenticate_with_authenticator(request):
                 request.browser.save()
                 if save_browser:
                     custom_log(request, "Marked browser as remembered", level="info")
-                    add_log_entry(request, "Marked browser as remembered", "eye")
+                    add_user_log(request, "Marked browser as remembered", "eye")
                 else:
                     custom_log(request, "Marked browser as not remembered", level="info")
-                    add_log_entry(request, "Marked browser as not remembered", "eye-slash")
+                    add_user_log(request, "Marked browser as not remembered", "eye-slash")
 
             if not status:
                 # If authenticator code did not match, also try latest SMS (if available).
@@ -457,7 +457,7 @@ def authenticate_with_authenticator(request):
                     custom_log(request, e.message)
 
                 custom_log(request, "Second-factor authentication with Authenticator succeeded")
-                add_log_entry(request, "Second-factor authentication with Authenticator succeeded", "lock")
+                add_user_log(request, "Second-factor authentication with Authenticator succeeded", "lock")
                 # Mark authenticator configuration as valid. User might have configured
                 # authenticator but aborted without entering validation code.
                 user.strong_authenticator_used = True
@@ -472,7 +472,7 @@ def authenticate_with_authenticator(request):
                 return redir_to_sso(request)
             else:
                 custom_log(request, "Incorrect Authenticator OTP provided: %s" % message, level="warn")
-                add_log_entry(request, "Incorrect Authenticator OTP provided: %s" % message, "warning")
+                add_user_log(request, "Incorrect Authenticator OTP provided: %s" % message, "warning")
                 ret["invalid_otp"] = message
     else:
         custom_log(request, "GET request", level="debug")
@@ -517,7 +517,7 @@ def authenticate_with_sms(request):
         if skips_available > 0:
             user.strong_skips_available -= 1
             user.save()
-            add_log_entry(request, "Skipped strong authentication: %s left" % user.strong_skips_available, "meh-o")
+            add_user_log(request, "Skipped strong authentication: %s left" % user.strong_skips_available, "meh-o")
             custom_log(request, "Skipped strong authentication: %s left" % user.strong_skips_available)
             # TODO: determine the levels automatically.
             request.browser.set_auth_level(Browser.L_STRONG)
@@ -558,15 +558,15 @@ def authenticate_with_sms(request):
                 request.browser.save()
                 if save_browser:
                     custom_log(request, "Marked browser as remembered", level="info")
-                    add_log_entry(request, "Marked browser as remembered", "eye")
+                    add_user_log(request, "Marked browser as remembered", "eye")
                 else:
                     custom_log(request, "Marked browser as not remembered", level="info")
-                    add_log_entry(request, "Marked browser as not remembered", "eye-slash")
+                    add_user_log(request, "Marked browser as not remembered", "eye-slash")
 
             if not status:
                 # If OTP from SMS did not match, also test for Authenticator OTP.
                 custom_log(request, "OTP from SMS did not match, testing Authenticator", level="info")
-                (status, _) = request.browser.user.validate_authenticator_code(otp)
+                (status, _) = request.browser.user.validate_authenticator_code(otp, request)
 
             if status:
 
@@ -581,7 +581,7 @@ def authenticate_with_sms(request):
 
                 # Authentication succeeded.
                 custom_log(request, "Second-factor authentication with SMS succeeded")
-                add_log_entry(request, "Second-factor authentication with SMS succeeded", "lock")
+                add_user_log(request, "Second-factor authentication with SMS succeeded", "lock")
                 # TODO: determine the levels automatically.
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
@@ -599,10 +599,10 @@ def authenticate_with_sms(request):
                 if message:
                     ret["message"] = message
                     custom_log(request, "OTP login failed: %s" % message, level="warn")
-                    add_log_entry(request, "OTP login failed: %s" % message, "warning")
+                    add_user_log(request, "OTP login failed: %s" % message, "warning")
                 else:
                     custom_log(request, "Incorrect SMS OTP", level="warn")
-                    add_log_entry(request, "Incorrect SMS OTP", "warning")
+                    add_user_log(request, "Incorrect SMS OTP", "warning")
                     ret["authentication_failed"] = True
     else:
         custom_log(request, "GET request", level="debug")
@@ -617,10 +617,10 @@ def authenticate_with_sms(request):
                 if not status:
                     ret["message"] = "Sending SMS to %s failed." % phone
                     custom_log(request, "Sending SMS to %s failed" % phone, level="warn")
-                    add_log_entry(request, "Sending SMS to %s failed" % phone)
+                    add_user_log(request, "Sending SMS to %s failed" % phone)
                 else:
                     custom_log(request, "Sent OTP to %s" % phone)
-                    add_log_entry(request, "Sent OTP code to %s" % phone, "info")
+                    add_user_log(request, "Sent OTP code to %s" % phone, "info")
                     phone_redacted = "%s...%s" % (phone[0:6], phone[-4:])
                     messages.info(request, mark_safe("Sent SMS to <span class='tooltip-link' title='This is redacted to protect your privacy'>%s</span>" % phone_redacted))
     ret["expected_sms_id"] = request.browser.sms_code_id
@@ -683,8 +683,8 @@ def sessions(request):
                         browser_logout.forced_sign_out = True
                         browser_logout.save()
                         custom_log(request, "Signed out browser %s" % browser_logout.bid_public, level="info")
-                        add_log_entry(request, "Signed out browser %s" % browser_logout.bid_public, "sign-out")
-                        add_log_entry(request, "Signed out from browser %s" % request.browser.bid_public, "sign-out", bid_public=browser_logout.bid_public)
+                        add_user_log(request, "Signed out browser %s" % browser_logout.bid_public, "sign-out")
+                        add_user_log(request, "Signed out from browser %s" % request.browser.bid_public, "sign-out", bid_public=browser_logout.bid_public)
                         messages.success(request, "Signed out browser %s" % browser_logout.get_readable_ua())
                 except Browser.DoesNotExist:
                     ret["message"] = "Invalid browser"
@@ -785,7 +785,7 @@ def configure_strong(request):
 
     if request.method == "POST":
         if request.POST.get("always_sms") == "on":
-            add_log_entry(request, "Switched to SMS authentication", "info")
+            add_user_log(request, "Switched to SMS authentication", "info")
             custom_log(request, "Switched to SMS authentication", level="info")
             user.strong_configured = True
             user.strong_sms_always = True
@@ -794,7 +794,7 @@ def configure_strong(request):
             messages.success(request, "Switched to SMS authentication")
             return redirect_with_get_params("login_frontend.views.configure_strong", request.GET.dict())
         elif request.POST.get("always_sms") == "off":
-            add_log_entry(request, "Switched to Authenticator authentication", "info")
+            add_user_log(request, "Switched to Authenticator authentication", "info")
             custom_log(request, "Switched to Authenticator authentication", level="info")
             user.strong_sms_always = False
             user.strong_skips_available = 0
@@ -854,7 +854,7 @@ def configure_authenticator(request):
     regen_secret = True
     otp = request.POST.get("otp_code")
     if otp:
-        (status, message) = request.browser.user.validate_authenticator_code(otp)
+        (status, message) = request.browser.user.validate_authenticator_code(otp, request)
         if status:
             # Correct OTP.
             user.strong_configured = True
@@ -863,7 +863,7 @@ def configure_authenticator(request):
             user.strong_skips_available = 0
             user.save()
             custom_log(request, "Reconfigured Authenticator", level="info")
-            add_log_entry(request, "Successfully configured Authenticator", "gear")
+            add_user_log(request, "Successfully configured Authenticator", "gear")
             messages.success(request, "Successfully configured Authenticator")
             redir = redir_to_sso(request, no_default=True)
             if redir:
@@ -872,7 +872,7 @@ def configure_authenticator(request):
         else:
             # Incorrect code. Don't regen secret.
             custom_log(request, "Entered invalid OTP during Authenticator configuration", level="info")
-            add_log_entry(request, "Entered invalid OTP during Authenticator configuration", "warning")
+            add_user_log(request, "Entered invalid OTP during Authenticator configuration", "warning")
             regen_secret = False
             ret["invalid_otp"] = message
 
@@ -885,7 +885,7 @@ def configure_authenticator(request):
         user.strong_authenticator_used = False
         user.strong_configured = False
         user.save()
-        add_log_entry(request, "Regenerated Authenticator code", "gear")
+        add_user_log(request, "Regenerated Authenticator code", "gear")
         custom_log(request, "Regenerated Authenticator code", level="info")
 
     request.browser.authenticator_qr_nonce = create_browser_uuid()
@@ -921,7 +921,7 @@ def logoutview(request):
         for login in logins:
             active_sessions.append({"sso_provider": login.sso_provider, "remote_service": login.remote_service, "expires_at": login.expires_at, "expires_session": login.expires_session, "auth_timestamp": login.auth_timestamp})
 
-        add_log_entry(request, "Signed out", "sign-out")
+        add_user_log(request, "Signed out", "sign-out")
         custom_log(request, "Signed out")
         logout_keys = ["username", "authenticated", "authentication_level", "login_time", "relogin_time"]
         for keyname in logout_keys:

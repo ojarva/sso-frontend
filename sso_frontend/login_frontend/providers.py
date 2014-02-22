@@ -12,7 +12,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
-from login_frontend.models import Browser, BrowserLogin, add_log_entry
+from login_frontend.models import Browser, BrowserLogin, add_user_log
 from urlparse import urlparse
 from login_frontend.utils import redirect_with_get_params
 import auth_pubtkt
@@ -158,7 +158,7 @@ def pubtkt(request):
         browser_login.expires_at = d_valid_until
         browser_login.save()
 
-        add_log_entry(request, "Granted pubtkt access (%s)" % back_url, "share-square-o")
+        add_user_log(request, "Granted pubtkt access (%s)" % back_url, "share-square-o")
 
         # Set cookies
         for cookie_name, cookie in cookies:
