@@ -1,22 +1,27 @@
 """
 Utility functions
 """
+
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from login_frontend.models import User
-import login_frontend._slumber_auth as _slumber_auth
+import datetime
+import dateutil.parser
 import geoip2
-import time
 import geoip2.database
 import geoip2.errors
 import geoip2.models
 import ipaddr
-import slumber
-import urllib
 import logging
+import login_frontend._slumber_auth as _slumber_auth
+import slumber
+import time
+import urllib
+        
+
 
 log = logging.getLogger(__name__)
 timing_log = logging.getLogger("timing_data")
@@ -24,7 +29,26 @@ timing_log = logging.getLogger("timing_data")
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
 
-__all__ = ["is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params"]
+__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params"]
+
+def redir_to_sso(request, **kwargs):
+    """ Returns HttpResponseRedirect to proper login service. """
+    sso = request.GET.get("_sso")
+    if sso == "pubtkt":
+        log.debug("Redirecting with pubtkt")
+        return redirect_with_get_params("login_frontend.providers.pubtkt", request.GET.dict())
+    elif sso == "internal":
+        log.debug("Redirecting with internal sso")
+        return redirect_with_get_params("login_frontend.providers.internal_login", request.GET.dict())
+    else:
+        log.debug("No sso preference configured")
+        if not kwargs.get("no_default", False):
+            log.debug("Redirecting back to indexview")
+            return redirect_with_get_params("login_frontend.views.indexview", request.GET.dict())
+        log.debug("No default configured - return None")
+        return None
+
+
 
 def is_private_net(ip_address):
     """ Returns True if specified in private networks, imported from

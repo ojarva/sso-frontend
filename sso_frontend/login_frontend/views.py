@@ -20,12 +20,11 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
 from login_frontend.forms import OTPForm
-from login_frontend.helpers import redir_to_sso
 from login_frontend.ldap_auth import LdapLogin
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.send_sms import send_sms
-from login_frontend.utils import save_timing_data, get_geoip_string, redirect_with_get_params
+from login_frontend.utils import save_timing_data, get_geoip_string, redirect_with_get_params, redir_to_sso
 from ratelimit.decorators import ratelimit
 import datetime
 import json
