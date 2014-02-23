@@ -35,5 +35,6 @@ urlpatterns = patterns('',
     url(r'^logout$', views.logoutview, name='logout'),
     url(r'^introduction$', TemplateView.as_view(template_name="login_frontend/introduction.html"), name='introduction'),
     url(r'^developer_introduction$', TemplateView.as_view(template_name="login_frontend/developer_introduction.html"), name='developer_introduction'),
+    url(r'^robots.txt$', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
     url(r'^get_pubkey/(?P<service>(.+))$', views.get_pubkey),
 )

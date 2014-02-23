@@ -1,0 +1,18 @@
+User-agent: *
+
+Disallow: /v2
+Disallow: /index
+Disallow: /first
+Disallow: /second
+Disallow: /pubtkt
+Disallow: /internal_login
+Disallow: /sessions
+Disallow: /ping
+Disallow: /configure
+Disallow: /view_log
+Disallow: /admin_
+Disallow: /admin
+Disallow: /logout
+Disallow: /configure_authenticator
+Disallow: /configure
+Disallow: /idp

@@ -1,5 +1,6 @@
 {% extends "login_frontend/base.html" %}
 
+{% block title %}Invalid request - {% endblock %}
 {% block content %}
 {% if enable_cookies %}
 	<div class="alert alert-danger">
@@ -28,6 +29,7 @@ Your don't have access to requested resource.
 <input type="submit" value="Logout and login again" class="btn btn-primary">
 </form>
 
+<p>If you think you should have access to this service, please contact IT team.</p>
 
 {% endif %}
 

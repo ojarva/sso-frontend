@@ -2,7 +2,7 @@
 
 <html>
 <head>
-<title>Futurice Single Sign-On</title>
+<title>{% block title %}{% endblock %}Futurice Single Sign-On</title>
 {% compress css %}
     <link href="/static/css/bootstrap.min.css" rel="stylesheet" />
     <link href="/static/css/font-awesome.min.css" rel="stylesheet" />
@@ -16,6 +16,10 @@
 {% endcompress %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% block header %}{% endblock %}
+<meta property="og:title" content="Sign-in required" />
+<meta property="og:description" content="This resource is protected by the single sign-on service. After signing in, you will be automatically redirected to the service you tried to access." />
+<meta name="description" content="This resource is protected by the single sign-on service. After signing in, you will be automatically redirected to the service you tried to access." />
+<meta property="og:type" content="website" />
 </head>
 
 

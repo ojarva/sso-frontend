@@ -1,5 +1,6 @@
 {% extends "admin_frontend/base.html" %}
 
+{% block title %}Admin - browser - {% endblock %}
 {% block admin_content %}
 
 <h2>{% for icon in abrowser.get_ua_icons %}<i class="fa fa-{{ icon }}"></i>{% endfor %} Details for <span class="tooltip-link" title="{{ abrowser.ua }}">{{ abrowser.get_readable_ua }}</span></h2>
