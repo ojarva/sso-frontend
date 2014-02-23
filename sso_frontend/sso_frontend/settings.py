@@ -122,10 +122,10 @@ USE_TZ = True
 # Example: "/var/www/example.com/media/"
 MEDIA_ROOT = ''
 
-SESSION_COOKIE_AGE=3*365*24*60*60
-
+SESSION_COOKIE_AGE=24*60*60*7
 SESSION_SERIALIZER="django.contrib.sessions.serializers.PickleSerializer"
-
+SESSION_ENGINE='redis_sessions.session'
+SESSION_REDIS_PREFIX="dsess"
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
