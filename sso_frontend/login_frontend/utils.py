@@ -7,7 +7,7 @@ from django.contrib.auth.models import User as DjangoUser
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
-from login_frontend.models import User
+from login_frontend.models import User, BrowserDetails, KeystrokeSequence
 import datetime
 import dateutil.parser
 import geoip2
@@ -16,6 +16,7 @@ import geoip2.errors
 import geoip2.models
 import ipaddr
 import logging
+import json
 import login_frontend._slumber_auth as _slumber_auth
 import slumber
 import time
@@ -66,9 +67,61 @@ def is_private_net(ip_address):
             return description
     return False
 
-def save_timing_data(username, user_agent, timing_data, bid_public):
+def save_timing_data(request, user, timing_data):
     """ Saves timing data with username, UA and bid. """
+    if not (hasattr(request, "browser") and request.browser):
+        log.error("Missing request.browser on timing data input")
+        return
+    browser = request.browser
+    user_agent = request.META.get("HTTP_USER_AGENT")
+    bid_public = request.browser.bid_public
+    username = user.username
     timing_log.info("%s - %s - %s - %s - %s" % (time.time(), username, user_agent, timing_data, bid_public))
+
+    try:
+        data = json.loads(timing_data)
+    except (ValueError, EOFError):
+        log.error("Unable to load timing data json")
+        return
+
+    if not isinstance(data, dict):
+        log.error("Invalid timing data dictionary")
+
+    resolution = data.get("resolution")
+    remote_clock = data.get("browserclock")
+    remote_clock_offset = remote_clock.get("timezoneoffset")
+    remote_clock_time = remote_clock.get("utciso")
+
+    plugins = data.get("plugins")
+
+    performance = data.get("performance")
+    performance_performance = performance_memory = performance_timing = performance_navigation = None
+    if isinstance(performance, dict):
+        performance_performance = performance.get("performance")
+        performance_memory = performance.get("memory")
+        performance_timing = performance.get("timing")
+        performance_navigation = performance.get("navigation")
+
+    BrowserDetails.objects.create(browser=browser, timestamp=timezone.now(), remote_clock_offset=str(remote_clock_offset), remote_clock_time=str(remote_clock_time), performance_performance=str(performance_performance), performance_memory=str(performance_memory), performance_timing=str(performance_timing), performance_navigation=str(performance_navigation), resolution=str(resolution), plugins=str(plugins))
+
+    if "id_username" in data:
+        fieldname = KeystrokeSequence.USERNAME
+        timing = str(data.get("id_username"))
+        KeystrokeSequence.objects.create(user=user, browser=browser, fieldname=fieldname, timing=timing, timestamp=timezone.now(), resolution=resolution, was_correct=True)
+    
+    if "id_password" in data:
+        fieldname = KeystrokeSequence.PASSWORD
+        timing = str(data.get("id_password"))
+        KeystrokeSequence.objects.create(user=user, browser=browser, fieldname=fieldname, timing=timing, timestamp=timezone.now(), resolution=resolution, was_correct=True)
+ 
+    if "id_otp" in data:
+        if request.path.startswith("/second/sms"):
+            fieldname = KeystrokeSequence.OTP_SMS
+        else:
+            fieldname = KeystrokeSequence.OTP_AUTHENTICATOR
+        timing = str(data.get("id_otp"))
+        KeystrokeSequence.objects.create(user=user, browser=browser, fieldname=fieldname, timing=timing, timestamp=timezone.now(), resolution=resolution, was_correct=True)
+
 
 
 def get_and_refresh_user(username):

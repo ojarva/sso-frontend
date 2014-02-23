@@ -266,11 +266,6 @@ def authenticate_with_password(request):
 
             if auth_status == True:
                     
-                if request.POST.get("timing_data"):
-                    user_agent = request.META.get("HTTP_USER_AGENT")
-                    timing_data = request.POST.get("timing_data")
-                    bid_public = browser.bid_public
-                    save_timing_data(username, user_agent, timing_data, bid_public)
 
                 # User authenticated successfully. Update AUTH_STATE and AUTH_LEVEL
                 browser.forced_sign_out = False
@@ -285,6 +280,10 @@ def authenticate_with_password(request):
                     browser.user = user
 
                 request.browser = browser
+
+                if request.POST.get("timing_data"):
+                    timing_data = request.POST.get("timing_data")
+                    save_timing_data(request, browser.user, timing_data)
 
                 add_user_log(request, "Successfully logged in using username and password", "sign-in")
                 custom_log(request, "Successfully logged in using username and password")
@@ -414,6 +413,7 @@ def authenticate_with_authenticator(request):
             messages.warning(request, "You can't skip strong authentication anymore.")
             custom_log(request, "Tried to skip strong authentication with no skips available", level="warn")
 
+    form = OTPForm()
     if request.method == "POST" and not request.session.test_cookie_worked():
         ret["enable_cookies"] = True
 
@@ -447,15 +447,6 @@ def authenticate_with_authenticator(request):
                 status, _ = request.browser.validate_sms(otp)
             if status:
 
-                try:
-                    if request.POST.get("timing_data"):
-                        user_agent = request.META.get("HTTP_USER_AGENT")
-                        timing_data = request.POST.get("timing_data")
-                        bid_public = request.browser.bid_public
-                        save_timing_data(request.browser.user.username, user_agent, timing_data, bid_public)
-                except Exception, e:
-                    custom_log(request, e.message)
-
                 custom_log(request, "Second-factor authentication with Authenticator succeeded")
                 add_user_log(request, "Second-factor authentication with Authenticator succeeded", "lock")
                 # Mark authenticator configuration as valid. User might have configured
@@ -463,6 +454,11 @@ def authenticate_with_authenticator(request):
                 user.strong_authenticator_used = True
                 user.strong_configured = True
                 user.save()
+
+                if request.POST.get("timing_data"):
+                    timing_data = request.POST.get("timing_data")
+                    save_timing_data(request, user, timing_data)
+
 
                 # TODO: determine the levels automatically.
                 request.browser.set_auth_level(Browser.L_STRONG)
@@ -569,16 +565,6 @@ def authenticate_with_sms(request):
                 (status, _) = request.browser.user.validate_authenticator_code(otp, request)
 
             if status:
-
-                try:
-                    if request.POST.get("timing_data"):
-                        user_agent = request.META.get("HTTP_USER_AGENT")
-                        timing_data = request.POST.get("timing_data")
-                        bid_public = request.browser.bid_public
-                        save_timing_data(request.browser.user.username, user_agent, timing_data, bid_public)
-                except Exception, e:
-                    custom_log(request, e.message)
-
                 # Authentication succeeded.
                 custom_log(request, "Second-factor authentication with SMS succeeded")
                 add_user_log(request, "Second-factor authentication with SMS succeeded", "lock")
@@ -588,6 +574,12 @@ def authenticate_with_sms(request):
                 request.browser.save()
                 user.primary_phone_changed = False
                 user.save()
+
+                if request.POST.get("timing_data"):
+                    timing_data = request.POST.get("timing_data")
+                    save_timing_data(request, user, timing_data)
+
+
                 if not user.strong_configured:
                     # Strong authentication is not configured. Go to configuration view.
                     custom_log(request, "User has not configured strong authentication. Redirect to configuration view", level="info")

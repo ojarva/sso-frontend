@@ -17,7 +17,7 @@ import uuid
 
 log = logging.getLogger(__name__)
 
-__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode"]
+__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails"]
 
 def custom_log(request, message, **kwargs):
     """ Automatically logs username, remote IP and bid_public """
@@ -504,6 +504,44 @@ class BrowserUsers(models.Model):
 
     remote_ip_passive = models.GenericIPAddressField(null=True, blank=True, help_text="Last remote IP address")
     last_seen_passive = models.DateTimeField(null=True)
+
+class BrowserDetails(models.Model):
+    """ Holds additional information for Browser """
+    browser = models.ForeignKey("Browser")
+    timestamp = models.DateTimeField()
+
+    remote_clock_offset = models.IntegerField(null=True, blank=True)
+    remote_clock_time = models.CharField(max_length=28, null=True, blank=True)
+
+    performance_performance = models.TextField(null=True, blank=True)
+    performance_memory = models.TextField(null=True, blank=True)
+    performance_timing = models.TextField(null=True, blank=True)
+    performance_navigation = models.TextField(null=True, blank=True)
+
+    resolution = models.TextField(null=True, blank=True)
+    plugins = models.TextField(null=True, blank=True)
+
+class KeystrokeSequence(models.Model):
+    OTP_AUTHENTICATOR = 0
+    OTP_SMS = 1
+    USERNAME = 2
+    PASSWORD = 3
+    KEYSTROKE_FIELD = (
+      (OTP_AUTHENTICATOR, "OTP to Authenticator field"),
+      (OTP_SMS, "OTP to SMS field"),
+      (USERNAME, "Username field"),
+      (PASSWORD, "Password field"),
+    )
+
+    browser = models.ForeignKey("Browser", null=True)
+    user = models.ForeignKey("User")    
+
+    resolution = models.CharField(max_length=30) # Screen resolution, used to determine whether external display was used.
+    fieldname = models.CharField(max_length=1, choices=KEYSTROKE_FIELD)
+    was_correct = models.BooleanField()
+    timestamp = models.DateTimeField()
+    timing = models.TextField()
+
 
 class UsedOTP(models.Model):
     """ Stores list of used OTPs."""
