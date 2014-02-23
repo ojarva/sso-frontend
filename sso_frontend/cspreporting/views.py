@@ -30,6 +30,45 @@ def test_csp(request, *args, **kwargs):
     return render_to_response("cspreporting/fail.html", {}, context_instance=RequestContext(request))
 
 @require_http_methods(["GET"])
+@protect_view("indexview", required_level=Browser.L_STRONG, admin_only=True)
+def view_warnings(request):
+    """ Shows potential misconfigurations """
+    ret = {}
+    entries = CSPReport.objects.filter(source_file__startswith='http')
+    paginator = Paginator(entries, 100)
+    page = request.GET.get("page")
+    try:
+        entries = paginator.page(page)
+    except PageNotAnInteger:
+        entries = paginator.page(1)
+        page = 1
+    except EmptyPage:
+        entries = paginator.page(paginator.num_pages)
+        page = paginator.num_pages
+    entries.pagerange = range(1, paginator.num_pages+1)
+
+    browsers = {}
+
+    for entry in entries:
+        if entry.bid_public == request.browser.bid_public:
+            entry.current_browser = True
+        browser = browsers.get(entry.bid_public)
+        if not browser:
+            try:
+                browser = Browser.objects.get(bid_public=entry.bid_public)
+                browsers[entry.bid_public] = browser
+            except Browser.DoesNotExist:
+                pass
+        if browser:
+            entry.browser = browser
+        entry.linked_source_file = entry.source_file
+
+    ret["entries"] = entries
+
+    return render_to_response("cspreporting/view_warnings.html", ret, context_instance=RequestContext(request))
+
+
+@require_http_methods(["GET"])
 @protect_view("indexview", required_level=Browser.L_STRONG)
 def view_reports(request):
     """ Report viewing. Only shows records for current user.

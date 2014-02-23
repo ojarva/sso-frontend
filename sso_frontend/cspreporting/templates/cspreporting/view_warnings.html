@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block container %}
+
+<h2>Potential CSP violations</h2>
+
+{% if entries %}
+{% if entries.pagerange %}
+<ul class="pagination">
+ {% if entries.has_previous %}
+ <li><a href="?page={{ entries.previous_page_number }}">&laquo; Newer</a></li>
+ {% else %}
+ <li class="disabled"><a href="#">&laquo; Newer</a></li>
+ {% endif %}
+ {% for page in entries.pagerange %}
+ <li{% if entries.number == page %} class="active"{% endif %}><a href="?page={{ page }}">{{ page }}</a></li>
+ {% endfor %}
+
+ {% if entries.has_next %}
+ <li><a href="?page={{ entries.next_page_number }}">Older &raquo;</a></li>
+ {% else %}
+ <li class="disabled"><a href="#">Older &raquo;</a></li>
+ {% endif %}
+</ul>
+{% endif %}
+
+
+<table class="table table-striped table-responsive">
+<thead>
+<tr>
+<th>First seen</th>
+<th>User</th>
+<th>Browser</th>
+<th>Violation</th>
+<th>Blocked address</th>
+<th>Source page</th>
+<th>Line/column</th>
+<th>Violated directive</th>
+</tr>
+</thead>
+{% for entry in entries %}
+<tr>
+  <td><span class="tooltip-link" title="{{ entry.reported_at }}">{{ entry.reported_at|timesince }} ago</span></td>
+  <td>{% if entry.username %}<a href="{% url 'admin_frontend.views.userdetails' entry.username %}">{{ entry.username }}</a>{% else %}-{% endif %}</td>
+  <td>{% if entry.browser %}<a href="{% url 'browser_logs' entry.browser.bid_public %}">{% for icon in entry.browser.get_ua_icons %}<i class="fa fa-{{icon}}"></i>{% endfor %} {{ entry.browser.get_readable_ua }}</a>{% endif %}</td>
+  <td>{{ entry.linked_source_file }}</td>
+  <td>{{ entry.blocked_uri }}</td>
+  <td><span class="tooltip-link" title="{{ entry.document_uri }}">{{ entry.document_uri|truncatechars:"80" }}</span></td>
+  <td>{{ entry.line_number }} / {{ entry.column_number }}</td>
+  <td>{{ entry.violated_directive }}</td>
+
+</tr>
+{% endfor %}
+</table>
+{% else %}
+<h3>Entries</h3>
+<p>Lucky you, no reports associated with your account.</p>
+{% endif %}
+{% endblock %}
