@@ -1,0 +1,88 @@
+{% extends "login_frontend/base.html" %}
+
+{% load full_uri %}
+
+{% block content %}
+
+<h2>Developer instructions</h2>
+
+<p>This page is for developers who are planning to use this login service. General FAQ is available <a href="{% url 'introduction' %}">here</a>.</p>
+
+<h3>General notes</h3>
+
+<ul>
+<li>There is no link for immediate logout. Link to <a href="{% full_uri 'login_frontend.views.logoutview' %}"><tt>{% full_uri 'login_frontend.views.logoutview' %}</tt></a>. Users have to click "Logout" to finish signing out.</li>
+<li>No external incoming POST requests are allowed. A valid <a href="https://docs.djangoproject.com/en/dev/ref/contrib/csrf/">CSRF token</a> is required.</li>
+</ul>
+
+<h3>pubtkt</h3>
+
+<p><a href="https://neon1.net/mod_auth_pubtkt/index.html">pubtkt</a> is transparent low-security SSO implementation that is based on domain cookies. pubtkt should be used for services that must be protected, but do not 
+contain anything particularly confidential. pubtkt does not provide any mechanism to revoke tickets.</p>
+
+<p>Notes on pubtkt:</p>
+
+<ul>
+<li>For configuration, you need this <a href="{% url 'login_frontend.views.get_pubkey' 'pubtkt' %}">public key</a></li>
+<li>Cookie name is <tt>auth_pubtkt</tt></li>
+<li>All cookies are issued with <tt>secure</tt> and <tt>httpOnly</tt> parameters.</li>
+<li>Client IP restrictions are not enabled.</li>
+</ul>
+
+<p>Example configuration for apache2 with mod_auth_pubtkt:</p>
+
+<pre>
+LoadModule auth_pubtkt_module /usr/lib/apache2/modules/mod_auth_pubtkt.so
+TKTAuthPublicKey /etc/apache2/tkt_pubkey.pem
+&lt;Location /&gt;
+ Order deny,allow
+ Deny from all
+ Satisfy any
+ AuthType mod_auth_pubtkt
+ TKTAuthLoginURL {% full_uri 'login_frontend.views.main_redir' %}
+ TKTAuthTimeoutURL {% full_uri 'login_frontend.views.main_redir' %}?timeout=1
+ TKTAuthUnauthURL {% full_uri 'login_frontend.views.main_redir' %}?unauth=1
+ Require valid-user
+&lt;/Location&gt;
+</pre>
+
+
+<h3>OpenID</h3>
+
+<p><a href="http://openid.net/">OpenID</a> identity provider (IdP) is available at <a href="{% full_uri 'openid-provider-root' %}">{% full_uri 'openid-provider-root' %}</a>.</p>
+
+<ul>
+<li>User identifiers include username: <tt>{% full_uri 'openid-provider-root' %}&lt;username&gt;</tt></li>
+<li>OpenID implements relying party discovery. If discovery does not succeed, user can still proceed, after validating they want to release their attributes.</li>
+<li>The system supports static trust roots for trusted services. If your service does not provide functional RP discovery, it can be added to the whitelist.</li>
+<li>Both <a href="http://openid.net/specs/openid-simple-registration-extension-1_0.html">sreg</a> and <a href="http://openid.net/specs/openid-attribute-exchange-1_0.html">ax</a> are supported.</li>
+<li><tt>openid.sreg.nickname</tt> is username. <tt>openid.sreg.email</tt> and <tt>openid.sreg.fullname</tt> are included. Other attributes are not available.</li>
+</ul>
+
+<h3>SAML 2.0</h3>
+
+<p><a href="http://en.wikipedia.org/wiki/SAML_2.0">SAML 2.0</a> IdP is supported.</p>
+
+<ul>
+<li>SAML is a horrific beast.</li>
+<li>Implementation is based on <a href="https://code.google.com/p/django-saml2-idp/">django-saml2-idp</a> project</li>
+<li>For configuration, you need this <a href="{% url 'login_frontend.views.get_pubkey' 'saml' %}">public key</a></li>
+<li>Sign-in page URL: <tt>{% full_uri 'saml2idp.views.login_begin' %}</tt></li>
+<li>Sign-out page URL: <tt>{% full_uri 'saml2idp.views.logout' %}</tt></li>
+<li>Google Apps works out-of-the-box</li>
+<li>Before you can authenticate against this service, additional configuration is required.</li>
+</ul>
+
+<h3>Authenticator</h3>
+
+<p>This service uses time-based one-time passwords, defined in <a href="http://tools.ietf.org/html/rfc6238">RFC 6238</a>. Authenticator implementations should support scanning QR codes. URI format is specified <a href="https://code.google.com/p/google-authenticator/wiki/KeyUriFormat">here</a>.</p>
+
+<ul>
+<li>Authenticator secret contains exactly 16 characters matching to <tt>[A-Z0-9]{16}</tt></li>
+<li>Only time-based one-time passwords (TOTP) are supported</li>
+<li>Only keys generated with the latest secret are accepted</li>
+<li>Client clock error must be less than 30 seconds for reliable operation. Only codes for current timestamp, previous and next 30 second slots are accepted</li>
+<li>Each code can be used only once</li>
+</ul>
+
+{% endblock %}

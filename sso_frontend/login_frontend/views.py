@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseForbidden, HttpResponse, HttpResponseNotFound, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
@@ -649,6 +649,18 @@ def js_ping(request, **kwargs):
     response = HttpResponse(json.dumps(ret), content_type="application/json")
     if sign_out:
         pubtkt_logout(request, response)
+    return response
+
+@require_http_methods(["GET"])
+def get_pubkey(request, **kwargs):
+    service = kwargs.get("service")
+    if service == "pubtkt":
+        filename = settings.PUBTKT_PUBKEY
+    elif service == "saml":
+        filename = settings.SAML_PUBKEY
+    else:
+        raise Http404
+    response = HttpResponse(open(filename).read(), content_type="application/x-x509-ca-cert")
     return response
 
 @require_http_methods(["GET", "POST"])
