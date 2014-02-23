@@ -36,7 +36,7 @@ def error_400(request, **kwargs):
     response = render_to_response("login_frontend/errors/400.html", ret, context_instance=RequestContext(request))
 
     # Upon bad request, delete all session data.
-    if request.browser:
+    if hasattr(request, "browser") and request.browser:
         request.browser.logout()
 
     response.delete_cookie(Browser.C_BID)

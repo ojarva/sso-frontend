@@ -118,7 +118,7 @@ class BrowserMiddleware(object):
 
 
 def log_request_timing(phase, request):
-    timing_log.info("%s: %.5f - %s - %s - [%s]", phase, time.time(), request.META.get("REMOTE_ADDR"), request.get_full_path(), request.META.get("HTTP_USER_AGENT"))
+    timing_log.info("%s: %.5f - %s - %s - [%s] - [bid_public=%s]", phase, time.time(), request.META.get("REMOTE_ADDR"), request.get_full_path(), request.META.get("HTTP_USER_AGENT"), request.COOKIES.get(Browser.C_BID_PUBLIC))
     
 
 class InLoggingMiddleware(object):
