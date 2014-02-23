@@ -181,6 +181,8 @@ MIDDLEWARE_CLASSES = (
     'login_frontend.middleware.ViewLoggingMiddleware',
 )
 
+DISABLE_TIMING_LOGGING=False
+
 from django.contrib import messages
 MESSAGE_TAGS = {
     messages.ERROR: 'danger'

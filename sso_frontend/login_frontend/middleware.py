@@ -10,7 +10,8 @@ Also, session cookie is automatically added if it does not exist yet.
 """
 
 from django.http import HttpResponse
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MiddlewareNotUsed
+from django.conf import settings
 from django.utils import timezone
 from login_frontend.models import Browser, BrowserUsers, BrowserLogin, create_browser_uuid
 from login_frontend.providers import pubtkt_logout
@@ -122,14 +123,26 @@ def log_request_timing(phase, request):
     
 
 class InLoggingMiddleware(object):
+    def __init__(self):
+        if settings.DISABLE_TIMING_LOGGING:
+            raise MiddlewareNotUsed
+
     def process_request(self, request):
         log_request_timing("process_request.first", request)
 
 class ViewLoggingMiddleware(object):
+    def __init__(self):
+        if settings.DISABLE_TIMING_LOGGING:
+            raise MiddlewareNotUsed
+
     def process_view(self, request, view_func, view_args, view_kwargs):
         log_request_timing("process_view.last", request)
 
 class OutLoggingMiddleware(object):
+    def __init__(self):
+        if settings.DISABLE_TIMING_LOGGING:
+            raise MiddlewareNotUsed
+
     def process_response(self, request, response):
         log_request_timing("process_response.last", request)
         return response
