@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseNotFound, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -717,7 +718,7 @@ def sessions(request):
         details["geo"] = get_geoip_string(session.remote_ip)
         details["icons"] = browser.get_ua_icons()
 
-        logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(expires_at__gte=timezone.now())
+        logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(Q(expires_at__gte=timezone.now()) | Q(expires_at=None))
         details["logins"] = logins
 
         sessions.append(details)
@@ -927,7 +928,7 @@ def logoutview(request):
     if request.method == 'POST' and request.browser and request.browser.user:
         ret_dict = request.GET.dict()
         ret_dict["logout"] = "on"
-        logins = BrowserLogin.objects.filter(user=request.browser.user, browser=request.browser).filter(can_logout=False).filter(signed_out=False)
+        logins = BrowserLogin.objects.filter(user=request.browser.user, browser=request.browser).filter(can_logout=False).filter(signed_out=False).filter(Q(expires_at__gte=timezone.now()) | Q(expires_at=None))
         active_sessions = []
         for login in logins:
             active_sessions.append({"sso_provider": login.sso_provider, "remote_service": login.remote_service, "expires_at": login.expires_at, "expires_session": login.expires_session, "auth_timestamp": login.auth_timestamp})
