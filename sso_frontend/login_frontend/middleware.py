@@ -13,8 +13,10 @@ from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist, MiddlewareNotUsed
 from django.conf import settings
 from django.utils import timezone
+from django.contrib import messages
 from login_frontend.models import Browser, BrowserUsers, BrowserLogin, create_browser_uuid
 from login_frontend.providers import pubtkt_logout
+from login_frontend.utils import dedup_messages
 import logging
 import re
 import time
@@ -65,7 +67,8 @@ def get_browser(request):
             session.save()
         if not browser.save_browser:
             # Browser was restarted, and save_browser is not set. Logout.
-            log.info("Browser bid_public=%s was restarted. Logging out.", browser.bid_public)
+            log.info("Browser bid_public=%s was restarted. Logging out. path: %s", browser.bid_public, request.path)
+            dedup_messages(request, messages.INFO, "According to our records, your browser was restarted. Therefore, you were signed out.")
             browser.logout(request)
 
     if browser.user:
@@ -104,9 +107,10 @@ class BrowserMiddleware(object):
             response = pubtkt_logout(request, response)
 
         if not browser:
+            log.debug("Browser does not exist")
             return response
 
-        if hasattr(browser, "valid_session_bid") and not browser.valid_session_bid:
+        if request.COOKIES.get(Browser.C_BID_SESSION) != browser.bid_session:
             # No valid session ID exists. Regen it first.
             browser.bid_session = create_browser_uuid()
             log.info("Session bid does not exist. Regenerating. bid_public=%s" % browser.bid_public)

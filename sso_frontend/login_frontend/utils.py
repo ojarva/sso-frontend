@@ -3,6 +3,7 @@ Utility functions
 """
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.models import User as DjangoUser
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -30,7 +31,17 @@ timing_log = logging.getLogger("timing_data")
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
 
-__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params"]
+__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages"]
+
+def dedup_messages(request, level, message):
+    storage = messages.get_messages(request)
+    for amessage in storage:
+        if unicode(amessage) == unicode(message):
+            storage.used = False
+            return False
+    storage.used = False
+    messages.add_message(request, level, message)
+
 
 def redir_to_sso(request, **kwargs):
     """ Returns HttpResponseRedirect to proper login service. """
