@@ -393,10 +393,20 @@ from M2Crypto import DSA
 IP_NETWORKS = [
 ]
 
+FQDN = None
+
+LDAP_SERVER = None # for example, "ldaps://ldap.example.com"
+LDAP_USER_BASE_DN = None # for example, "uid=%s,ou=People,dc=example,dc=com"
+LDAP_GROUPS_BASE_DN = None # for example, "ou=Groups,dc=example,dc=com"
+LDAP_IGNORE_SSL=False # skip LDAP SSL certificate checks
+TOKEN_MAP = {} # map of LDAP groups to pubtkt tokens. For example, {"Administrators": "admins", "ExternalContractors": "ext"}
 
 PUBTKT_PRIVKEY=None
 PUBTKT_PUBKEY=None
 PUBTKT_ALLOWED_DOMAINS=[]
+SAML_PUBKEY=None
+
+SECURE_COOKIES = True
 
 FUM_API_ENDPOINT=None
 FUM_ACCESS_TOKEN=None
@@ -406,11 +416,14 @@ OPENID_FAILED_DISCOVERY_AS_VALID=True
 OPENID_TRUSTED_ROOTS=[]
 
 
+from local_settings import *
 try:
-    from local_settings import *
+   pass
 except ImportError:
     pass
 
-if PUBTKT_PRIVKEY is None:
-    from django.core.exceptions import ImproperlyConfigured
-    raise ImproperlyConfigured("PUBTKT_PRIVKEY is not defined.")
+check_keys = ["FQDN", "PUBTKT_PRIVKEY", "PUBTKT_PUBKEY", "SAML_PUBKEY", "LDAP_SERVER", "LDAP_USER_BASE_DN", "LDAP_GROUPS_BASE_DN"]
+for key_name in check_keys:
+    if key_name not in locals():
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured("%s is not defined." % key_name)
