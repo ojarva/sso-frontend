@@ -7,6 +7,7 @@ This is not integrated to Django admin.
 from django.contrib import messages
 from django.contrib.auth.models import User as DjangoUser
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -133,7 +134,7 @@ def userdetails(request, **kwargs):
             log_entry = Log(user=user, message="%s revoked strong authentication settings and signed out all sessions" % request.browser.user.username, status="exclamation-circle")
             log_entry.save()
             messages.info(request, "Revoked Authenticator configuration for %s" % username)
-        return HttpResponseRedirect("admin_frontend.views.userdetails", (username, ))
+        return HttpResponseRedirect(reverse("admin_frontend.views.userdetails", args=(username, )))
 
     ret["entries"] = Log.objects.filter(user=ret["auser"])[0:25]
 
