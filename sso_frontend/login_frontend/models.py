@@ -1,5 +1,6 @@
 #pylint: disable-msg=C0301
 from distutils.version import LooseVersion
+from django.conf import settings
 from django.contrib.auth import logout as django_logout
 from django.db import models
 from django.utils import timezone
@@ -209,11 +210,10 @@ class Browser(models.Model):
 
 
     def get_cookie(self):
-        # TODO: futurice
         return [
-           (Browser.C_BID, {"value": self.bid, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
-           (Browser.C_BID_PUBLIC, {"value": self.bid_public, "secure": True, "httponly": True, "domain": "login.futurice.com", "max_age": time.time() + 86400 * 1000}),
-           (Browser.C_BID_SESSION, {"value": self.bid_session, "secure": True, "httponly": True, "domain": "login.futurice.com"})
+           (Browser.C_BID, {"value": self.bid, "secure": settings.SECURE_COOKIES, "httponly": True, "max_age": time.time() + 86400 * 1000}),
+           (Browser.C_BID_PUBLIC, {"value": self.bid_public, "secure": settings.SECURE_COOKIES, "httponly": True, "max_age": time.time() + 86400 * 1000}),
+           (Browser.C_BID_SESSION, {"value": self.bid_session, "secure": settings.SECURE_COOKIES, "httponly": True})
         ]
 
     def revoke_sms(self):
@@ -334,6 +334,7 @@ class Browser(models.Model):
         prevent exposure to lock screen.
         """
         (sms_code_id, sms_code) = self.generate_sms(length)
+        # TODO: futurice
         return """Your one-time password #%s for Futurice SSO is below:
 
 
