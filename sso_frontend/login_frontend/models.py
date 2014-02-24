@@ -365,7 +365,7 @@ class Browser(models.Model):
 
                 extra = """
 
-If you're signing in from mobile phone, open this link: %s""" % mobile_phone_link
+If you're signing in from this mobile phone, open this: %s""" % mobile_phone_link
             else:
                 extra = """
 
