@@ -719,7 +719,11 @@ def sessions(request):
         details["logins"] = logins
 
         sessions.append(details)
-
+    try:
+        sessions.sort(key=lambda item:item.get("session").last_seen, reverse=True)
+    except Exception, e:
+        # In certain cases, session.last_seen is None.
+        custom_log(request, "Unable to sort sessions: %s" % e, level="error")
     ret["sessions"] = sessions
     ret["num_sessions"] = len(sessions)
     ret["user"] = user
