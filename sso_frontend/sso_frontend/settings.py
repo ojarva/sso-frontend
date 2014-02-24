@@ -393,6 +393,7 @@ from M2Crypto import DSA
 IP_NETWORKS = [
 ]
 
+SECURE_COOKIES = True
 
 PUBTKT_PRIVKEY=None
 PUBTKT_PUBKEY=None
