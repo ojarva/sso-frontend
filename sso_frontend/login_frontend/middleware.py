@@ -9,11 +9,13 @@ if browser was restarted, and not saved.
 Also, session cookie is automatically added if it does not exist yet.
 """
 
-from django.http import HttpResponse
-from django.core.exceptions import ObjectDoesNotExist, MiddlewareNotUsed
 from django.conf import settings
-from django.utils import timezone
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist, MiddlewareNotUsed
+from django.http import HttpResponse
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from django.utils import timezone
 from login_frontend.models import Browser, BrowserUsers, BrowserLogin, create_browser_uuid
 from login_frontend.providers import pubtkt_logout
 from login_frontend.utils import dedup_messages
@@ -91,8 +93,12 @@ class BrowserMiddleware(object):
         ua = request.META.get("HTTP_USER_AGENT") 
         for ua_re in DISALLOWED_UA:
             if ua_re.match(ua):
-                #TODO: futurice
-                return HttpResponse("OK. Your request was caught because you seem to be a bot. If this is by mistake, please contact admin@futurice.com")
+                ret = {}
+                try:
+                    (_, ret["admin"]) = settings.ADMINS[0]
+                except (IndexError, ValueError):
+                    pass
+                return render_to_response("login_frontend/errors/you_are_a_bot.html", ret, context_instance=RequestContext(request))
 
         request.browser = get_browser(request)
 
