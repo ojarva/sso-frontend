@@ -359,7 +359,7 @@ LOGGING = {
           'level': 'INFO',
         },
         'users': {
-          'handlers': ['logfile_main', 'logfile_users'],
+          'handlers': ['logfile_users'],
           'propagate': True,
           'level': 'DEBUG',
         },
