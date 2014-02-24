@@ -2,23 +2,30 @@
 from distutils.version import LooseVersion
 from django.conf import settings
 from django.contrib.auth import logout as django_logout
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils import timezone
 from random import choice, randint
 import datetime
 import httpagentparser
+import json
 import logging
 import pyotp
 import re
+import redis
 import subprocess
 import sys
 import os
 import time
+import urllib
 import uuid
 
 log = logging.getLogger(__name__)
 
 __all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails"]
+
+r = redis.Redis()
+
 
 def custom_log(request, message, **kwargs):
     """ Automatically logs username, remote IP and bid_public """
@@ -331,6 +338,14 @@ class Browser(models.Model):
         self.revoke_sms()
         return (True, None)        
 
+    def is_mobile_phone(self):
+        tablet_matches = ["iPad", "Nexus 7"]
+        for tablet in tablet_matches:
+            if tablet in self.ua:
+                return False
+        if "Mobile" in self.ua:
+            return True
+
     def generate_sms_text(self, length=5, **kwargs):
         """ Generates new SMS code and returns contents of SMS.
 
@@ -341,7 +356,18 @@ class Browser(models.Model):
         extra = ""
         request = kwargs.get("request")
         if request:
-            extra = """
+            if self.is_mobile_phone():
+                link_id = create_browser_uuid().split("-")[0]
+                r.setex("urlauth-params-%s" % link_id, json.dumps(request.GET.dict()), 900)
+                r.setex("urlauth-bid-%s" % link_id, self.bid_public, 900)
+                r.setex("urlauth-user-%s" % link_id, self.user.username, 900)
+                mobile_phone_link = request.build_absolute_uri(reverse("login_frontend.views.authenticate_with_url", args=(link_id, )))
+
+                extra = """
+
+If you're signing in from mobile phone, open this link: %s""" % mobile_phone_link
+            else:
+                extra = """
 
 Requested from %s""" % request.META.get("REMOTE_ADDR")
         return """Your one-time password #%s for %s is below:

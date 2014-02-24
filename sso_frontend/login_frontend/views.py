@@ -374,6 +374,71 @@ def secondstepauth(request):
     custom_log(request, "No proper redirect configured.", level="error")
     return HttpResponse("Second step auth: no proper redirect configured.")
 
+def authenticate_with_url(request, **kwargs):
+    """ Authenticates user with URL sent via SMS """
+    def sid_cleanup(sid):
+        keys = ["params", "user", "bid"]
+        for k in keys:
+            r.delete("urlauth-%s-%s" % (k, sid))
+
+    template_name = "login_frontend/authenticate_with_url.html"
+    sid = kwargs.get("sid")
+    ret = {}
+    if not hasattr(request, "browser") or not request.browser or not request.browser.user:
+        custom_log(request, "No browser object / no signed-in user", level="warn")
+        ret["invalid_request"] = True
+        return render_to_response(template_name, ret, context_instance=RequestContext(request))
+
+    if not r.exists("urlauth-params-%s" % sid):
+        custom_log(request, "sid does not exist, or it expired.", level="warn")
+        ret["invalid_sid"] = True
+        return render_to_response(template_name, ret, context_instance=RequestContext(request))
+
+    username = r.get("urlauth-user-%s" % sid)
+    if username != request.browser.user.username:
+        custom_log(request, "Tried to access SID that belongs to another user.", level="warn")
+        ret["invalid_request"] = True
+        return render_to_response(template_name, ret, context_instance=RequestContext(request))
+
+    bid_public = r.get("urlauth-bid-%s" % sid)
+    if bid_public != request.browser.bid_public:
+        custom_log(request, "Tried to access SID with wrong browser. Probably the phone opens SMS links to different browser, or it was actually another phone.", level="warn")
+        ret["wrong_browser"] = True
+        return render_to_response(template_name, ret, context_instance=RequestContext(request))
+
+    get_params = r.get("urlauth-params-%s" % sid)
+    try:
+        get_params_dict = json.loads(get_params)
+    except (ValueError, EOFError):
+        custom_log(request, "Invalid get_params json from redis", level="warn")
+        ret["invalid_request"] = True
+        return render_to_response(template_name, ret, context_instance=RequestContext(request))
+
+    if request.browser.is_authenticated():
+        custom_log(request, "User is already signed in. Redirect to secondstepauth: %s" % get_params, level="info")
+        sid_cleanup(sid)
+        return redirect_with_get_params("login_frontend.views.secondstepauth", get_params_dict)
+
+    if not request.browser.get_auth_level() >= Browser.L_BASIC or not request.browser.get_auth_state() == Browser.S_REQUEST_STRONG:
+        custom_log(request, "Browser is in wrong authentication state", level="warn")
+        ret["invalid_auth_state"] = True
+        return render_to_response(template_name, ret, context_instance=RequestContext(request))
+
+    # Everything is fine:
+    # - sid is valid
+    # - browser matches
+    # - user is authenticated
+    # set authentication state and redirect through secondstepauth.
+    # TODO: determine these automatically
+    request.browser.set_auth_level(Browser.L_STRONG)
+    request.browser.set_auth_state(Browser.S_AUTHENTICATED)
+    request.browser.save()
+    sid_cleanup(sid)
+    custom_log(request, "Successfully authenticated with URL. Redirecting to secondstepauth", level="info")
+    add_user_log(request, "Successfully authenticated with URL.", "lock")
+    return redirect_with_get_params("login_frontend.views.secondstepauth", get_params_dict)
+
+
 @require_http_methods(["GET", "POST"])
 @protect_view("authenticate_with_authenticator", required_level=Browser.L_BASIC)
 def authenticate_with_authenticator(request):

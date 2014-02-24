@@ -18,6 +18,7 @@ urlpatterns = patterns('',
     url(r'^second/authenticator$', views.authenticate_with_authenticator),
     url(r'^second/sms$', views.authenticate_with_sms),
     url(r'^second/emergency$', views.authenticate_with_emergency),
+    url(r'^urlauth/(?P<sid>(.+))$', views.authenticate_with_url),
 
     # SSO providers
     url(r'^pubtkt$', providers.pubtkt),
