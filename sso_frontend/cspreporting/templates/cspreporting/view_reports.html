@@ -2,7 +2,7 @@
 
 {% block container %}
 
-<h2>CSP reports</h2>
+<h2>CSP reports for {{ ausername }}</h2>
 
 <p>This page shows Content Security Policy violations your browser has reported. For more information, see <a href="http://en.wikipedia.org/wiki/Content_Security_Policy">wikipedia</a>, <a href="http://www.w3.org/TR/CSP/">W3C</a> and <a href="http://www.html5rocks.com/en/tutorials/security/content-security-policy/">html5rocks</a>.</p>
 
@@ -10,7 +10,6 @@
 causing policy violation. Usually this does not matter. If you use password manager that does not work on this site, please check whether they support disabling 
 customizing styles. With 1Password, go to "Preferences > Browser" and disable "Animate form filling".</p>
 
-{% if entries %}
 {% if entries.pagerange %}
 <ul class="pagination">
  {% if entries.has_previous %}
@@ -51,8 +50,4 @@ customizing styles. With 1Password, go to "Preferences > Browser" and disable "A
 </tr>
 {% endfor %}
 </table>
-{% else %}
-<h3>Entries</h3>
-<p>Lucky you, no reports associated with your account.</p>
-{% endif %}
 {% endblock %}

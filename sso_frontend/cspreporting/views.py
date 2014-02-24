@@ -76,7 +76,8 @@ def view_reports(request):
     """
 
     ret = {}
-    entries = CSPReport.objects.filter(username=request.user.username)
+    ret["ausername"] = request.browser.user.username
+    entries = CSPReport.objects.filter(username=request.browser.user.username)
     paginator = Paginator(entries, 100)
     page = request.GET.get("page")
     try:
@@ -110,7 +111,6 @@ def view_reports(request):
                 entry.linked_source_file = mark_safe('<a href="https://chrome.google.com/webstore/detail//%s">Chrome extension</a>' % extension_id)
 
     ret["entries"] = entries
-
     return render_to_response("cspreporting/view_reports.html", ret, context_instance=RequestContext(request))
 
 
