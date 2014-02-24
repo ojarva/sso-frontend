@@ -71,6 +71,11 @@
   }
 }
 
+.container-wide {
+ padding-right: 40px;
+ padding-left: 40px;
+}
+
 .data-container {
  padding-top: 80px;
  padding-bottom: 80px;

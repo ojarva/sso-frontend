@@ -32,6 +32,10 @@ class Command(BaseCommand):
            data = json.loads(json_data)
 
            resolution = data.get("resolution")
+           if isinstance(resolution, dict):
+               resolution = "%s x %s" % (resolution.get("width"), resolution.get("height"))
+           else:
+               resolution = "None"
            remote_clock = data.get("browserclock")
            remote_clock_offset = remote_clock.get("timezoneoffset")
            remote_clock_time = remote_clock.get("utciso")
@@ -56,7 +60,7 @@ class Command(BaseCommand):
            try:
                user = User.objects.get(username=username)
            except User.DoesNotExist:
-               self.stderr.write("User %s does not exist" % bid_public)
+               self.stderr.write("User %s does not exist" % username)
                continue
 
            BrowserDetails.objects.create(browser=browser, timestamp=timestamp, remote_clock_offset=str(remote_clock_offset), remote_clock_time=str(remote_clock_time), performance_performance=str(performance_performance), performance_memory=str(performance_memory), performance_timing=str(performance_timing), performance_navigation=str(performance_navigation), resolution=str(resolution), plugins=str(plugins))

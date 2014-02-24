@@ -68,7 +68,7 @@ def get_browser(request):
         if not browser.save_browser:
             # Browser was restarted, and save_browser is not set. Logout.
             log.info("Browser bid_public=%s was restarted. Logging out. path: %s", browser.bid_public, request.path)
-            dedup_messages(request, messages.INFO, "According to our records, your browser was restarted. Therefore, you were signed out.")
+            dedup_messages(request, messages.INFO, "According to our records, your browser was restarted. Therefore, you were signed out. If this is your own computer, you can avoid this by checking 'Remember this browser' below the sign-in form.")
             browser.logout(request)
 
     if browser.user:
