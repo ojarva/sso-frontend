@@ -604,7 +604,7 @@ class User(models.Model):
             return self.strong_authenticator_id
         else:
             #TODO: futurice
-            return "%s@futu" % user.username
+            return "%s@futu" % self.username
 
     def sign_out_all(self, **kwargs):
         browsers = Browser.objects.filter(user=self)
