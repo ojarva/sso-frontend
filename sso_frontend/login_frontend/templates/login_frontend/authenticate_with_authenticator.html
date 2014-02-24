@@ -12,13 +12,21 @@
 <div class="col-md-8 col-centered">
 
 <h3>Authenticator</h3>
+{% if authenticator_not_used %}
+	<div class="alert alert-info">
+		You have Authenticator generated <span class="tooltip-link" title="{{ authenticator_generated }}">{{ authenticator_generated|timesince }} ago</span>, but you have not used current configuration.
+		The name of your current configuration is "<tt>{{ authenticator_id }}</tt>".
+		If you don't have the newest configuration on your phone, use <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}" class="alert-link">SMS authentication instead</a>.
+	</div>
+{% endif %}
 {% if invalid_otp %}
-<div class="alert alert-danger">
-{{ invalid_otp }}
-</div>
+	<div class="alert alert-danger">
+	{{ invalid_otp }}
+	</div>
 
-<p>You're authenticating with Authenticator password. You should enter 6-digit one-time password from your mobile app.
-If code from your app is not working, you can <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">sign in with SMS</a>.</p>
+	<p>You're authenticating with Authenticator password. It is a 6-digit code from Authenticator app.
+        The name of that code should be "<tt>{{ authenticator_id }}</tt>".
+        If this does match and/or the code is not working, you can <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">sign in with SMS</a>.</p>
 {% endif %}
 
 {% if message %}
@@ -28,18 +36,18 @@ If code from your app is not working, you can <a href="{% url 'login_frontend.vi
 {% endif %}
 
 {% if skips_available > 0 %}
-<p>If you are in hurry, you can skip configuring this up to {{ skips_available }} time{{ skips_available|pluralize }}. Configuration only takes
-a few moments.</p>
-<form class="form" role="form" name="skip_form" method="POST" action="?{{ get_params }}">
-{% csrf_token %}
-<input type="hidden" name="skip" value="1">
-<button type="submit" class="btn btn-info">Skip until tomorrow</button>
-</form>
+	<p>If you are in hurry, you can skip configuring this up to {{ skips_available }} time{{ skips_available|pluralize }}. Configuration only takes
+	a few moments.</p>
+	<form class="form" role="form" name="skip_form" method="POST" action="?{{ get_params }}">
+	{% csrf_token %}
+	<input type="hidden" name="skip" value="1">
+	<button type="submit" class="btn btn-info">Skip until tomorrow</button>
+	</form>
 {% endif %}
 
 <form class="form" role="form" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">
   {% csrf_token %}
-{% include 'login_frontend/snippets/otp_input.html' %}
+  {% include 'login_frontend/snippets/otp_input.html' %}
   <div class="form-group">
        <button class="btn btn-primary" type="submit">Sign in <span class="glyphicon glyphicon-remove-circle"></span></button>
   </div>

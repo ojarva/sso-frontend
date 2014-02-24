@@ -399,6 +399,10 @@ def authenticate_with_authenticator(request):
         messages.warning(request, "You tried to authenticate with Authenticator. However, according to our records, you don't have it configured. Please sign in and go to settings to do that.")
         return redirect_with_get_params("login_frontend.views.secondstepauth", request.GET)
 
+    if not user.strong_authenticator_used:
+        ret["authenticator_not_used"] = True
+        ret["authenticator_generated"] = user.strong_authenticator_generated_at
+
     if request.method == "POST" and request.POST.get("skip"):
         if skips_available > 0:
             user.strong_skips_available -= 1
@@ -480,6 +484,7 @@ def authenticate_with_authenticator(request):
 
     ret["form"] = form
     ret["user"] = user
+    ret["authenticator_id"] = user.get_authenticator_id()
     ret["get_params"] = urllib.urlencode(request.GET)
     ret["my_computer"] = request.browser.save_browser
     request.session.set_test_cookie()
@@ -529,12 +534,19 @@ def authenticate_with_sms(request):
             messages.warning(request, "You can't skip strong authentication anymore.")
             custom_log(request, "Tried to skip strong authentication with no skips available", level="warn")
 
-    if not user.strong_configured:
+    if user.strong_configured:
+        if user.strong_authenticator_secret:
+            ret["can_use_authenticator"] = True
+            if not user.strong_authenticator_used:
+                ret["authenticator_generated"] = True
+    else:
         custom_log(request, "Strong authentication is not configured yet.", level="debug")
         # No strong authentication is configured.
         ret["strong_not_configured"] = True
         if user.strong_authenticator_secret:
             ret["authenticator_generated"] = True
+            ret["can_use_authenticator"] = True
+
 
     if user.primary_phone_changed:
         custom_log(request, "Phone number has changed.", level="debug")
@@ -809,6 +821,9 @@ def configure_strong(request):
         elif request.POST.get("always_sms") == "off":
             add_user_log(request, "Switched to Authenticator authentication", "info")
             custom_log(request, "Switched to Authenticator authentication", level="info")
+            # This is only visible when Authenticator is already generated. If it was not generated,
+            # user can click to "Use SMS instead"
+            user.strong_configured = True
             user.strong_sms_always = False
             user.strong_skips_available = 0
             user.save()
@@ -820,6 +835,7 @@ def configure_strong(request):
     back_url = redir_to_sso(request, no_default=True)
     ret["num_sessions"] = Browser.objects.filter(user=user).count()
     ret["csp_violations"] = CSPReport.objects.filter(username=user.username).count()
+    ret["authenticator_id"] = user.get_authenticator_id()
 
     if back_url:
         ret["back_url"] = back_url.url
@@ -844,7 +860,7 @@ def get_authenticator_qr(request, **kwargs):
     request.browser.save()
 
     totp = pyotp.TOTP(request.browser.user.strong_authenticator_secret)
-    img = qrcode.make(totp.provisioning_uri(request.browser.user.username+"@futu"))
+    img = qrcode.make(totp.provisioning_uri(request.browser.user.strong_authenticator_id))
     stringio = StringIO()
     img.save(stringio)
     stringio.seek(0)
@@ -888,10 +904,10 @@ def configure_authenticator(request):
             add_user_log(request, "Entered invalid OTP during Authenticator configuration", "warning")
             regen_secret = False
             ret["invalid_otp"] = message
+            messages.warning(request, "Invalid one-time password. Please scroll down to try again.")
 
     if regen_secret:
         authenticator_secret = user.gen_authenticator()
-        ret["authenticator_secret"] = authenticator_secret
         # As new secret was generated and saved, authenticator configuration is no longer valid.
         # Similarly, strong authentication is no longer configured, because authenticator configuration
         # was revoked.
@@ -900,6 +916,9 @@ def configure_authenticator(request):
         user.save()
         add_user_log(request, "Regenerated Authenticator code", "gear")
         custom_log(request, "Regenerated Authenticator code", level="info")
+
+    ret["authenticator_secret"] = user.strong_authenticator_secret
+    ret["authenticator_id"] = user.strong_authenticator_id
 
     request.browser.authenticator_qr_nonce = create_browser_uuid()
     ret["authenticator_qr_nonce"] = request.browser.authenticator_qr_nonce

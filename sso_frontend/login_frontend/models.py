@@ -320,7 +320,7 @@ class Browser(models.Model):
         if self.sms_code is None:
             return (False, "No OTP code exists for this browser.")
         if otp != self.sms_code:
-            return (False, "Invalid OTP")
+            return (False, None)
         if not self.valid_sms_exists():
             self.revoke_sms()
             message = "Code was valid, but expired (older than 15 minutes). New code was automatically sent to your phone."
@@ -577,6 +577,8 @@ class User(models.Model):
 
     strong_configured = models.BooleanField(default=False, help_text="True if user has saved strong authentication preferences")
     strong_authenticator_secret = models.CharField(max_length=30, null=True, blank=True, help_text="Secret for TOTP generation")
+    strong_authenticator_id = models.CharField(max_length=30, null=True, blank=True, help_text="Name of the current Authenticator configuration")
+    strong_authenticator_num = models.IntegerField(default=0, help_text="Running counter for Authenticator numbering")
     strong_authenticator_generated_at = models.DateTimeField(null=True, help_text="Timestamp of generating authenticator secret")
     strong_authenticator_used = models.BooleanField(default=False, help_text="True if user has used authenticator")
 
@@ -597,6 +599,12 @@ class User(models.Model):
 
     user_tokens = models.CharField(max_length=255, null=True, blank=True, help_text="List of pubtkt tokens")
 
+    def get_authenticator_id(self):
+        if self.strong_authenticator_id:
+            return self.strong_authenticator_id
+        else:
+            #TODO: futurice
+            return "%s@futu" % user.username
 
     def sign_out_all(self, **kwargs):
         browsers = Browser.objects.filter(user=self)
@@ -633,9 +641,13 @@ class User(models.Model):
         """ Generates and stores new secret for authenticator. """
         timestamp = timezone.now()
         self.strong_authenticator_secret = pyotp.random_base32()
+        current_authenticator_id = self.strong_authenticator_num
+        #TODO: futurice
+        self.strong_authenticator_id = "%s@futu -%s-" % (self.username, current_authenticator_id)
+        self.strong_authenticator_num += 1
         self.strong_authenticator_generated_at = timestamp
         self.save()
-        AuthenticatorCode.objects.create(user=self, generated_at=timestamp, authenticator_secret=self.strong_authenticator_secret)
+        AuthenticatorCode.objects.create(user=self, generated_at=timestamp, authenticator_secret=self.strong_authenticator_secret, authenticator_id=self.strong_authenticator_id)
         return self.strong_authenticator_secret
 
     def validate_authenticator_code(self, code, request):
@@ -739,4 +751,5 @@ class User(models.Model):
 class AuthenticatorCode(models.Model):
     user = models.ForeignKey("User")
     generated_at = models.DateTimeField()
+    authenticator_id = models.CharField(max_length=30, default="undefined")
     authenticator_secret = models.CharField(max_length=30, help_text="Secret for TOTP generation")

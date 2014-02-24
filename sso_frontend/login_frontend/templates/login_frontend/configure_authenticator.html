@@ -68,8 +68,8 @@ If you can't scan this code, you can setup Authenticator manually.
 </p>
 <ol>
 <li>In Authenticator, select <button class="btn btn-small btn-default" disabled="disabled">Begin Setup</button> and <button class="btn btn-small btn-default" disabled="disabled">Enter provided key</button></li>
-<li>To first field ("Enter account name"), enter <tt>{{ username }}@futu</tt></li>
-<li>To second field ("Enter your key"), enter <tt>{{ authenticator_secret }}</tt></li>
+<li>To first field ("Enter account name"), enter "<tt>{{ authenticator_id }}</tt>"</li>
+<li>To second field ("Enter your key"), enter "<tt>{{ authenticator_secret }}</tt>"</li>
 <li>Key type is "Time based"</li>
 <li>Click <button class="btn btn-small btn-default" disabled="disabled">Add</button> and continue to next step</li>
 </ol>
@@ -94,7 +94,7 @@ On Windows Phone, similar feature is enabled by default. On iPhone, you're out o
 
 {% endif %}
 
-<p>After configuring Authenticator, it should show 6-digit that changes every 30 seconds. The title should be <tt>{{ username }}@futu</tt>.</p>
+<p>After configuring Authenticator, it should show 6-digit that changes every 30 seconds. The title should be "<tt>{{ authenticator_id }}</tt>".</p>
 
 <p>To complete configuration and continue to service you tried to access, please enter that code below:</p>
 

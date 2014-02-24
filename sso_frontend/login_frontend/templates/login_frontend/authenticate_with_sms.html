@@ -13,7 +13,7 @@
 
 {% if authentication_failed %}
 <div class="alert alert-danger">
-Incorrect one-time code.
+Incorrect one-time code. Only code from message with id #{{ expected_sms_id }} is valid.
 </div>
 {% endif %}
 
@@ -24,37 +24,41 @@ Incorrect one-time code.
 {% endif %}
 
 {% if primary_phone_changed %}
-<div class="alert alert-warning">
-Your phone number has changed. For security reasons, you must reconfigure strong authentication.
-</div>
+	<div class="alert alert-warning">
+		Your phone number has changed. For security reasons, you must reconfigure strong authentication.
+	</div>
 
-<p>You should receive SMS message with one-time password #{{ expected_sms_id }} shortly. Please enter the code below. On the next step, you can set your preferences for authentication. After that, you'll be redirected back to service you tried to access.</p>
+	<p>You should receive SMS message with one-time password #{{ expected_sms_id }} shortly. Please enter it below. On the next step, you can set your preferences for authentication. After that, you'll be redirected back to service you tried to access.</p>
 
 {% elif strong_not_configured %}
-<div class="alert alert-warning">
-You have not configured strong authentication.
-{% if authenticator_generated %}
-You seem to have Authenticator generated, but not validated. If you have it configured, you can <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">proceed with it</a>.
-{% endif %}
-</div>
+	{% if authenticator_generated %}
+		<div class="alert alert-warning">
+			You generated Authenticator configuration, but have not used it. If it is configured on your phone, you can <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}" class="alert-link">proceed to Authenticator page</a>.
+		</div>
+	{% endif %}
 
-<p>You should receive SMS message with one-time password #{{ expected_sms_id }} shortly. Please enter it below. On the next step, you can set your preferences for authentication. After that, you'll be redirected back to service you tried to access.</p>
+	<p>You should receive SMS with one-time password #{{ expected_sms_id }} shortly. Please enter it below. On the next step, you can set your preferences for authentication. After that, you'll be redirected back to service you tried to access.</p>
 
-<p><a target="_window" href="{% url 'introduction' %}">What is strong authentication?</a></p>
-{% elif authentication_failed %}
-<p>You're authenticating with SMS code. You should enter 5-digit code #{{ expected_sms_id }}. Older messages are not valid anymore.</p>
+	<p><a target="_window" href="{% url 'introduction' %}">What is strong authentication?</a></p>
 {% else %}
-You should receive SMS containing one-time password shortly. Please enter it below. It should be #{{ expected_sms_id }}.
+	{% if authenticator_generated %}
+		<p>You have generated Authenticator configuration, but have not used it. If you have it on your phone, you can <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">proceed with it</a>.</p>
+	{% endif %}
+
+	{% if authentication_failed %}
+		<p>You're authenticating with SMS code. You should enter 5-digit code #{{ expected_sms_id }}. Any other codes are not valid anymore.</p>
+	{% else %}
+		<p>You should receive SMS containing one-time password shortly. Please enter it below. It should be #{{ expected_sms_id }}. The code is only valid for 15 minutes.</p>
+	{% endif %}
 {% endif %}
 
 {% if skips_available > 0 %}
-<p>If you are in hurry, you can skip configuring this up to {{ skips_available }} time{{ skips_available|pluralize }}. Configuration only takes
-a few moments.</p>
-<form class="form" role="form" name="skip_form" method="POST" action="?{{ get_params }}">
-{% csrf_token %}
-<input type="hidden" name="skip" value="1">
-<button type="submit" class="btn btn-info">Skip until tomorrow</button>
-</form>
+	<p>If you are in hurry, you can skip configuring this up to {{ skips_available }} time{{ skips_available|pluralize }}. Configuration only takes a few moments.</p>
+	<form class="form" role="form" name="skip_form" method="POST" action="?{{ get_params }}">
+	{% csrf_token %}
+	<input type="hidden" name="skip" value="1">
+	<button type="submit" class="btn btn-info">Skip until tomorrow</button>
+	</form>
 {% endif %}
 
 <form role="form" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">
@@ -68,7 +72,7 @@ a few moments.</p>
 </form>
 <p><form method="post" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">{% csrf_token %}<button class="btn btn-link">Not {{ first_name }}?</button></form></p>
 
-{% if not strong_not_configured %}
-<p><small>Want to <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">use Authenticator</a> instead of SMS?</small></p>
+{% if can_use_authenticator %}
+	<p><small>Want to <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">use Authenticator</a> instead of SMS?</small></p>
 {% endif %}
 {% endblock %}

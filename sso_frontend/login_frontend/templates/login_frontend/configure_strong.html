@@ -25,7 +25,7 @@
 		<p><a href="{{ back_url }}" class="btn btn-info">Skip for now</a></p>
 	{% endif %}
 
-	<p>It appears you haven't set your preferences yet.
+	<p>You have not set your preferences yet.
 
 	{% if back_url %} 
 		If you want to, you can do this later. <a href="{{ back_url }}">Go back to service you tried to access</a>.
@@ -33,20 +33,32 @@
 
 	This screen will be shown to you every time you login, until you select your preferences below.</p>
 
-{% else %}
-	{% if back_url %}
-		<p><a href="{{ back_url }}" class="btn btn-info">Continue to service you tried to access</a></p>
-	{% endif %}
+{% elif back_url %}
+		<p><a href="{{ back_url }}" class="btn btn-info">Continue to the service you tried to access</a></p>
 {% endif %}
 
 {% if not user.strong_authenticator_secret %}
+	{% if user.strong_sms_always %}
+		<div class="alert alert-warning">
+			You have opted for SMS authentication. Do note that it is less reliable, especially while traveling.
+			This system will ask for one-time passwords when you travel to new places.
+		</div>
+	{% endif %}
 
 	<p>You don't have Google Authenticator configured, or your configuration was revoked.
-	Google Authenticator generates one-time passwords on your phone.
-	That's faster and more reliable than receiving SMS messages, as it works with no cell or network connection.</p>
+	{% if user.strong_sms_always %}
+		Even if you want to use SMS by default, you should configure Authenticator.
+	{% else %} 
+		You have two choices: either use Authenticator app on your mobile phone, or receive SMS every time one-time password is required.
+	{% endif %}</p>
 
+	<ul>
+	<li>Authenticator is more reliable, because it works with no cell or internet connection.</li>
+	<li>Installing Authenticator takes only a few minutes. You'll get a full set of instructions.</li>
+	<li>Using SMS does not require any configuration, <b>but</b> it does not work reliably while traveling.</li>
+	</ul>
 
-	<p>If you want to make your life a bit easier, you can
+	<p>If you want to make your life a bit easier, you can</p>
 
 	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
 	        {% csrf_token %}
@@ -54,7 +66,13 @@
 	</form>
 
 	{% if not user.strong_sms_always %}
-		<p>If you want to live dangerously, you can opt for always receiving SMS messages:</p>
+		<p>If you want to live dangerously, you can opt for always receiving SMS messages. Before clicking this, do note the following:</p>
+		<ul>
+		<li>Installing and configuring Authenticator takes only a few minutes.</li>
+		<li>Authenticator is faster to use.</li>
+		<li>SMS delivery could be unreliable especially while traveling. You'll need one-time codes when traveling to new places.</li>
+		<li>Even if you use Authenticator by default, you can always click "use SMS" link on the login page.</li>
+		</ul>
 
 		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
 		        {% csrf_token %}
@@ -63,26 +81,40 @@
 	{% endif %}
 
 {% else %}
-
-	{% if not user.strong_authenticator_used %}
-		<p>It seems you have Google Authenticator configured, but you have not used it.</p>
+	{% if user.strong_authenticator_used and not user.strong_sms_always %}
+		<div class="alert alert-success">
+			You are using Google Authenticator for one-time passwords. If you have it configured on your phone, no action is required. The name of
+			the code should be "<tt>{{ authenticator_id }}</tt>". If that does not match, you probably have to reconfigure it.
+		</div>
+		<p>If you have lost the configuration, you can</p>
+	{% elif user.strong_authenticator_used %}
+		<p>You have Google Authenticator configured and according to our records you have successfully used it.
+		If you don't have Google Authenticator configured anymore - for example, after reinstalling or changing the phone - you can reconfigure it:</p>
 	{% else %}
-		<p>You have Google Authenticator configured and according to our records you have successfully used it.</p>
+		<p>It seems you have generated Google Authenticator configuration, but you have not used it. If you haven't actually
+		configured it to your phone, you can</p>
 	{% endif %}
 
-	<p>If you don't have Google Authenticator configured anymore - for example, after reinstalling or changing the phone - you can reconfigure it:</p>
 	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
 	        {% csrf_token %}
 	        <span class="tooltip-link" title="Clicking this will immediately revoke your previous configuration"><button class="btn btn-warning" type="submit">Reconfigure Google Authenticator</button></span>
 	</form>
 
-	{% if not user.strong_sms_always %}
-	<p>If you don't want to use Authenticator, you can opt to always use SMSes instead. Do note that Authenticator is more reliable and quicker to use.</p>
+	<hr />
 
-	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
-	        {% csrf_token %}
-	        <input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Revoke and always use SMS messages</button>
-	</form>
+	{% if not user.strong_sms_always %}
+		<p>If you don't want to use Authenticator, you can opt to always use SMS instead. Before doing this, please note following points:</p>
+
+		<ul>
+		<li>Authenticator is faster to use</li>
+		<li>SMS delivery could be unreliable especially while traveling. You'll need one-time codes when traveling to new places.</li>
+		<li>Even if you use Authenticator by default, you can always click "use SMS" link on the login page.</li>
+		</ul>
+
+		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+		        {% csrf_token %}
+		        <input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Always use SMS</button>
+		</form>
 	{% else %}
 		{% if not user.strong_authenticator_used %}
 			<p>It seems you have generated configuration for Authenticator <span class="tooltip-link" title="{{ user.strong_authenticator_generated_at }}">{{ user.strong_authenticator_generated_at|timesince }} ago</span>, but never used it. If you want to, you can still switch to using Authenticator by default:</p>
