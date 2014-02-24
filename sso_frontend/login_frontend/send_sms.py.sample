@@ -2,8 +2,6 @@ import urllib2
 
 __all__ = ["send_sms"]
 
-send_sms = send_sms_get
-
 def send_sms_get(number, message):
     message = urllib2.quote(message.encode('utf-8'))
     try:
@@ -25,3 +23,5 @@ def send_sms_post(number, message):
     except urllib2.URLError, e:
         return False
     return True
+
+send_sms = send_sms_get

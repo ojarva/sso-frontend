@@ -315,6 +315,9 @@ def authenticate_with_password(request):
                     ret["authentication_failed"] = True
                     custom_log(request, "Authentication failed. Invalid credentials", level="warn")
                     add_user_log(request, "Authentication failed. Invalid credentials", "warning")
+                elif auth_status == "server_down":
+                    messages.warning(request, "Unable to connect user directory (LDAP). Could not proceed with authentication. Please try again later, and/or contact IT team.")
+                    custom_log(request, "LDAP server is down.", level="error")
                 else:
                     ret["message"] = auth_status 
                     custom_log(request, "Authentication failed: %s" % auth_status, level="warn")

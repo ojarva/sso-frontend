@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Bot - {% endblock %}
+
+{% block content %}
+<div class="alert alert-danger">
+It seems you are a bot.
+</div>
+
+<div>Your request was caught because you seem to be a bot. It is totally okay to monitor this service.
+This page returns 500 Internal Server error if the database is down, or something else is wrong.</div>
+
+{% if admin %}
+<div>If this is by mistake, please contact <a href="mailto:{{ admin }}">{{ admin }}</a>.</div>
+{% endif %}
+
+{% endblock %}
