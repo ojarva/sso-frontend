@@ -593,24 +593,26 @@ def authenticate_with_sms(request):
             else:
                 if message:
                     ret["message"] = message
-                    custom_log(request, "OTP login failed: %s" % message, level="warn")
-                    add_user_log(request, "OTP login failed: %s" % message, "warning")
+                    custom_log(request, "SMS OTP login failed: %s" % message, level="warn")
+                    add_user_log(request, "SMS OTP login failed: %s" % message, "warning")
                 else:
                     custom_log(request, "Incorrect SMS OTP", level="warn")
                     add_user_log(request, "Incorrect SMS OTP", "warning")
                     ret["authentication_failed"] = True
+        else:
+            messages.warning(request, "Invalid input")
     else:
         custom_log(request, "GET request", level="debug")
         form = OTPForm()
 
     if request.method == "GET" or request.GET.get("regen_sms") or not request.browser.valid_sms_exists():
         custom_log(request, "Generating a new SMS code", level="info")
-        sms_text = request.browser.generate_sms_text()
+        sms_text = request.browser.generate_sms_text(request=request)
         for phone in (user.primary_phone, user.secondary_phone):
             if phone:
                 status = send_sms(phone, sms_text)
                 if not status:
-                    ret["message"] = "Sending SMS to %s failed." % phone
+                    messages.warning(request, "Sending SMS to %s failed." % phone)
                     custom_log(request, "Sending SMS to %s failed" % phone, level="warn")
                     add_user_log(request, "Sending SMS to %s failed" % phone)
                 else:

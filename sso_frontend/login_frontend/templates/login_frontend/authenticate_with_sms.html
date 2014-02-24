@@ -17,6 +17,11 @@ Incorrect one-time code.
 </div>
 {% endif %}
 
+{% if message %}
+<div class="alert alert-danger">
+{{ message }}
+</div>
+{% endif %}
 
 {% if primary_phone_changed %}
 <div class="alert alert-warning">

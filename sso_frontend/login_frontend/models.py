@@ -216,12 +216,6 @@ class Browser(models.Model):
            (Browser.C_BID_SESSION, {"value": self.bid_session, "secure": settings.SECURE_COOKIES, "httponly": True})
         ]
 
-    def revoke_sms(self):
-        self.sms_code = None
-        self.sms_code_id = None
-        self.sms_code_generated_at = None
-        self.save()
-
     def set_auth_state(self, state):
         # TODO: logic for determining proper timeouts
         self.auth_state = state
@@ -307,11 +301,17 @@ class Browser(models.Model):
             return True
         return False
 
+    def revoke_sms(self):
+        self.sms_code = None
+        self.sms_code_id = None
+        self.sms_code_generated_at = None
+        self.save()
+
     def valid_sms_exists(self):
         if not self.sms_code or not self.sms_code_generated_at:
             return False
         otp_age = timezone.now() - self.sms_code_generated_at
-        otp_age_s = otp_age.days * 86400 + otp_age.seconds
+        otp_age_s = otp_age.days * 86400 + otp_age.seconds # total_seconds is not available on older Python versions.
         if otp_age_s > 900:
             return False
         return True
@@ -320,26 +320,35 @@ class Browser(models.Model):
         if self.sms_code is None:
             return (False, "No OTP code exists for this browser.")
         if otp != self.sms_code:
-            return (False, None)
+            return (False, "Invalid OTP")
         if not self.valid_sms_exists():
             self.revoke_sms()
-            return (False, "OTP was valid, but expired (15 minutes). Please request a new code.")
+            message = "Code was valid, but expired (older than 15 minutes). New code was automatically sent to your phone."
+            if self.user:
+                if self.user.primary_phone and self.user.secondary_phone:
+                    message = "Code was valid, but expired (older than 15 minutes). New code was automatically sent to your phones."
+            return (False, message)
         self.revoke_sms()
         return (True, None)        
 
-    def generate_sms_text(self, length=5):
+    def generate_sms_text(self, length=5, **kwargs):
         """ Generates new SMS code and returns contents of SMS.
 
         Formatting of the message, including line breaks, is important to
         prevent exposure to lock screen.
         """
         (sms_code_id, sms_code) = self.generate_sms(length)
-        # TODO: futurice
-        return """Your one-time password #%s for Futurice SSO is below:
+        extra = ""
+        request = kwargs.get("request")
+        if request:
+            extra = """
+
+Requested from %s""" % request.META.get("REMOTE_ADDR")
+        return """Your one-time password #%s for %s is below:
 
 
 
-%s""" % (sms_code_id, sms_code)
+%s%s""" % (sms_code_id, settings.FQDN, sms_code, extra)
 
     def generate_sms(self, length=5):
         """ Generates new SMS code, but does not send the message.
