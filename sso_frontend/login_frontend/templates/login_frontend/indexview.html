@@ -7,23 +7,26 @@
 
 {% if auth_level == "strong" %}
 
-<p>You have authenticated with <a role="button" href="{% url 'introduction' %}" class="popover-link" data-toggle="popover" 
-title="Strong authentication?" data-trigger="hover"
-data-content="You are fully authenticated. You entered one-time password to validate you have your 
-mobile phone with you.">strong authentication</a>.</p>
+	<p>You have authenticated with <a role="button" href="{% url 'introduction' %}" class="popover-link" data-toggle="popover" 
+	title="Strong authentication?" data-trigger="hover"
+	data-content="You are fully authenticated. You entered one-time password to validate you have your 
+	mobile phone with you.">strong authentication</a>.</p>
 
 {% elif auth_level == "strong_skipped" %}
 
-<p>You are fully authenticated.</p>
+	<p>You are fully authenticated.</p>
 
 {% elif auth_level == "basic" %}
 
-<p>You are authenticated only on basic level. To access services, you have to <a href="{% url 'login_frontend.views.secondstepauth' %}?{{get_params}}">authenticate with 
-strong authentication</a>.</p>
+	<p>You are authenticated only on basic level. To access services, you have to <a href="{% url 'login_frontend.views.secondstepauth' %}?{{get_params}}">authenticate with 
+	strong authentication</a>.</p>
 
+{% elif auth_level == "emulate_legacy" %}
+	<p>Your session will expire in {% include "snippets/timestamp.html" with timestamp=session_expire %}.</p>
 {% endif %}
 
 {% if auth_level != "strong_skipped" %}
+{% if auth_level != "emulate_legacy" %}
 {% if remembered %}
 	<p>You are <span class="popover-link" data-toggle="popover" data-trigger="hover"
 	title="Remembered browser" data-content="You have indicated this is your private browser. Your authentication is remembered
@@ -47,6 +50,7 @@ strong authentication</a>.</p>
 	<button class="btn btn-default" name="my_computer" value="on">Remember me on this browser</button>
 	</span>
 	</form>
+{% endif %}
 {% endif %}
 {% endif %}
 

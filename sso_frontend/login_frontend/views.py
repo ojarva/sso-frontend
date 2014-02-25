@@ -181,7 +181,10 @@ def indexview(request):
     ret["user"] = request.browser.user
     ret["get_params"] = urllib.urlencode(request.GET)
     auth_level = request.browser.get_auth_level()
-    if auth_level == Browser.L_STRONG:
+    if request.browser.user.emulate_legacy:
+        ret["auth_level"] = "emulate_legacy"
+        ret["session_expire"] = request.browser.auth_level_valid_until
+    elif auth_level == Browser.L_STRONG:
         ret["auth_level"] = "strong"
     elif auth_level == Browser.L_STRONG_SKIPPED:
         ret["auth_level"] = "strong_skipped"
