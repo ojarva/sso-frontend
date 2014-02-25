@@ -580,18 +580,6 @@ class KeystrokeSequence(models.Model):
     timestamp = models.DateTimeField()
     timing = models.TextField()
 
-
-class UsedOTP(models.Model):
-    """ Stores list of used OTPs."""
-
-    def __unicode__(self):
-        return u"%s: %s at %s from %s" % (self.user, self.code, self.used_at, self.used_from)
-
-    user = models.ForeignKey('User')
-    code = models.CharField(max_length=15)
-    used_at = models.DateTimeField(auto_now_add=True)
-    used_from = models.GenericIPAddressField(null=True, blank=True)
-
 class User(models.Model):
 
     class Meta:
@@ -695,13 +683,11 @@ class User(models.Model):
             totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
             custom_log(request, "Comparing '%s' and '%s'" % (totp_code, code), level="debug")
             if str(code) == totp_code:
-                (obj, created) = UsedOTP.objects.get_or_create(user=self, code=code)
-                if created:
-                    if request:
-                        obj.used_from = request.META.get("REMOTE_ADDR")
-                        obj.save()
-                else:
+                r_k = "used-otp-%s-%s" % (self.username, totp_code)
+                already_used = r.get(r_k)
+                if already_used:
                     return (False, "OTP was already used. Please wait for 30 seconds and try again.")
+                r.setex(r_k, True, 900)
                 return (True, None)
 
         # Either timestamp is way off or user entered incorrect OTP.
