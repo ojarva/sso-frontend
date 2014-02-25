@@ -45,12 +45,12 @@
           class="popover-link" 
           data-trigger="hover" 
           title="Details for {{ login.sso_provider }}" 
-          data-content="Signing out this browser will not sign out this session.
+          data-content='Signing out this browser will not sign out this session.
 {% if login.remote_service %}It was used to log in to '{{ login.remote_service }}'.{% endif %}
-{% if login.expires_at %}Session will expire in {% include "snippets/timestamp.html" with timestamp=login.expires_at notooltip="true" %}.{% endif %}
 {% if login.expires_session %}When the browser is closed, the session is automatically destroyed.{% endif %}
-"
-    >{{ login.sso_provider }} {% include "snippets/timestamp.html" with timestamp=login.auth_timestamp notooltip="true" %}</span></li>
+'>{{ login.sso_provider }} {% include "snippets/timestamp.html" with timestamp=login.auth_timestamp notooltip="true" %}</span>
+{% if login.expires_at %}- expires in {% include "snippets/timestamp.html" with timestamp=login.expires_at %}{% endif %}
+</li>
 {% empty %}
 <li><span data-toggle="popover" 
           data-placement="top" 
