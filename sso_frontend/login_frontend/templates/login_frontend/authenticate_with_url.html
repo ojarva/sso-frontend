@@ -1,0 +1,48 @@
+{% extends "login_frontend/base.html" %}
+
+{% block title %}URL - {% endblock %}
+{% block header %}
+<script src="/static/js/otp.js" type="text/javascript"></script>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="row">
+<div class="col-md-8 col-centered">
+
+<h3>URL</h3>
+
+{% if invalid_request %}
+	<div class="alert alert-danger">
+		Invalid request. Did you open this page on the same browser you started the authentication process?
+	</div>
+
+	<p>This link only works on the browser you used to start sign-in process. If your phone opens it on different
+	browser - or you didn't start log-in process in this phone - you can't use the link. You should manually
+	enter one-time code instead.</p>
+{% elif invalid_sid %}
+	<div class="alert alert-danger">
+		Unique code for this URL expired already.
+	</div>
+
+	<p>The link is only valid for 15 minutes, and only on the same browser where you started the sign-in process.</p>
+{% elif wrong_browser %}
+	<div class="alert alert-danger">
+		This is not the browser you used to start the sign-in process.
+	</div>
+	<p>This link only works on the browser you used to start sign-in process. If your phone opens it on different
+	browser - or you didn't start log-in process in this phone - you can't use the link. You should manually
+	enter one-time code instead.</p>
+{% elif invalid_auth_state %}
+	<div class="alert alert-danger">
+		You are not signed in properly. Did you open this page on the same browser you started the authentication process?
+	</div>
+	<p>This link only works on the browser you used to start sign-in process. If your phone opens it on different
+	browser - or you didn't start log-in process in this phone - you can't use the link. You should manually
+	enter one-time code instead.</p>
+{% endif %}
+</div>
+</div>
+
+{% endblock %}
