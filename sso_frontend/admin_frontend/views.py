@@ -150,7 +150,7 @@ def logins(request):
     ret = {}
     custom_log(request, "Admin: list of active logins")
     entries = BrowserLogin.objects.filter(signed_out=False).filter(expires_at__lte=timezone.now())
-    paginator = Paginator(logins, 100)
+    paginator = Paginator(entries, 100)
     page = request.GET.get("page")
     try:
         entries = paginator.page(page)
