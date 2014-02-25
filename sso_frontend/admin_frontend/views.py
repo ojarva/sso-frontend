@@ -148,7 +148,7 @@ def logins(request):
     """ Shows list of active logins for all users. """
     ret = {}
     custom_log(request, "Admin: list of active logins")
-    entries = BrowserLogin.objects.filter(signed_out=False).filter(expires_at__lte=timezone.now())
+    entries = BrowserLogin.objects.filter(signed_out=False).filter(expires_at__gte=timezone.now())
     ret["entries"] = paginate(request, entries)
     return render_to_response("admin_frontend/logins.html", ret, context_instance=RequestContext(request))
 
