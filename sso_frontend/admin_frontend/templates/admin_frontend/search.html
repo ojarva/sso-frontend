@@ -30,7 +30,7 @@
 <h2>All browsers for {{ q }}</h2>
 <ul>
 {% for abrowser in all_browsers_for_user %}
-<li><a href="{% url 'admin_frontend.views.browserdetails' abrowser.browser.bid_public %}">{{ abrowser.browser.get_readable_ua }}</a>, last seen <span class="tooltip-link" title="At {{ abrowser.last_seen }}">{{ abrowser.last_seen|timesince }} ago</span></li>
+<li><a href="{% url 'admin_frontend.views.browserdetails' abrowser.browser.bid_public %}">{{ abrowser.browser.get_readable_ua }}</a>, last seen {% include "snippets/timestamp.html" with timestamp=abrowser.last_seen %}</li>
 {% endfor %}
 </ul>
 {% endif %}

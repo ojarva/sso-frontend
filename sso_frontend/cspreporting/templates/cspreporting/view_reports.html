@@ -10,25 +10,7 @@
 causing policy violation. Usually this does not matter. If you use password manager that does not work on this site, please check whether they support disabling 
 customizing styles. With 1Password, go to "Preferences > Browser" and disable "Animate form filling".</p>
 
-{% if entries.pagerange %}
-<ul class="pagination">
- {% if entries.has_previous %}
- <li><a href="?page={{ entries.previous_page_number }}">&laquo; Newer</a></li>
- {% else %}
- <li class="disabled"><a href="#">&laquo; Newer</a></li>
- {% endif %}
- {% for page in entries.pagerange %}
- <li{% if entries.number == page %} class="active"{% endif %}><a href="?page={{ page }}">{{ page }}</a></li>
- {% endfor %}
-
- {% if entries.has_next %}
- <li><a href="?page={{ entries.next_page_number }}">Older &raquo;</a></li>
- {% else %}
- <li class="disabled"><a href="#">Older &raquo;</a></li>
- {% endif %}
-</ul>
-{% endif %}
-
+{% include "snippets/pagination.html" %}
 
 <table class="table table-striped table-responsive">
 <thead>

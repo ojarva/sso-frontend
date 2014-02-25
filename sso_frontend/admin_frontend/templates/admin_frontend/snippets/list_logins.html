@@ -1,24 +1,6 @@
 {% if logins %}
 
-
-{% if logins.page_range %}
-<ul class="pagination">
- {% if logins.has_previous %}
- <li><a href="?page={{ logins.previous_page_number }}">&laquo; Newer</a></li>
- {% else %}
- <li class="disabled"><a href="#">&laquo; Newer</a></li>
- {% endif %}
- {% for page in logins.page_range %}
- <li{% if logins.number == page %} class="active"{% endif %}><a href="?page={{ page }}">{{ page }}</a></li>
- {% endfor %}
-
- {% if logins.has_next %}
- <li><a href="?page={{ logins.next_page_number }}">Older &raquo;</a></li>
- {% else %}
- <li class="disabled"><a href="#">Older &raquo;</a></li>
- {% endif %}
-</ul>
-{% endif %}
+{% include "snippets/pagination.html" %}
 
 <table class="table table-striped table-responsive">
 <thead>
@@ -32,13 +14,13 @@
 </tr>
 </thead>
 <tbody>
-{% for login in logins %}
+{% for login in entries %}
 <tr>
 <td><a href="{% url 'admin_frontend.views.userdetails' login.user.username %}">{{ login.user.username }}</a> on <a href="{% url 'admin_frontend.views.browserdetails' login.browser.bid_public %}">{{ login.browser.get_readable_ua }}</a></td>
 <td>{{ login.sso_provider }}</td>
 <td>{{ login.remote_service|truncatechars:80 }}</td>
-<td><span class="tooltip-link" title="{{ login.auth_timestamp|timesince }} ago">{{ login.auth_timestamp }}</span></td>
-<td>{% if login.expires_at %}<span class="tooltip-link" title="{{ login.expires_at|timeuntil }}">{{ login.expires_at }}</span>{% endif %}</td>
+<td>{% include "snippets/timestamp.html" with timestamp=login.auth_timestamp %}</td>
+<td>{% if login.expires_at %}{% include "snippets/timestamp.html" with timestamp=login.expires_at %}{% endif %}</td>
 <td>{{ login.signed_out }}</td>
 </tr>
 {% endfor %}

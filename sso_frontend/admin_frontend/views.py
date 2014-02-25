@@ -6,7 +6,6 @@ This is not integrated to Django admin.
 
 from django.contrib import messages
 from django.contrib.auth.models import User as DjangoUser
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -16,7 +15,7 @@ from django.template import RequestContext
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from login_frontend.models import Browser, User, BrowserLogin, BrowserUsers, Log
-from login_frontend.utils import get_and_refresh_user
+from login_frontend.utils import get_and_refresh_user, paginate
 from login_frontend.views import protect_view
 import logging
 import redis
@@ -150,30 +149,17 @@ def logins(request):
     ret = {}
     custom_log(request, "Admin: list of active logins")
     entries = BrowserLogin.objects.filter(signed_out=False).filter(expires_at__lte=timezone.now())
-    paginator = Paginator(entries, 100)
-    page = request.GET.get("page")
-    try:
-        entries = paginator.page(page)
-    except PageNotAnInteger:
-        entries = paginator.page(1)
-        page = 1
-    except EmptyPage:
-        entries = paginator.page(paginator.num_pages)
-        page = paginator.num_pages
-    entries.pagerange = range(max(1, entries.number - 5), min(paginator.num_pages, entries.number + 5))
-    ret["logins"] = logins
-
+    ret["entries"] = paginate(request, entries)
     return render_to_response("admin_frontend/logins.html", ret, context_instance=RequestContext(request))
 
 @require_http_methods(["GET"])
 @protect_view("browsers", required_level=Browser.L_STRONG, admin_only=True)
 def browsers(request):
     """ Shows list of all browsers.
-    TODO: pagination
     """
     ret = {}
     custom_log(request, "Admin: list of browsers")
-    ret["browsers"] = Browser.objects.all()
+    ret["entries"] = paginate(request, Browser.objects.all())
     return render_to_response("admin_frontend/browsers.html", ret, context_instance=RequestContext(request))
 
 @require_http_methods(["GET"])
@@ -218,18 +204,7 @@ def logs(request, **kwargs):
         custom_log(request, "Admin: all entries")
         entries = Log.objects.all()
 
-    paginator = Paginator(entries, 100)
-    page = request.GET.get("page")
-    try:
-        entries = paginator.page(page)
-    except PageNotAnInteger:
-        entries = paginator.page(1)
-        page = 1
-    except EmptyPage:
-        entries = paginator.page(paginator.num_pages)
-        page = paginator.num_pages
-    entries.pagerange = range(max(1, entries.number - 5), min(paginator.num_pages, entries.number + 5))
-    ret["entries"] = entries
+    ret["entries"] = paginate(request, entries)
 
 
     return render_to_response("admin_frontend/logs.html", ret, context_instance=RequestContext(request))

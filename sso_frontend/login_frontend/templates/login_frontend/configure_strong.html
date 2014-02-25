@@ -117,9 +117,9 @@
 		</form>
 	{% else %}
 		{% if not user.strong_authenticator_used %}
-			<p>It seems you have generated configuration for Authenticator <span class="tooltip-link" title="{{ user.strong_authenticator_generated_at }}">{{ user.strong_authenticator_generated_at|timesince }} ago</span>, but never used it. If you want to, you can still switch to using Authenticator by default:</p>
+			<p>It seems you have generated configuration for Authenticator {% include "snippets/timestamp.html" with timestamp=user.strong_authenticator_configured_at %}, but never used it. If you want to, you can still switch to using Authenticator by default:</p>
 		{% else %}
-			<p>You have generated configuration for Authenticator <span class="tooltip-link" title="{{ user.strong_authenticator_generated_at }}">{{ user.strong_authenticator_generated_at|timesince }} ago</span>, and successfully used it. If you want to, you can still switch to using Authenticator by default:</p>
+			<p>You have generated configuration for Authenticator {% include "snippets/timestamp.html" with timestamp=user.strong_authenticator_configured_at %}, and successfully used it. If you want to, you can still switch to using Authenticator by default:</p>
 		{% endif %}
 		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
 		        {% csrf_token %}
@@ -132,8 +132,8 @@
 
 <h3>Properties</h3>
 <ul>
-<li><span class="tooltip-link" title="Want to change this? Please contact IT team"><b>Primary phone number:</b> {{ user.primary_phone }} (last changed {{ user.primary_phone_refresh|timesince }} ago)</span></li>
-{% if user.secondary_phone %}<li><b>Secondary phone number:</b> {{ user.secondary_phone }} (last changed {{ user.secondary_phone_refresh|timesince }} ago)</li>{% endif %}
+<li><span class="tooltip-link" title="Want to change this? Please contact IT team"><b>Primary phone number:</b> {{ user.primary_phone }}</span> (last changed {% include "snippets/timestamp.html" with timestamp=user.primary_phone_refresh %})</li>
+{% if user.secondary_phone %}<li><b>Secondary phone number:</b> {{ user.secondary_phone }}</span> (last changed {% include "snippets/timestamp.html" with timestamp=user.secondary_phone_refresh %})</li>{% endif %}
 <li><b>Google Authenticator configured:</b>
    {% if user.strong_authenticator_secret %}
 	{% if user.strong_authenticator_used %}
@@ -141,7 +141,7 @@
 	{% else %}
 		<span class="tooltip-link" title="Maybe - it's configured, but you haven't used it."><i class="fa fa-question"></i></span>
         {% endif %}
-	{% if user.strong_authenticator_generated_at %} <span class="tooltip-link" title="{{ user.strong_authenticator_generated_at }}">{{ user.strong_authenticator_generated_at|timesince }} ago</span>
+	{% if user.strong_authenticator_generated_at %} {% include "snippets/timestamp.html" with timestamp=user.strong_authenticator_generated_at %}
 	{% endif %}
    {% else %}<i class="fa fa-thumbs-o-down"></i>
    {% endif %}

@@ -45,12 +45,12 @@
 
 <tr>
 <th>Primary phone number</th>
-<td>{{ auser.primary_phone }} {% if auser.primary_phone %} - last changed <span class="tooltip-link" title="{{ auser.primary_phone_refresh|timesince }} ago">{{ auser.primary_phone_refresh }}</span>{% endif %}</td>
+<td>{{ auser.primary_phone }} {% if auser.primary_phone %} - last changed {% include "snippets/timestamp.html" with timestamp=auser.primary_phone_refresh %}{% endif %}</td>
 </tr>
 
 <tr>
 <th>Secondary phone number</th>
-<td>{{ auser.secondary_phone }} {% if auser.secondary_phone %} - last changed <span class="tooltip-link" title="{{ auser.secondary_phone_refresh|timesince }} ago">{{ auser.secondary_phone_refresh }}</span>{% endif %}</td>
+<td>{{ auser.secondary_phone }} {% if auser.secondary_phone %} - last changed {% include "snippets/timestamp.html" with timestamp=auser.secondary_phone_refresh %}{% endif %}</td>
 </tr>
 
 <tr>
@@ -70,7 +70,7 @@
 
 <tr>
 <th>Authenticator configured</th>
-<td>{% if auser.strong_authenticator_generated_at %}<span class="tooltip-link" title="{{ auser.strong_authenticator_generated_at|timesince }} ago">At {{ auser.strong_authenticator_generated_at }}</span>{% else %}No{% endif %}</td>
+<td>{% if auser.strong_authenticator_generated_at %}{% include "snippets/timestamp.html" with timestamp=auser.strong_authenticator_generated_at %}{% else %}No{% endif %}</td>
 </tr>
 
 <tr>

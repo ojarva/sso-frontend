@@ -2,10 +2,17 @@
 
 {% block content %}
 
+{% if ratelimit %}
+<h1>Oops. You probably shouldn't make that many requests</h1>
+
+<p>You're on hold for excessive flooding. If it wasn't you, it might be someone else from the same IP address or network. Please try again after a few seconds. If this still does not work, please contact IT team.</p>
+
+{% else %}
 <h1>Oops. Unauthorized</h1>
 
 <p>You're not allowed to access this page. This might be ratelimit to prevent flooding the server with excess amount of requests. If that is the case, please try again shortly.</p>
 
+{% endif %}
 <p>If you think this is an error, please explain what happened. {% if browser_public_bid %}Mentioning <b>{{ browser_public_bid }}</b> helps with solving the issue.{% endif %}</p>
 
 <p>You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>

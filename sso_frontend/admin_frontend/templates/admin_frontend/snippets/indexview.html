@@ -19,7 +19,7 @@
 
 <ul>
 {% for alogin in last_logins %}
-<li><a href="{% url 'admin_frontend.views.userdetails' alogin.user.username %}">{{ alogin.user.username }}</a> with {{ alogin.sso_provider }} <span class="tooltip-link" title="{{ alogin.auth_timestamp }}">{{ alogin.auth_timestamp|timesince }} ago</span></li>
+<li><a href="{% url 'admin_frontend.views.userdetails' alogin.user.username %}">{{ alogin.user.username }}</a> with {{ alogin.sso_provider }} {% include "snippets/timestamp.html" with timestamp=alogin.auth_timestamp %}</li>
 {% endfor %}
 </ul>
 

@@ -8,7 +8,15 @@ function login_ping() {
  setTimeout(login_ping, 300000);
 }
 
+function refresh_timestamps() {
+ $("time.timeago").each(function() {
+  $(this).html(moment($(this).attr("datetime")).fromNow());
+ });
+}
+
 $(document).ready(function() {
+ refresh_timestamps();
+ setInterval(refresh_timestamps, 3000);
  $(".popover-link").popover();
  $(".tooltip-link").tooltip();
  $(".autofocus").focus();

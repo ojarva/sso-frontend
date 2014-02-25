@@ -16,7 +16,7 @@
 
 <tr>
 <th>Browser first seen</th>
-<td><span class="tooltip-link" title="{{ abrowser.created|timesince }} ago">{{ abrowser.created }}</span></td>
+<td>{% include "snippets/timestamp.html" with timestamp=abrowser.created %}</td>
 </tr>
 
 

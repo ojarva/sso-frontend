@@ -56,6 +56,8 @@ def error_403(request, **kwargs):
     """ 403 - Forbidden. This is encountered with ratelimits, and when trying to access admin pages. """
     ret = {}
     ret["browser_public_bid"] = request.COOKIES.get(Browser.C_BID_PUBLIC)
+    if hasattr(request, "limited") and request.limited:
+        ret["ratelimit"] = True
     response = render_to_response("login_frontend/errors/403.html", ret, context_instance=RequestContext(request))
     response.status_code = "403"
     response.reason_phrase = "Forbidden"

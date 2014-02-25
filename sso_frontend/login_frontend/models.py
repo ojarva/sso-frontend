@@ -358,6 +358,7 @@ class Browser(models.Model):
         if request:
             if self.is_mobile_phone():
                 link_id = create_browser_uuid().split("-")[0]
+                custom_log(request, "sms_text: Signing in from mobile device. Creating login link: %s" % link_id, level="info")
                 r.setex("urlauth-params-%s" % link_id, json.dumps(request.GET.dict()), 900)
                 r.setex("urlauth-bid-%s" % link_id, self.bid_public, 900)
                 r.setex("urlauth-user-%s" % link_id, self.user.username, 900)
@@ -367,6 +368,7 @@ class Browser(models.Model):
 
 If you're signing in from this mobile phone, open this: %s""" % mobile_phone_link
             else:
+                custom_log(request, "sms_text: Not signing in from mobile device", level="debug")
                 extra = """
 
 Requested from %s""" % request.META.get("REMOTE_ADDR")

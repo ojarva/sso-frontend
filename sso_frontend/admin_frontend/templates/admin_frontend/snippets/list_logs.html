@@ -2,24 +2,7 @@
 
 {% if entries %}
 
-{% if entries.pagerange %}
-<ul class="pagination">
- {% if entries.has_previous %}
- <li><a href="?page={{ entries.previous_page_number }}">&laquo; Newer</a></li>
- {% else %}
- <li class="disabled"><a href="#">&laquo; Newer</a></li>
- {% endif %}
- {% for page in entries.pagerange %}
- <li{% if entries.number == page %} class="active"{% endif %}><a href="?page={{ page }}">{{ page }}</a></li>
- {% endfor %}
-
- {% if entries.has_next %}
- <li><a href="?page={{ entries.next_page_number }}">Older &raquo;</a></li>
- {% else %}
- <li class="disabled"><a href="#">Older &raquo;</a></li>
- {% endif %}
-</ul>
-{% endif %}
+{% include "snippets/pagination.html" %}
 
 <div class="table-responsive">
 <table class="table table-striped">
@@ -36,7 +19,7 @@
 <tbody>
 {% for entry in entries %}
 <tr>
-<td><span class="tooltip-link" title="{{ entry.timestamp|timesince }} ago">{{ entry.timestamp }}</span></td>
+<td>{% include "snippets/timestamp.html" with timestamp=entry.timestamp %}</td>
 <td><a href="{% url 'admin_frontend.views.userdetails' entry.user.username %}">{{ entry.user.username }}</a></td>
 <td><span class="tooltip-link" title="{{ entry.remote_ip }}">{{ entry.remote_ip|ip_to_geoip }}</span></td>
 <td><span class="tooltip-link" title="{{ entry.browser.ua }}">{% for icon in entry.browser.get_ua_icons %} <i class="fa fa-{{icon}}"></i>{% endfor %}</a></td>

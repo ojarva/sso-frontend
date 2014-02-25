@@ -14,7 +14,7 @@
 <h3>Authenticator</h3>
 {% if authenticator_not_used %}
 	<div class="alert alert-info">
-		You have Authenticator generated <span class="tooltip-link" title="{{ authenticator_generated }}">{{ authenticator_generated|timesince }} ago</span>, but you have not used current configuration.
+		You have Authenticator generated {% include "snippets/timestamp.html" with timestamp=authenticator_generated %}, but you have not used current configuration.
 		The name of your current configuration is "<tt>{{ authenticator_id }}</tt>".
 		If you don't have the newest configuration on your phone, use <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}" class="alert-link">SMS authentication instead</a>.
 	</div>

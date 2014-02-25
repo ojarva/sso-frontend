@@ -5,6 +5,7 @@ Utility functions
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User as DjangoUser
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
@@ -31,7 +32,7 @@ timing_log = logging.getLogger("timing_data")
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
 
-__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages"]
+__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate"]
 
 def dedup_messages(request, level, message):
     storage = messages.get_messages(request)
@@ -41,6 +42,21 @@ def dedup_messages(request, level, message):
             return False
     storage.used = False
     messages.add_message(request, level, message)
+
+def paginate(request, queryset, **kwargs):
+    per_page = kwargs.get("per_page", 100)
+    paginator = Paginator(queryset, per_page)
+    page = request.GET.get("page")
+    try:
+        entries = paginator.page(page)
+    except PageNotAnInteger:
+        entries = paginator.page(1)
+        page = 1
+    except EmptyPage:
+        entries = paginator.page(paginator.num_pages)
+        page = paginator.num_pages
+    entries.pagerange = range(max(1, entries.number - 5), min(paginator.num_pages, entries.number + 5))
+    return entries
 
 
 def redir_to_sso(request, **kwargs):
@@ -59,7 +75,6 @@ def redir_to_sso(request, **kwargs):
             return redirect_with_get_params("login_frontend.views.indexview", request.GET.dict())
         log.debug("No default configured - return None")
         return None
-
 
 
 def is_private_net(ip_address):
