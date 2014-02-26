@@ -12,6 +12,26 @@ function refresh_timestamps() {
  $("time.timeago").each(function() {
   $(this).html(moment($(this).attr("datetime")).fromNow());
  });
+
+ $("span.onlybefore").each(function() {
+  valid_until = $(this).data("timestamp");
+  console.log("onlybefore", valid_until, ""+ moment(valid_until), ""+moment());
+  if (moment(valid_until) < moment()) {
+   console.log("Hide", $(this));
+   $(this).addClass("hidden");
+   $(this).removeClass("onlybefore");
+  }
+ });
+
+ $("span.onlyafter").each(function() {
+  valid_until = $(this).data("timestamp");
+  console.log("onlyafter", valid_until, ""+ moment(valid_until), ""+moment());
+  if (moment(valid_until) < moment()) {
+   console.log("Show", $(this));
+   $(this).removeClass("hidden");
+   $(this).removeClass("onlyafter");
+  }
+ });
 }
 
 $(document).ready(function() {

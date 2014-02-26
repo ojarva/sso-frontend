@@ -12,6 +12,22 @@ function refresh_timestamps() {
  $("time.timeago").each(function() {
   $(this).html(moment($(this).attr("datetime")).fromNow());
  });
+
+ $("span.onlybefore").each(function() {
+  valid_until = $(this).data("timestamp");
+  if (moment(valid_until) < moment()) {
+   $(this).addClass("hidden");
+   $(this).removeClass("onlybefore");
+  }
+ });
+
+ $("span.onlyafter").each(function() {
+  valid_until = $(this).data("timestamp");
+  if (moment(valid_until) < moment()) {
+   $(this).removeClass("hidden");
+   $(this).removeClass("onlyafter");
+  }
+ });
 }
 
 $(document).ready(function() {

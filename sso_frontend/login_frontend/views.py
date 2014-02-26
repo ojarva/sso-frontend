@@ -731,6 +731,8 @@ def authenticate_with_sms(request):
                     add_user_log(request, "Sent OTP code to %s" % phone, "info")
                     phone_redacted = "%s...%s" % (phone[0:6], phone[-4:])
                     messages.info(request, mark_safe("Sent SMS to <span class='tooltip-link' title='This is redacted to protect your privacy'>%s</span>" % phone_redacted))
+
+    ret["sms_valid_until"] = request.browser.sms_code_generated_at + datetime.timedelta(seconds=30)
     ret["expected_sms_id"] = request.browser.sms_code_id
     ret["form"] = form
     ret["get_params"] = urllib.urlencode(request.GET)

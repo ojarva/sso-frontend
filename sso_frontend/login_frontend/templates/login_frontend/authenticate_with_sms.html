@@ -48,7 +48,7 @@ Incorrect one-time code. Only code from message with id #{{ expected_sms_id }} i
 	{% if authentication_failed %}
 		<p>You're authenticating with SMS code. You should enter 5-digit code #{{ expected_sms_id }}. Any other codes are not valid anymore.</p>
 	{% else %}
-		<p>You should receive SMS containing one-time password shortly. Please enter it below. It should be #{{ expected_sms_id }}. The code is only valid for 15 minutes.</p>
+		<p>You should receive SMS containing one-time password shortly. Please enter it below. It should be #{{ expected_sms_id }}.</p>
 	{% endif %}
 {% endif %}
 
@@ -63,7 +63,12 @@ Incorrect one-time code. Only code from message with id #{{ expected_sms_id }} i
 
 <form role="form" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">
   {% csrf_token %}
-{% include 'login_frontend/snippets/otp_input.html' %}
+  <div class="form-group control-group">
+    <label for="id_otp" control-label">One-time password (<span class="onlybefore" data-timestamp="{{ sms_valid_until }}">Expires {% include "snippets/timestamp.html" with timestamp=sms_valid_until %}</span>
+<span class="onlyafter hidden" data-timestamp="{{ sms_valid_until }}">expired. <a href="?{{ get_params }}">Request a new code</a></span>)</label>
+    <input class="form-control autofocus track_content" id="id_otp" placeholder="123456" title="You should enter 6-digit one-time password here." name="otp" type="tel" data-len="5-6" pattern="[0-9 ]*" autocomplete='off' />
+    <span class="glyphicon form-control-feedback"></span>
+  </div>
   <div class="form-group">
        <button class="btn btn-primary" type="submit">Sign in <span class="glyphicon glyphicon-remove-circle"></span></button>
   </div>
