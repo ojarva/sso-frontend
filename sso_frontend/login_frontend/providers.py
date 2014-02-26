@@ -52,7 +52,7 @@ def custom_log_inner(request, message, **kwargs):
     method = getattr(log, level)
     remote_addr = request.META.get("REMOTE_ADDR")
     bid_public = username = ""
-    if request.browser:
+    if hasattr(request, "browser") and request.browser:
         bid_public = request.browser.bid_public
         if request.browser.user:
             username = request.browser.user.username
