@@ -16,7 +16,7 @@
 <tbody>
 {% for login in entries %}
 <tr>
-<td><a href="{% url 'admin_frontend.views.userdetails' login.user.username %}">{{ login.user.username }}</a> on <a href="{% url 'admin_frontend.views.browserdetails' login.browser.bid_public %}">{{ login.browser.get_readable_ua }}</a></td>
+<td><a href="{% url 'admin_frontend.views.userdetails' login.user.username %}">{{ login.user.username }}</a> on {% if login.browser.bid_public %}<a href="{% url 'admin_frontend.views.browserdetails' login.browser.bid_public %}">{{ login.browser.get_readable_ua }}</a>{% else %}?{% endif %}</td>
 <td>{{ login.sso_provider }}</td>
 <td>{{ login.remote_service|truncatechars:80 }}</td>
 <td>{% include "snippets/timestamp.html" with timestamp=login.auth_timestamp %}</td>
