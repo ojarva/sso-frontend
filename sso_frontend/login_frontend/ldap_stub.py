@@ -42,6 +42,10 @@ class LdapLogin:
             self.authenticated = True
             return True
 
+        if self.username == "test_valid2" and self.password == "testpassword":
+            self.authenticated = True
+            return True
+
         if self.username == "test_admin" and self.password == "testpassword":
             self.authenticated = True
             return True

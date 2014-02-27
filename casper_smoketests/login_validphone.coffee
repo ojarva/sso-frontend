@@ -1,3 +1,5 @@
+phantom.clearCookies()
+
 casper.userAgent('Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)');
 casper.start 'http://localhost:8000', ->
    @.test.assertHttpStatus(200);
@@ -34,7 +36,9 @@ casper.start 'http://localhost:8000', ->
    @.then ->
     @.clickLabel('continue to your originating service')
    @.then ->
+    @.test.assertHttpStatus(200)
     @.test.assertUrlMatch 'http://localhost:8000/index'
+    @.capture("test.png")
     @.test.assertSelectorHasText(".username", "test_valid")
    @.then ->
     @.click("#sessions_link")

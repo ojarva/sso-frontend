@@ -1,7 +1,11 @@
 CasperJS
 ========
 
-These tests are for CasperJS. However, these are designed to run one-by-one. Running ```casperjs test casper_smoketests``` fails, as it shares
-cookies between all tests.
+These tests are for CasperJS. Before running, set ```FAKE_TESTING=True```. This enables static usernames and SMS codes. Never set this value on production environment. Run with
 
-Run these tests with ```python manage.py testserver login_frontend/fixtures/casper.json```. Set ```FAKE_TESTING=True``` (static usernames and OTP code).
+```
+python manage.py testserver login_frontend/fixtures/casper.json
+casperjs test casper_smoketests
+```
+
+After each run, restart "testserver", as casper tests do not reset the database.

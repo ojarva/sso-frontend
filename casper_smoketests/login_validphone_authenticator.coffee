@@ -1,3 +1,5 @@
+phantom.clearCookies()
+
 casper.userAgent('Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)');
 casper.start 'http://localhost:8000', ->
    @.test.assertHttpStatus(200);
@@ -6,7 +8,7 @@ casper.start 'http://localhost:8000', ->
    @.viewport(1200, 1200);
    @.then ->
     @.fill("form[name='loginform']", {
-     "username": "test_valid",
+     "username": "test_valid2",
      "password": "testpassword"
     }, true);
    @.then ->
@@ -44,7 +46,7 @@ casper.start 'http://localhost:8000', ->
     @.clickLabel("sign in again")
    @.then ->
     @.fill("form[name='loginform']", {
-     "username": "test_valid",
+     "username": "test_valid2",
      "password": "testpassword"
     }, true);
    @.then ->

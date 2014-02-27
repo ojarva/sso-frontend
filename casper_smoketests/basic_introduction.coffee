@@ -1,3 +1,5 @@
+phantom.clearCookies()
+
 casper.start 'http://localhost:8000/', ->
    @.viewport(1200, 1200);
    @.thenClick("#introduction_link")

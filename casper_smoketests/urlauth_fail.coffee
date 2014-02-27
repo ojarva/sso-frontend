@@ -1,3 +1,5 @@
+phantom.clearCookies()
+
 casper.userAgent('Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)');
 casper.start 'http://localhost:8000/urlauth/asdf', ->
    @.test.assertHttpStatus(200);

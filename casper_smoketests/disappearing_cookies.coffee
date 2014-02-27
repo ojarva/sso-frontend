@@ -1,3 +1,5 @@
+phantom.clearCookies()
+
 check_cookie = (cookie_name) ->
   cookies = (phantom.cookies[cookie].name for cookie of phantom.cookies)
   return cookie_name in cookies
