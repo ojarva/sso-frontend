@@ -759,6 +759,7 @@
             future : "in %s",
             past : "%s ago",
             s : "a few seconds",
+            ss : "a half minute", 
             m : "a minute",
             mm : "%d minutes",
             h : "an hour",
@@ -1490,15 +1491,15 @@
             hours = round(minutes / 60),
             days = round(hours / 24),
             years = round(days / 365),
-            args = seconds < 55 && ['s', seconds] ||
+            args = seconds < 20 && ['s', seconds] ||
+                seconds < 55 && ['ss', seconds] ||
                 minutes === 1 && ['m'] ||
                 minutes < 70 && ['mm', minutes] ||
                 hours === 1 && ['h'] ||
                 hours < 48 && ['hh', hours] ||
                 days === 1 && ['d'] ||
                 days <= 65 && ['dd', days] ||
-                days <= 185 && ['M'] ||
-                days < 345 && ['MM', round(days / 30)] ||
+                days < 545 && ['MM', round(days / 30)] || // 18 months
                 years === 1 && ['y'] || ['yy', years];
         args[2] = withoutSuffix;
         args[3] = milliseconds > 0;

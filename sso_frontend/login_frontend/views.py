@@ -20,7 +20,10 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
 from login_frontend.forms import OTPForm
-from login_frontend.ldap_auth import LdapLogin
+if settings.FAKE_TESTING:
+    from login_frontend.ldap_stub import LdapLogin
+else:
+    from login_frontend.ldap_auth import LdapLogin
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.send_sms import send_sms
@@ -338,7 +341,7 @@ def authenticate_with_password(request):
                     add_user_log(request, "Authentication failed: %s" % auth_status, "warning")
         else:
             custom_log(request, "1f: Either username or password is missing.", level="warn")
-            messages.warning(request, "Invalid request")
+            messages.warning(request, "Please enter both username and password.")
     else:
         custom_log(request, "1f: GET request", level="debug")
     if browser:
@@ -732,7 +735,7 @@ def authenticate_with_sms(request):
                     phone_redacted = "%s...%s" % (phone[0:6], phone[-4:])
                     messages.info(request, mark_safe("Sent SMS to <span class='tooltip-link' title='This is redacted to protect your privacy'>%s</span>" % phone_redacted))
 
-    ret["sms_valid_until"] = request.browser.sms_code_generated_at + datetime.timedelta(seconds=30)
+    ret["sms_valid_until"] = request.browser.sms_code_generated_at + datetime.timedelta(seconds=900)
     ret["expected_sms_id"] = request.browser.sms_code_id
     ret["form"] = form
     ret["get_params"] = urllib.urlencode(request.GET)

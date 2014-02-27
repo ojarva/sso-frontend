@@ -243,6 +243,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'admin_frontend',
     'cspreporting',
+    'django_extensions',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -400,6 +401,8 @@ LDAP_USER_BASE_DN = None # for example, "uid=%s,ou=People,dc=example,dc=com"
 LDAP_GROUPS_BASE_DN = None # for example, "ou=Groups,dc=example,dc=com"
 LDAP_IGNORE_SSL=False # skip LDAP SSL certificate checks
 TOKEN_MAP = {} # map of LDAP groups to pubtkt tokens. For example, {"Administrators": "admins", "ExternalContractors": "ext"}
+
+FAKE_TESTING = False # This uses LDAP stub and static SMS codes. Useful for smoke testing, but never set in production.
 
 PUBTKT_PRIVKEY=None
 PUBTKT_PUBKEY=None

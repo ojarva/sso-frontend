@@ -22,7 +22,7 @@
 	<h2>Configure Strong Authentication</h2>
 
 	{% if back_url %}
-		<p><a href="{{ back_url }}" class="btn btn-info">Skip for now</a></p>
+		<p><a href="{{ back_url }}" class="btn btn-info skip_for_now">Skip for now</a></p>
 	{% endif %}
 
 	<p>You have not set your preferences yet.
@@ -62,7 +62,7 @@
 
 	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
 	        {% csrf_token %}
-	        <button class="btn btn-primary" type="submit">Configure Google Authenticator</button>
+	        <button class="btn btn-primary configure_authenticator_btn" type="submit">Configure Google Authenticator</button>
 	</form>
 
 	{% if not user.strong_sms_always %}
@@ -97,7 +97,7 @@
 
 	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
 	        {% csrf_token %}
-	        <span class="tooltip-link" title="Clicking this will immediately revoke your previous configuration"><button class="btn btn-warning" type="submit">Reconfigure Google Authenticator</button></span>
+	        <span class="tooltip-link" title="Clicking this will immediately revoke your previous configuration"><button class="btn btn-warning configure_authenticator_btn" type="submit">Reconfigure Google Authenticator</button></span>
 	</form>
 
 	<hr />

@@ -218,8 +218,8 @@ class Browser(models.Model):
 
     def get_cookie(self):
         return [
-           (Browser.C_BID, {"value": self.bid, "secure": settings.SECURE_COOKIES, "httponly": True, "max_age": time.time() + 86400 * 1000}),
-           (Browser.C_BID_PUBLIC, {"value": self.bid_public, "secure": settings.SECURE_COOKIES, "httponly": True, "max_age": time.time() + 86400 * 1000}),
+           (Browser.C_BID, {"value": self.bid, "secure": settings.SECURE_COOKIES, "httponly": True, "max_age": int(time.time() + 86400 * 1000)}),
+           (Browser.C_BID_PUBLIC, {"value": self.bid_public, "secure": settings.SECURE_COOKIES, "httponly": True, "max_age": int(time.time() + 86400 * 1000)}),
            (Browser.C_BID_SESSION, {"value": self.bid_session, "secure": settings.SECURE_COOKIES, "httponly": True})
         ]
 
@@ -382,9 +382,12 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
         """ Generates new SMS code, but does not send the message.
         Returns (code_id, sms_code) tuple. code_id is random
         id for code, to avoid confusion with duplicate/old messages. """
-        code = ""
-        for _ in range(length):
-            code += str(randint(0, 9))
+        if settings.FAKE_TESTING:
+            code = "12345"
+        else:
+            code = ""
+            for _ in range(length):
+                code += str(randint(0, 9))
         self.sms_code = code
         self.sms_code_generated_at = timezone.now()
         self.sms_code_id = randint(0, 999)

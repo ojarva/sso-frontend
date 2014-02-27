@@ -39,7 +39,7 @@
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
 {% if username %}
-<li><a href="{% url 'login_frontend.views.sessions' %}">Sessions <span class="badge">{{ num_sessions }}</span></a></li>
+<li><a id="sessions_link" href="{% url 'login_frontend.views.sessions' %}">Sessions <span class="badge">{{ num_sessions }}</span></a></li>
 {% if not user.emulate_legacy %}
 <li><a href="{% url 'login_frontend.views.configure_strong' %}">Settings</a></li>
 {% endif %}
@@ -48,7 +48,7 @@
 {% endif %}
 {% endif %}
 
-<li><a href="{% url 'introduction' %}"><i class="fa fa-question-circle"></i></a></li>
+<li><a id="introduction_link" href="{% url 'introduction' %}"><i class="fa fa-question-circle"></i></a></li>
           </ul>
 
 {% if username %}
