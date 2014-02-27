@@ -38,7 +38,6 @@ casper.start 'http://localhost:8000', ->
    @.then ->
     @.test.assertHttpStatus(200)
     @.test.assertUrlMatch 'http://localhost:8000/index'
-    @.capture("test.png")
     @.test.assertSelectorHasText(".username", "test_valid")
    @.then ->
     @.click("#sessions_link")
@@ -48,6 +47,24 @@ casper.start 'http://localhost:8000', ->
     @.clickLabel("View log")
    @.then ->
     @.test.assertHttpStatus(200);
+   @.thenOpen("http://localhost:8000/index")
+   @.then ->
+    @.clickLabel("Remember me on this browser")
+   @.then ->
+    @.test.assertHttpStatus(200)
+    @.test.assertSelectorHasText("button", "Forget this browser")
+    @.test.assertSelectorHasText(".alert-info", "You're now remembered on this browser")
+   @.then ->
+    @.clickLabel("Forget this browser")
+   @.then ->
+    @.test.assertHttpStatus(200)
+    @.test.assertSelectorHasText("button", "Remember me on this browser")
+    @.test.assertSelectorHasText(".alert-info", "You're no longer remembered on this browser")
+
+   @.thenOpen("http://localhost:8000/admin_/")
+   @.then ->
+    @.test.assertHttpStatus(403)
+
    @.then ->
     @.clickLabel("Sign out")
    @.then ->

@@ -44,6 +44,39 @@ casper.start 'http://localhost:8000', ->
     @.test.assertHttpStatus(200)
 
    @.then ->
+    @.clickLabel("test_admin")
+   @.then ->
+    @.test.assertHttpStatus(200)
+    @.test.assertUrlMatch 'http://localhost:8000/admin_/user/test_admin'
+   @.then -> 
+    @.clickLabel("Details")
+   @.then ->
+    @.test.assertHttpStatus(200)
+   @.then ->
+    @.clickLabel("View logs")
+   @.then ->
+    @.test.assertHttpStatus(200)
+
+   @.then ->
+    @.fill("form.form-inline", 
+      {"q": "test_admin"},
+      true)
+   @.then ->
+    @.test.assertHttpStatus(200)
+    @.test.assertUrlMatch 'http://localhost:8000/admin_/search?q=test_admin'
+   @.then ->
+    @.clickLabel("Microsoft Internet Explorer on Windows (XP)")
+   @.then ->
+    @.test.assertHttpStatus(200)
+
+   @.then ->
+    @.fill("form.form-inline", 
+      {"q": "invalid search string"},
+      true)
+   @.then ->
+    @.test.assertHttpStatus(200)
+
+   @.then ->
     @.clickLabel("Logins")
    @.then ->
     @.test.assertHttpStatus(200)
