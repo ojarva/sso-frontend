@@ -51,8 +51,8 @@ def _generate_response(request, processor):
     return render_to_response('saml2idp/login.html', tv,
                                 context_instance=RequestContext(request))
 
-def xml_response(request, template, tv):
-    return render_to_response(template, tv, mimetype="application/xml")
+def xml_response(request, template, tv, **kwargs):
+    return render_to_response(template, tv, mimetype="application/xml", **kwargs)
 
 @csrf_exempt
 def login_begin(request, *args, **kwargs):
@@ -142,10 +142,10 @@ def descriptor(request):
     Replies with the XML Metadata IDSSODescriptor.
     """
     idp_config = saml2idp_metadata.SAML2IDP_CONFIG
-    entity_id = config['issuer']
+    entity_id = idp_config['issuer']
     slo_url = request.build_absolute_uri(reverse('logout'))
     sso_url = request.build_absolute_uri(reverse('login_begin'))
-    pubkey = xml_signing.load_cert_data(config['certificate_file'])
+    pubkey = xml_signing.load_cert_data(idp_config['certificate_file'])
     tv = {
         'entity_id': entity_id,
         'cert_public_key': pubkey,

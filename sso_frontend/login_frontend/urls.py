@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, url
 from django.views.generic import TemplateView
+from django.conf import settings
 
 from login_frontend import views
 from login_frontend import providers
@@ -39,3 +40,11 @@ urlpatterns = patterns('',
     url(r'^robots.txt$', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
     url(r'^get_pubkey/(?P<service>(.+))$', views.get_pubkey),
 )
+
+if settings.FAKE_TESTING:
+    urlpatterns += patterns('login_frontend.error_tests',
+       url(r'^errors/400', 'raise_400'),
+       url(r'^errors/403', 'raise_403'),
+       url(r'^errors/404', 'raise_404'),
+       url(r'^errors/500', 'raise_500'),
+    )

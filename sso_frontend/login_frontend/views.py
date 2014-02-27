@@ -110,13 +110,15 @@ def protect_view(current_step, **main_kwargs):
             else:
                 current_level = int(browser.get_auth_level())
 
-
-            if kwargs.get("admin_only", False):
-                if not (browser.user and browser.user.is_admin):
-                    custom_log(request, "User have no access to admin_only resource %s" % request.path, level="warn")
-                    raise PermissionDenied
+            admin_allowed = True
+            if main_kwargs.get("admin_only", False):
+                if not (browser and browser.user and browser.user.is_admin):
+                    admin_allowed = False
 
             if current_level >= required_level:
+                if not admin_allowed:
+                    custom_log(request, "User have no access to admin_only resource %s" % request.path, level="warn")
+                    raise PermissionDenied
                 # Authentication level is already satisfied
                 # Execute requested method.
                 return inner_func(request, *args, **kwargs)
@@ -131,6 +133,7 @@ def protect_view(current_step, **main_kwargs):
                 # Login is still valid. Go to second step authentication
                 custom_log(request, "Second step authentication requested.", level="debug")
                 return redir_view("secondstepauth", redirect_with_get_params("login_frontend.views.secondstepauth", get_params))
+
 
             # Requested authentication level is not satisfied, and user is not proceeding to the second step.
             # Start from the beginning.

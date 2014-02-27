@@ -126,7 +126,7 @@ def log_report(request, *args, **kwargs):
     bid_public = request.COOKIES.get(Browser.C_BID_PUBLIC)
     log.info("%s - %s - %s - %s", remote_ip, request.META.get("HTTP_USER_AGENT"), bid_public, csp_data)
 
-    if request.browser and request.browser.user:
+    if hasattr(request, "browser") and request.browser and request.browser.user:
         username = request.browser.user.username
     else:
         username = None
@@ -146,10 +146,11 @@ def log_report(request, *args, **kwargs):
     if CSPReport.objects.filter(username=username, bid_public=bid_public).filter(source_file=data.get("source-file"), line_number=data.get("line-number"), violated_directive=data.get("violated-directive")).count() > 0:
         return HttpResponse("Duplicate CSP report. Not stored.")
 
-    CSPReport.objects.create(username=username, bid_public=bid_public, csp_raw=csp_data, document_uri=data.get("document-uri"),
+
+    a = CSPReport.objects.create(username=username, bid_public=bid_public, csp_raw=csp_data, document_uri=data.get("document-uri"),
                                       referrer=data.get("referrer"), violated_directive=data.get("violated-directive"),
                                       blocked_uri=data.get("blocked-uri"), source_file=data.get("source-file"),
                                       line_number=data.get("line-number"), column_number=data.get("column-number"),
                                       status_code=data.get("status-code"))
 
-    return HttpResponse("OK")
+    return HttpResponse("OK %s" % a)

@@ -76,7 +76,7 @@
 
 		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
 		        {% csrf_token %}
-			<input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Always use SMS messages</button>
+			<input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Always use SMS</button>
 		</form>
 	{% endif %}
 
