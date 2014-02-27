@@ -116,14 +116,20 @@ class BrowserMiddleware(object):
             log.debug("Browser does not exist")
             return response
 
+        cookies = []
         if request.COOKIES.get(Browser.C_BID_SESSION) != browser.bid_session:
             # No valid session ID exists. Regen it first.
             browser.bid_session = create_browser_uuid()
             log.info("Session bid does not exist. Regenerating. bid_public=%s" % browser.bid_public)
             browser.save()
             cookies = browser.get_cookie()
-            for cookie_name, cookie in cookies:
-                response.set_cookie(cookie_name, **cookie)
+
+        if request.COOKIES.get(Browser.C_BID_PUBLIC) != browser.bid_public:
+            # Public bid does not match. Set it again.
+            cookies = browser.get_cookie()
+
+        for cookie_name, cookie in cookies:
+            response.set_cookie(cookie_name, **cookie)
 
         return response
 
