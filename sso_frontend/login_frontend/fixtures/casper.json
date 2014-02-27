@@ -1,0 +1,24 @@
+[
+
+{"pk": "test", "model": "login_frontend.user", "fields": {"secondary_phone_refresh": null, "strong_skips_available": 0, "primary_phone_refresh": null, "primary_phone": null, "strong_sms_always": false, "user_tokens": null, 
+"strong_authenticator_secret": null, "strong_authenticator_id": null, "strong_authenticator_num": 0, "is_admin": false, "emulate_legacy": false, "strong_configured": false, "secondary_phone": null, 
+"strong_authenticator_generated_at": null, "primary_phone_changed": false, "email": "test-user@example.com", "strong_authenticator_used": false}},
+
+{"pk": 499, "model": "auth.user", "fields": {"username": "test", "last_name": "And last name", "is_active": true, "is_staff": false, "groups": [], "user_permissions": [], "password": "", "date_joined": 
+"2014-02-25T12:25:48.609Z", "first_name": "Test user with no phone number", "is_superuser": false, "last_login": "2014-02-25T12:25:48.609Z", "email": "test-user@example.com"}},
+
+{"pk": "test_valid", "model": "login_frontend.user", "fields": {"secondary_phone_refresh": null, "strong_skips_available": 0, "primary_phone_refresh": "2014-02-25T12:25:44.159Z", "primary_phone": "+358567567", 
+"strong_sms_always": false, "user_tokens": null, "strong_authenticator_secret": null, "strong_authenticator_id": null, "strong_authenticator_num": 0, "is_admin": false, "emulate_legacy": false, "strong_configured": false, 
+"secondary_phone": null, "strong_authenticator_generated_at": null, "primary_phone_changed": false, "email": "test-user@example.com", "strong_authenticator_used": false}},
+
+{"pk": 500, "model": "auth.user", "fields": {"username": "test_valid", "last_name": "And last name", "is_active": true, "is_staff": false, "groups": [], "user_permissions": [], "password": "", "date_joined": 
+"2014-02-25T12:25:48.609Z", "first_name": "Test user with a valid", "is_superuser": false, "last_login": "2014-02-25T12:25:48.609Z", "email": "test-user2@example.com"}},
+
+{"pk": "test_admin", "model": "login_frontend.user", "fields": {"secondary_phone_refresh": null, "strong_skips_available": 0, "primary_phone_refresh": "2014-02-25T12:25:44.159Z", "primary_phone": "+358009009", 
+"strong_sms_always": false, "user_tokens": null, "strong_authenticator_secret": null, "strong_authenticator_id": null, "strong_authenticator_num": 0, "is_admin": true, "emulate_legacy": false, "strong_configured": false, 
+"secondary_phone": null, "strong_authenticator_generated_at": null, "primary_phone_changed": false, "email": "test-user@example.com", "strong_authenticator_used": false}},
+
+{"pk": 501, "model": "auth.user", "fields": {"username": "test_admin", "last_name": "And last name", "is_active": true, "is_staff": false, "groups": [], "user_permissions": [], "password": "", "date_joined": 
+"2014-02-25T12:25:48.609Z", "first_name": "Test user with no phone number", "is_superuser": false, "last_login": "2014-02-25T12:25:48.609Z", "email": "test-user3@example.com"}}
+
+]
