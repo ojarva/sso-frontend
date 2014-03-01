@@ -7,7 +7,7 @@ __all__ = ["LdapLogin"]
 
 log = logging.getLogger(__name__)
 
-class LdapLogin:
+class LdapLogin: # pragma: no cover
     """ LDAP authentication module """
 
     def __init__(self, username, password, redis_instance):

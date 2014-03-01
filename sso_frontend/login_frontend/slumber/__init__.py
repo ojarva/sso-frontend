@@ -9,7 +9,7 @@ from slumber.serialize import Serializer
 __all__ = ["Resource", "API"]
 
 
-def url_join(base, *args):
+def url_join(base, *args): # pragma: no cover
     """
     Helper function to join an arbitrary number of url segments together.
     """
@@ -19,7 +19,7 @@ def url_join(base, *args):
     return urlparse.urlunsplit([scheme, netloc, path, query, fragment])
 
 
-class ResourceAttributesMixin(object):
+class ResourceAttributesMixin(object): # pragma: no cover
     """
     A Mixin that makes it so that accessing an undefined attribute on a class
     results in returning a Resource Instance. This Instance can then be used
@@ -42,7 +42,7 @@ class ResourceAttributesMixin(object):
         return Resource(**kwargs)
 
 
-class Resource(ResourceAttributesMixin, object):
+class Resource(ResourceAttributesMixin, object): # pragma: no cover
     """
     Resource provides the main functionality behind slumber. It handles the
     attribute -> url, kwarg -> query param, and other related behind the scenes
@@ -179,7 +179,7 @@ class Resource(ResourceAttributesMixin, object):
             return False
 
 
-class API(ResourceAttributesMixin, object):
+class API(ResourceAttributesMixin, object): # pragma: no cover
 
     def __init__(self, base_url=None, auth=None, format=None, append_slash=True, session=None, serializer=None):
         if serializer is None:

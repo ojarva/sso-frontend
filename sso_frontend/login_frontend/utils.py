@@ -150,13 +150,13 @@ def save_timing_data(request, user, timing_data):
 
 
 
-def get_and_refresh_user(username):
+def get_and_refresh_user(username): # pragma: no cover
     """ Loads and refreshes user information from LDAP """
     log.info("Refreshing %s" % username)
     api = slumber.API(settings.FUM_API_ENDPOINT, auth=_slumber_auth.TokenAuth(settings.FUM_ACCESS_TOKEN))
     refresh_user(api.users().get(username=username))
 
-def refresh_user(user):
+def refresh_user(user): # pragma: no cover
     """ Refreshes user details, if necessary. """
     username = user.get("username")
     log.info("Updating %s" % username)

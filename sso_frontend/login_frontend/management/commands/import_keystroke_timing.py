@@ -9,7 +9,7 @@ import json
 from django.conf import settings
 import datetime
 
-class Command(BaseCommand):
+class Command(BaseCommand): # pragma: no cover
     args = ''
     help = 'Imports keystroke timing logs to database'
 

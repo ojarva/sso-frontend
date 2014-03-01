@@ -1,3 +1,4 @@
+# pragma: no cover
 from slumber import exceptions
 
 _SERIALIZERS = {
@@ -16,7 +17,7 @@ except ImportError:
     _SERIALIZERS["yaml"] = False
 
 
-class BaseSerializer(object):
+class BaseSerializer(object): # pragma: no cover
 
     content_types = None
     key = None
@@ -33,7 +34,7 @@ class BaseSerializer(object):
         raise NotImplementedError()
 
 
-class JsonSerializer(BaseSerializer):
+class JsonSerializer(BaseSerializer): # pragma: no cover
 
     content_types = [
                         "application/json",
@@ -51,7 +52,7 @@ class JsonSerializer(BaseSerializer):
         return json.dumps(data)
 
 
-class YamlSerializer(BaseSerializer):
+class YamlSerializer(BaseSerializer): # pragma: no cover
 
     content_types = ["text/yaml"]
     key = "yaml"
@@ -63,7 +64,7 @@ class YamlSerializer(BaseSerializer):
         return yaml.dump(data)
 
 
-class Serializer(object):
+class Serializer(object): # pragma: no cover
 
     def __init__(self, default=None, serializers=None):
         if default is None:

@@ -11,7 +11,7 @@ import redis
 from django.conf import settings
 
 
-class Command(BaseCommand):
+class Command(BaseCommand): # pragma: no cover
     args = ''
     help = 'Fetches all users'
 
