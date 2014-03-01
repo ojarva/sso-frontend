@@ -29,11 +29,14 @@ import time
 log = logging.getLogger(__name__)
 
 timing_log = logging.getLogger("request_timing")
+p0f_log = logging.getLogger("p0f")
+
 
 DISALLOWED_UA = [
  re.compile("^Wget/.*"),
  re.compile("^Pingdom.com_bot_version.*"),
- re.compile("^curl/.*")
+ re.compile("^curl/.*"),
+ re.compile("^nutch-.*"),
 ]
 
 __all__ = ["get_browser", "BrowserMiddleware"]
@@ -123,20 +126,25 @@ class P0fMiddleware(object):
             log.debug("p0f: updated %s", newest.browser.bid_public)
             newest.save()
             return True
-            
 
         try:
             p0fapi = p0f.P0f(settings.P0F_SOCKET)
             try:
                 remote_info = p0fapi.get_info(remote_addr)
-            except ValueError, e:
+            except KeyError, e:
                 # No information exists.
                 log.debug("p0f: %s", str(e))
                 return
-            except (KeyError, p0f.P0fException), e:
+            except (ValueError, p0f.P0fException), e:
                 # Invalid information received from p0f
                 log.error("p0f raised KeyError: %s", str(e))
                 return
+
+            username = None
+            if browser.user:
+                username = browser.user.username
+
+            p0f_log.info("%s - %s - %s - %s - %s", remote_addr, browser.bid_public, username, request.path, str(remote_info))
 
             if remote_info["last_nat"] != None:
                 # NAT detected. Don't store/update anything.

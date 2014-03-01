@@ -260,6 +260,10 @@ LOGGING = {
             'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
             'datefmt' : "%Y-%m-%d %H:%M:%S"
         },
+        'plain': {
+            'format' : "[%(asctime)s] %(message)s",
+            'datefmt' : "%Y-%m-%d %H:%M:%S"
+        },
     },
     'filters': {
         'require_debug_false': {
@@ -335,6 +339,16 @@ LOGGING = {
             'formatter': 'standard',
         },
 
+	'logfile_p0f': {
+            'level':'INFO',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/p0f_data",
+            'maxBytes': 500000000,
+            'backupCount': 100,
+            'formatter': 'plain',
+        },
+            
+
         'logfile_request_timing': {
             'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
@@ -357,6 +371,11 @@ LOGGING = {
         },
         'request_timing': {
           'handlers': ['logfile_request_timing'],
+          'propagate': False,
+          'level': 'INFO',
+        },
+        'p0f': {
+          'handlers': ['logfile_p0f'],
           'propagate': False,
           'level': 'INFO',
         },
