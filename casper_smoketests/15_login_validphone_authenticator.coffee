@@ -1,46 +1,36 @@
 phantom.clearCookies()
 
-casper.userAgent('Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)');
+casper.userAgent('Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)')
 casper.start 'http://localhost:8000', ->
-   @.test.assertHttpStatus(200);
+   @.test.assertHttpStatus 200
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=http://localhost:8000/index'
-   @.viewport(1200, 1200);
+    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=http://localhost:8000/index', "Redirected to password authentication"
+   @.viewport(1200, 1200)
    @.then ->
     @.fill("form[name='loginform']", {
      "username": "test_valid2",
      "password": "testpassword"
-    }, true);
+    }, true)
    @.then ->
-    @.test.assertHttpStatus(200);
+    @.test.assertHttpStatus 200
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=http://localhost:8000/index'
-   @.then ->
-    @.fill("form[name='loginform']", {
-     "otp": "1234"
-    }, true);
-   @.then ->
-    @.test.assertSelectorHasText('.alert', 'Incorrect one-time code. Only code from message with id');
+    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=http://localhost:8000/index', "Redirected to SMS authentication"
    @.then ->
     @.fill("form[name='loginform']", {
      "otp": "12345"
-    }, true);
+    }, true)
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=http://localhost:8000/index'
-    @.test.assertSelectorHasText('.skip_for_now', 'Skip for now');
-    @.test.assertSelectorHasText('.configure_authenticator_btn', 'Configure Google Authenticator');
+    @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=http://localhost:8000/index', "Redirected to configuration view"
    @.then ->
     @.clickLabel("Configure Google Authenticator")
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/configure_authenticator?_sso=internal&next=http://localhost:8000/index'
-   @.then ->
-    @.test.assertHttpStatus(200)
+    @.test.assertUrlMatch 'http://localhost:8000/configure_authenticator?_sso=internal&next=http://localhost:8000/index', "Entered authenticator configuration"
+    @.test.assertHttpStatus 200
    @.then ->
     @.clickLabel("Sign out")
    @.then ->
     @.test.assertUrlMatch 'http://localhost:8000/logout?logout=on'
-   @.then ->
-    @.test.assertSelectorHasText('.alert-success', 'You are now signed out.')
+    @.test.assertSelectorHasText('.alert-success', 'You are now signed out.', "Signed out message")
 
    @.then ->
     @.clickLabel("sign in again")
@@ -48,25 +38,22 @@ casper.start 'http://localhost:8000', ->
     @.fill("form[name='loginform']", {
      "username": "test_valid2",
      "password": "testpassword"
-    }, true);
+    }, true)
    @.then ->
-    @.test.assertHttpStatus(200);
-   @.then ->
+    @.test.assertHttpStatus 200
     @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=http://localhost:8000/index'
-   @.then ->
-    @.test.assertSelectorHasText('.alert-warning', 'You generated Authenticator configuration, but have not used it.')
+    @.test.assertSelectorHasText('.alert-warning', 'You generated Authenticator configuration, but have not used it.', "Authenticator generated but not used warning")
    @.then ->
     @.clickLabel("proceed to Authenticator page")
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/second/authenticator?_sso=internal&next=http://localhost:8000/index'
-   @.then ->
-    @.test.assertSelectorHasText('.alert-info', 'You have Authenticator generated')
+    @.test.assertUrlMatch 'http://localhost:8000/second/authenticator?_sso=internal&next=http://localhost:8000/index', "Entered Authenticator page"
+    @.test.assertSelectorHasText('.alert-info', 'You have Authenticator generated', "Authenticator generated but not used warning")
    @.then ->
     @.fill("form[name='loginform']", {
      "otp": "asdf"
-    }, true);
+    }, true)
    @.then ->
-    @.test.assertSelectorHasText(".alert-danger", "Incorrect OTP code.")
+    @.test.assertSelectorHasText(".alert-danger", "Incorrect OTP code.", "Incorrect OTP for authenticator")
    
 
 
