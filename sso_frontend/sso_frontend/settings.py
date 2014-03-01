@@ -176,6 +176,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'login_frontend.middleware.P0fMiddleware',
     'login_frontend.middleware.OutLoggingMiddleware', # logging middleware should be before browsermiddleware, as browsermiddleware might abort on process_request.
     'login_frontend.middleware.BrowserMiddleware',
     'login_frontend.middleware.ViewLoggingMiddleware',
@@ -403,6 +404,9 @@ LDAP_IGNORE_SSL=False # skip LDAP SSL certificate checks
 TOKEN_MAP = {} # map of LDAP groups to pubtkt tokens. For example, {"Administrators": "admins", "ExternalContractors": "ext"}
 
 FAKE_TESTING = False # This uses LDAP stub and static SMS codes. Useful for smoke testing, but never set in production.
+
+
+P0F_SOCKET = None
 
 PUBTKT_PRIVKEY=None
 PUBTKT_PUBKEY=None

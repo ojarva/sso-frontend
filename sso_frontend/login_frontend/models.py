@@ -505,6 +505,40 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
                 return False # downgraded browser version
         return True
 
+class BrowserP0f(models.Model):
+    OS_NORMAL = 0
+    OS_FUZZY = 1
+    OS_GENERIC = 2
+    OS_BOTH = 3
+
+    OS_MATCH = (
+      (OS_NORMAL, "Normal"),
+      (OS_FUZZY, "Fuzzy"),
+      (OS_GENERIC, "Generic signature"),
+      (OS_BOTH, "Using both"),
+    )
+
+    class Meta:
+        ordering = ["first_seen", "last_seen"]
+        get_latest_by = "updated_at"
+
+    def __unicode__(self):
+        return u"%s: %s" % (self.browser.bid_public, self.first_seen)
+
+    browser = models.ForeignKey("Browser")
+    updated_at = models.DateTimeField(auto_now=True)
+    first_seen = models.DateTimeField()
+    last_seen = models.DateTimeField()
+    total_conn = models.IntegerField()
+    uptime_sec = models.IntegerField(null=True, blank=True)
+    up_mod_days = models.IntegerField(null=True, blank=True)
+    last_nat = models.DateTimeField(null=True, blank=True)
+    distance = models.IntegerField(null=True, blank=True)
+    os_match_q = models.CharField(max_length=1, choices=OS_MATCH)
+    os_name = models.CharField(max_length=32, null=True, blank=True)
+    os_flavor = models.CharField(max_length=32, null=True, blank=True)
+    link_type = models.CharField(max_length=32, null=True, blank=True)
+
 class BrowserLogin(models.Model):
 
     class Meta:
