@@ -28,6 +28,8 @@
  <dd><b>{{ detailed.session.remote_ip }}</b> ({{ detailed.geo }})</dd>
  <dt>Remembered</dt>
  <dd>{% if detailed.browser.save_browser %}<span class="tooltip-link" title="You have marked this browser as 'remembered'">yes</span>{% else %}no{% endif %}</dd>
+ <dt>First seen</dt>
+ <dd>{% include "snippets/timestamp.html" with timestamp=detailed.browser.created %}</dd>
 </dl>
 
       </div>
