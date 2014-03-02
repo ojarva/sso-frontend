@@ -527,6 +527,8 @@ class BrowserP0f(models.Model):
 
     browser = models.ForeignKey("Browser")
     updated_at = models.DateTimeField(auto_now=True)
+    wraparounds = models.IntegerField(default=0)
+
     first_seen = models.DateTimeField()
     last_seen = models.DateTimeField()
     total_conn = models.IntegerField()

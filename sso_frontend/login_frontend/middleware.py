@@ -19,6 +19,7 @@ from django.utils import timezone
 from login_frontend.models import Browser, BrowserUsers, BrowserLogin, create_browser_uuid, BrowserP0f
 from login_frontend.providers import pubtkt_logout
 from login_frontend.utils import dedup_messages
+import datetime
 import logging
 import p0f
 import pytz
@@ -111,11 +112,30 @@ class P0fMiddleware(object):
             if newest.uptime_sec == None:
                 return False
 
-            uptime_diff = remote_info["uptime_sec"] - newest.uptime_sec
+            time_since_last = timezone.now() - newest.updated_at
+            time_since_last_sec = time_since_last.days * 86400 + time_since_last.seconds
 
-            if uptime_diff + 120 < 0:
-                # Uptime went backwards. Create a new instance. Allow 2 minutes margin for various errors.
+            expected_uptime = newest.uptime_sec + time_since_last_sec
+
+            up_mod_days = remote_info["up_mod_days"]
+            if up_mod_days and up_mod_days > datetime.timedelta(days=1):
+                # Detect wraparound
+                up_mod_sec = up_mod_days.days * 86400
+              
+                if expected_uptime > up_mod_sec:
+                    log.debug("p0f: %s@%s - uptime wraparound detected: %s", browser.bid_public, remote_addr, expected_uptime)
+                    newest.wraparound += 1
+                    expected_uptime -= up_mod_sec
+
+            uptime_diff = expected_uptime - remote_info["uptime_sec"]
+            allowed_diff = max(10*60, expected_uptime * 0.1)
+
+            if uptime_diff > allowed_diff:
                 log.debug("p0f: %s@%s - uptime went backwards %s seconds", browser.bid_public, remote_addr, uptime_diff)
+                return False
+
+            if uptime_diff < -allowed_diff:
+                log.debug("p0f: %s@%s - uptime jumped onwards %s seconds", browser.bid_public, remote_addr, uptime_diff)
                 return False
 
             time_since_last = timezone.now() - newest.last_seen
