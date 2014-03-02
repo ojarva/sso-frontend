@@ -1,0 +1,14 @@
+<dl class="dl-horizontal">
+ <dt>First seen</dt>
+ <dd>{% include "snippets/timestamp.html" with timestamp=entry.first_seen %}</dd>
+ <dt>Connections</dt>
+ <dd>{{ entry.total_conn }}</dd>
+ <dt>OS (guess)</dt>
+ <dd>{% if entry.os_name %}{{ entry.os_name }} {% if entry.os_flavor %}{{ entry.os_flavor }}{% endif %}{% else %}?{% endif %}</dd>
+ <dt>Link type</dt>
+ <dd>{{ entry.link_type }}</dd>
+ <dt>Network distance</dt>
+ <dd>{{ entry.distance }} hop{{ entry.distance|pluralize }}</dd>
+ <dt>Uptime guess</dt>
+ <dd>{{ entry.get_readable_uptime }} (modulo {{ entry.up_mod_days }} day{{ entry.up_mod_days|pluralize }})</dd>
+</dl>

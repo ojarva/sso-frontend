@@ -841,6 +841,11 @@ def sessions(request):
         details["geo"] = get_geoip_string(session.remote_ip)
         details["icons"] = browser.get_ua_icons()
 
+        try:
+            details["p0f"] = BrowserP0f.objects.filter(browser=browser).latest()
+        except BrowserP0f.DoesNotExist:
+            pass
+
         logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(Q(expires_at__gte=timezone.now()) | Q(expires_at=None))
         details["logins"] = logins
 

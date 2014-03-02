@@ -22,7 +22,7 @@ import uuid
 
 log = logging.getLogger(__name__)
 
-__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails"]
+__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f"]
 
 r = redis.Redis()
 
@@ -540,6 +540,10 @@ class BrowserP0f(models.Model):
     os_name = models.CharField(max_length=32, null=True, blank=True)
     os_flavor = models.CharField(max_length=32, null=True, blank=True)
     link_type = models.CharField(max_length=32, null=True, blank=True)
+
+    def get_readable_uptime(self):
+        if self.uptime_sec:
+            return datetime.timedelta(seconds=self.uptime_sec).__str__()
 
 class BrowserLogin(models.Model):
 
