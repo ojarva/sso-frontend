@@ -244,6 +244,8 @@ class BrowserMiddleware(object):
         for cookie_name, cookie in cookies:
             response.set_cookie(cookie_name, **cookie)
 
+        response["Server"] = "https://github.com/ojarva/sso-frontend"
+
         return response
 
 

@@ -203,7 +203,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 "login_frontend.context_processors.add_static_timestamp"
 )
 
-
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_COOKIE_SECURE=True
 CSRF_COOKIE_HTTPONLY=True
 CSRF_FAILURE_VIEW="login_frontend.error_views.error_csrf"

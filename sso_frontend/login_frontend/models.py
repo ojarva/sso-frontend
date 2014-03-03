@@ -617,7 +617,7 @@ class KeystrokeSequence(models.Model):
     browser = models.ForeignKey("Browser", null=True)
     user = models.ForeignKey("User")    
 
-    resolution = models.CharField(max_length=30) # Screen resolution, used to determine whether external display was used.
+    resolution = models.TextField(blank=True, null=True) # Screen resolution, used to determine whether external display was used.
     fieldname = models.CharField(max_length=1, choices=KEYSTROKE_FIELD)
     was_correct = models.BooleanField()
     timestamp = models.DateTimeField()
