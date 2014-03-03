@@ -528,6 +528,17 @@ class BrowserTime(models.Model):
     time_diff = models.IntegerField()
     measurement_error = models.DecimalField(max_digits=11, decimal_places=3)
 
+    def is_meaningful(self):
+        return abs(time_diff) * 1.1 > measurement_error
+
+    def formatted_time_diff(self):
+        td = self.time_diff
+        if td < 2500:
+            return "%sms" % td
+        if td < 1000 * 120:
+            return "%ss" % round(td / 1000, 1)
+        return "%s minutes" % round(td / 1000 * 60, 1)
+
 class BrowserP0f(models.Model):
     OS_NORMAL = 0
     OS_FUZZY = 1

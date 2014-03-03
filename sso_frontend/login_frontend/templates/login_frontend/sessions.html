@@ -18,8 +18,11 @@
   {% include "login_frontend/snippets/p0f.html" with entry=detailed.p0f %}
 {% endif %}
 
-
 <dl class="dl-horizontal">
+{% if detailed.timesync %}
+ <dt>Your clock</dt>
+ <dd>{{ detailed.timesync.formatted_time_diff }} &plusmn; {{ detailed.timesync.measurement_error }}ms (measured {% include "snippets/timestamp.html" with timestamp=detailed.timesync.checked_at %})</dd>
+{% endif %}
  <dt>Browser</dt>
  <dd>{{ detailed.browser.ua }}</dd>
  <dt>Last seen</dt>

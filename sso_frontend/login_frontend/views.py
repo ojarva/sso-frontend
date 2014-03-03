@@ -934,6 +934,11 @@ def sessions(request):
         except BrowserP0f.DoesNotExist:
             pass
 
+        try:
+            details["timesync"] = BrowserTime.objects.filter(browser=browser).latest()
+        except BrowserTime.DoesNotExist:
+            pass
+
         logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(Q(expires_at__gte=timezone.now()) | Q(expires_at=None))
         details["logins"] = logins
 
