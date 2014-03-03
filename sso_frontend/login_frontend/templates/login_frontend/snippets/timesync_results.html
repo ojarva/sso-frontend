@@ -6,7 +6,7 @@
 		It might be off by just {{ best_sync}}ms, but measurement error is &plusmn;{{ std}}ms.
 	{% endif %}
 {% elif best_sync < 10000 %}
-	Your clock is a bit off. The difference is {{ best_sync }}s, and measurement error is &plusmn;{{ std }}ms.
+	Your clock is a bit off. The difference is {{ best_sync }}ms, and measurement error is &plusmn;{{ std }}ms.
 {% else %}
-	Your clock seems to be way off. The difference is {{ best_sync  }}s, and measurement error is &plusmn;{{ std }}ms.
+	Your clock seems to be way off. The difference is {{ best_sync  }}ms, and measurement error is &plusmn;{{ std }}ms.
 {% endif %}
