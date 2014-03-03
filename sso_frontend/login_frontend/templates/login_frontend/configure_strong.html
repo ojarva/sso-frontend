@@ -7,7 +7,7 @@
 
 {% if enable_cookies %}
 	<div class="alert alert-danger">
-		Please enable cookies. You're not able to sign in without properly working cookies.
+		<i class="fa fa-exclamation-circle"></i> Please enable cookies. You're not able to sign in without properly working cookies.
 	</div>
 {% endif %}
 
@@ -40,7 +40,7 @@
 {% if not user.strong_authenticator_secret %}
 	{% if user.strong_sms_always %}
 		<div class="alert alert-warning">
-			You have opted for SMS authentication. Do note that it is less reliable, especially while traveling.
+			<i class="fa fa-exclamation"></i> You have opted for SMS authentication. Do note that it is less reliable, especially while traveling.
 			This system will ask for one-time passwords when you travel to new places.
 		</div>
 	{% endif %}
@@ -83,7 +83,7 @@
 {% else %}
 	{% if user.strong_authenticator_used and not user.strong_sms_always %}
 		<div class="alert alert-success">
-			You are using Google Authenticator for one-time passwords. If you have it configured on your phone, no action is required. The name of
+			<i class="fa fa-heart"></i> You are using Google Authenticator for one-time passwords. If you have it configured on your phone, no action is required. The name of
 			the code should be "<tt>{{ authenticator_id }}</tt>". If that does not match, you probably have to reconfigure it.
 		</div>
 		<p>If you have lost the configuration, you can</p>

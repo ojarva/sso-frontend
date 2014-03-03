@@ -15,6 +15,7 @@
 
 {% if invalid_request %}
 	<div class="alert alert-danger">
+		<i class="fa fa-exclamation-triangle"></i>
 		Invalid request. Did you open this page on the same browser you started the authentication process?
 	</div>
 
@@ -23,12 +24,14 @@
 	enter one-time code instead.</p>
 {% elif invalid_sid %}
 	<div class="alert alert-danger">
+		<i class="fa fa-exclamation-triangle"></i>
 		Unique code for this URL expired already.
 	</div>
 
 	<p>The link is only valid for 15 minutes, and only on the same browser where you started the sign-in process.</p>
 {% elif wrong_browser %}
 	<div class="alert alert-danger">
+		<i class="fa fa-exclamation-triangle"></i>
 		This is not the browser you used to start the sign-in process.
 	</div>
 	<p>This link only works on the browser you used to start sign-in process. If your phone opens it on different
@@ -36,6 +39,7 @@
 	enter one-time code instead.</p>
 {% elif invalid_auth_state %}
 	<div class="alert alert-danger">
+		<i class="fa fa-exclamation-triangle"></i>
 		You are not signed in properly. Did you open this page on the same browser you started the authentication process?
 	</div>
 	<p>This link only works on the browser you used to start sign-in process. If your phone opens it on different

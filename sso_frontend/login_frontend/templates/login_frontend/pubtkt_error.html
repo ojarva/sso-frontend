@@ -4,33 +4,34 @@
 {% block content %}
 {% if enable_cookies %}
 	<div class="alert alert-danger">
+		<i class="fa fa-exclamation-triangle"></i>
 		Please enable cookies. You're not able to sign in without properly working cookies.
 	</div>
 {% endif %}
 
 {% if invalid_back_url %}
-<div class="alert alert-danger">
-Unable to complete sign-in request.
-</div>
+	<div class="alert alert-danger">
+		<i class="fa fa-exclamation-triangle"></i>
+		Unable to complete sign-in request.
+	</div>
 
-<p>Requested service URL "{{ back_url }}" is invalid. You can still <a href="{% url 'login_frontend.views.indexview' %}">sign in</a>, but redirect is disabled.</p>
-
+	<p>Requested service URL "{{ back_url }}" is invalid. You can still <a href="{% url 'login_frontend.views.indexview' %}">sign in</a>, but redirect is disabled.</p>
 {% endif %}
 
 {% if unauth %}
-<div class="alert alert-danger">
-Your don't have access to requested resource.
-</div>
+	<div class="alert alert-danger">
+		<i class="fa fa-exclamation-triangle"></i>
+		Your don't have access to requested resource.
+	</div>
 
-<p>Unfortunately, you don't have access to <tt>{{ back_url }}</tt>. If you want to, you can logout and login again with different user. If you got access to new groups, do the same.</p>
+	<p>Unfortunately, you don't have access to <tt>{{ back_url }}</tt>. If you want to, you can logout and login again with different user. If you got access to new groups, do the same.</p>
 
-<form method="post" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">
-{% csrf_token %}
-<input type="submit" value="Logout and login again" class="btn btn-primary">
-</form>
+	<form method="post" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">
+	{% csrf_token %}
+	<input type="submit" value="Logout and login again" class="btn btn-primary">
+	</form>
 
-<p>If you think you should have access to this service, please contact IT team.</p>
-
+	<p>If you think you should have access to this service, please contact IT team.</p>
 {% endif %}
 
 {% endblock %}

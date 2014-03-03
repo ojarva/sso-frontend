@@ -2,12 +2,6 @@
 
 {% block title %}Configure Authenticator - {% endblock %}
 {% block content %}
-{% if enable_cookies %}
-	<div class="alert alert-danger">
-		Please enable cookies. You're not able to sign in without properly working cookies.
-	</div>
-{% endif %}
-
 
 <h2>Configure Google Authenticator</h2>
 
@@ -16,7 +10,10 @@
  <h3 class="panel-title">What is Google Authenticator?</h3>
 </div>
 <div class="panel-body">
-<p>Google Authenticator generates one-time passwords on your phone. It's faster and more reliable than receiving SMS messages. After configuring Google Authenticator, you can still authenticate using SMS messages if needed.</p>
+
+<p>Google Authenticator generates one-time passwords on your phone. It's faster and more reliable than receiving SMS messages. After configuring Google Authenticator, 
+you can still authenticate using SMS messages if needed.</p>
+
 </div>
 </div>
 
@@ -51,7 +48,7 @@
 <ol>
 <li>Open Authenticator app</li>
 <li>In Authenticator, select <button class="btn btn-sm btn-default" disabled="disabled">Begin Setup</button> and click <button class="btn btn-sm btn-default" disabled="disabled">Scan a barcode</button>. Don't select any of the listed accounts.</li>
-<li>Scan this QR code:
+<li>Scan this QR code and continue to next step below.</li>
 </ol>
 <p><img width="410" height="410" src="{% url 'login_frontend.views.get_authenticator_qr' authenticator_qr_nonce %}"></p>
 
