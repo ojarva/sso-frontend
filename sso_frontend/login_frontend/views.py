@@ -154,7 +154,7 @@ def main_redir(request):
     return redirect_with_get_params("login_frontend.views.indexview", request.GET)
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("indexview", required_level=Browser.L_BASIC)
@@ -202,7 +202,7 @@ def indexview(request):
     return response
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("firststepauth", required_level=Browser.L_UNAUTH)
@@ -212,7 +212,7 @@ def firststepauth(request):
     return redirect_with_get_params("login_frontend.views.authenticate_with_password", request.GET)
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("authenticate_with_password", required_level=Browser.L_UNAUTH)
@@ -363,7 +363,7 @@ def authenticate_with_password(request):
 
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("secondstepauth", required_level=Browser.L_BASIC)
@@ -400,7 +400,7 @@ def secondstepauth(request):
     return HttpResponse("Second step auth: no proper redirect configured.")
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 # This method should not protected with protect_view. In this case, it is important to show specific error messages.
@@ -472,7 +472,7 @@ def authenticate_with_url(request, **kwargs):
 
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("authenticate_with_authenticator", required_level=Browser.L_BASIC)
@@ -599,7 +599,7 @@ def authenticate_with_authenticator(request):
 
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("authenticate_with_sms", required_level=Browser.L_BASIC)
@@ -772,7 +772,7 @@ def js_ping(request, **kwargs):
     return response
 
 @require_http_methods(["GET"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 def get_pubkey(request, **kwargs):
@@ -787,7 +787,7 @@ def get_pubkey(request, **kwargs):
     return response
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("sessions", required_level=Browser.L_STRONG)
@@ -868,7 +868,7 @@ def sessions(request):
 
 
 @require_http_methods(["GET"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("view_log", required_level=Browser.L_STRONG)
@@ -916,7 +916,7 @@ def view_log(request, **kwargs):
 
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("configure_strong", required_level=Browser.L_STRONG)
@@ -960,7 +960,7 @@ def configure_strong(request):
     return response
 
 @require_http_methods(["GET"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("get_authenticator_qr", required_level=Browser.L_STRONG)
@@ -988,7 +988,7 @@ def get_authenticator_qr(request, **kwargs):
     return HttpResponse(stringio.read(), content_type="image/png")
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("configure_authenticator", required_level=Browser.L_STRONG)
@@ -1052,7 +1052,7 @@ def configure_authenticator(request):
     return response
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='6/2s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("authenticate_with_emergency", required_level=Browser.L_BASIC)
