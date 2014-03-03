@@ -760,7 +760,7 @@ class User(models.Model):
                     if abs(time_diff) < 35:
                         message = "You tried to use old Authenticator configuration, generated at %s. If you don't have newer configuration, please sign in with SMS and reconfigure Authenticator." % authenticator.generated_at
                     else:
-                        message = "You tried to use old Authenticator configuration, generated at %s. If you don't have newer configuration, please sign in with SMS and reconfigure Authenticator. Also, your clock seems to be off by about %s seconds" % (authenticator.generated_at, time_diff)
+                        message = "You tried to use old Authenticator configuration, generated at %s. If you don't have newer configuration, please sign in with SMS and reconfigure Authenticator. Also, clock of your mobile phone seems to be off by about %s seconds" % (authenticator.generated_at, time_diff)
                         custom_log(request, "User clock is off by %s seconds" % time_diff, level="warn")
                     return (False, message)
 
