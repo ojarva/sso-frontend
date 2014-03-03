@@ -12,7 +12,7 @@
 <h3>General notes</h3>
 
 <ul>
-<li>There is no link for immediate logout. Link to <a href="{% full_uri 'login_frontend.views.logoutview' %}"><tt>{% full_uri 'login_frontend.views.logoutview' %}</tt></a>. Users have to click "Logout" to finish signing out.</li>
+<li>There is no link for immediate logout. Link to <a href="{% full_uri 'login_frontend.views.logoutview' %}"><code>{% full_uri 'login_frontend.views.logoutview' %}</code></a>. Users have to click "Logout" to finish signing out.</li>
 <li>No external incoming POST requests are allowed. A valid <a href="https://docs.djangoproject.com/en/dev/ref/contrib/csrf/">CSRF token</a> is required.</li>
 </ul>
 
@@ -25,8 +25,8 @@ contain anything particularly confidential. pubtkt does not provide any mechanis
 
 <ul>
 <li>For configuration, you need this <a href="{% url 'login_frontend.views.get_pubkey' 'pubtkt' %}">public key</a></li>
-<li>Cookie name is <tt>auth_pubtkt</tt></li>
-<li>All cookies are issued with <tt>secure</tt> and <tt>httpOnly</tt> parameters.</li>
+<li>Cookie name is <code>auth_pubtkt</code></li>
+<li>All cookies are issued with <code>secure</code> and <code>httpOnly</code> parameters.</li>
 <li>Client IP restrictions are not enabled.</li>
 </ul>
 
@@ -53,11 +53,11 @@ TKTAuthPublicKey /etc/apache2/tkt_pubkey.pem
 <p><a href="http://openid.net/">OpenID</a> identity provider (IdP) is available at <a href="{% full_uri 'openid-provider-root' %}">{% full_uri 'openid-provider-root' %}</a>.</p>
 
 <ul>
-<li>User identifiers include username: <tt>{% full_uri 'openid-provider-root' %}&lt;username&gt;</tt></li>
+<li>User identifiers include username: <code>{% full_uri 'openid-provider-root' %}&lt;username&gt;</code></li>
 <li>OpenID implements relying party discovery. If discovery does not succeed, user can still proceed, after validating they want to release their attributes.</li>
 <li>The system supports static trust roots for trusted services. If your service does not provide functional RP discovery, it can be added to the whitelist.</li>
 <li>Both <a href="http://openid.net/specs/openid-simple-registration-extension-1_0.html">sreg</a> and <a href="http://openid.net/specs/openid-attribute-exchange-1_0.html">ax</a> are supported.</li>
-<li><tt>openid.sreg.nickname</tt> is username. <tt>openid.sreg.email</tt> and <tt>openid.sreg.fullname</tt> are included. Other attributes are not available.</li>
+<li><code>openid.sreg.nickname</code> is username. <code>openid.sreg.email</code> and <code>openid.sreg.fullname</code> are included. Other attributes are not available.</li>
 </ul>
 
 <h3>SAML 2.0</h3>
@@ -68,8 +68,8 @@ TKTAuthPublicKey /etc/apache2/tkt_pubkey.pem
 <li>SAML is a horrific beast.</li>
 <li>Implementation is based on <a href="https://code.google.com/p/django-saml2-idp/">django-saml2-idp</a> project</li>
 <li>For configuration, you need this <a href="{% url 'login_frontend.views.get_pubkey' 'saml' %}">public key</a></li>
-<li>Sign-in page URL: <tt>{% full_uri 'saml2idp.views.login_begin' %}</tt></li>
-<li>Sign-out page URL: <tt>{% full_uri 'saml2idp.views.logout' %}</tt></li>
+<li>Sign-in page URL: <code>{% full_uri 'saml2idp.views.login_begin' %}</code></li>
+<li>Sign-out page URL: <code>{% full_uri 'saml2idp.views.logout' %}</code></li>
 <li>Google Apps works out-of-the-box</li>
 <li>Before you can authenticate against this service, additional configuration is required.</li>
 </ul>
@@ -79,7 +79,7 @@ TKTAuthPublicKey /etc/apache2/tkt_pubkey.pem
 <p>This service uses time-based one-time passwords, defined in <a href="http://tools.ietf.org/html/rfc6238">RFC 6238</a>. Authenticator implementations should support scanning QR codes. URI format is specified <a href="https://code.google.com/p/google-authenticator/wiki/KeyUriFormat">here</a>.</p>
 
 <ul>
-<li>Authenticator secret contains exactly 16 characters matching to <tt>[A-Z0-9]{16}</tt></li>
+<li>Authenticator secret contains exactly 16 characters matching to <code>[A-Z0-9]{16}</code></li>
 <li>Only time-based one-time passwords (TOTP) are supported</li>
 <li>Only keys generated with the latest secret are accepted</li>
 <li>Client clock error must be less than 30 seconds for reliable operation. Only codes for current timestamp, previous and next 30 second slots are accepted</li>

@@ -84,7 +84,7 @@
 	{% if user.strong_authenticator_used and not user.strong_sms_always %}
 		<div class="alert alert-success">
 			<i class="fa fa-heart"></i> You are using Google Authenticator for one-time passwords. If you have it configured on your phone, no action is required. The name of
-			the code should be "<tt>{{ authenticator_id }}</tt>". If that does not match, you probably have to reconfigure it.
+			the code should be "{{ authenticator_id }}". If that does not match, you probably have to reconfigure it.
 		</div>
 		<p>If you have lost the configuration, you can</p>
 	{% elif user.strong_authenticator_used %}

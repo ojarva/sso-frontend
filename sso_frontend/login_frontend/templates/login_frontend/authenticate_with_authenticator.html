@@ -18,7 +18,7 @@
 {% if authenticator_not_used %}
 	<div class="alert alert-info">
 		You have Authenticator generated {% include "snippets/timestamp.html" with timestamp=authenticator_generated %}, but you have not used current configuration.
-		The name of your current configuration is "<tt>{{ authenticator_id }}</tt>".
+		The name of your current configuration is "{{ authenticator_id }}".
 		If you don't have the newest configuration on your phone, use <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}" class="alert-link">SMS authentication instead</a>.
 	</div>
 {% endif %}
@@ -28,7 +28,7 @@
 	</div>
 
 	<p>You're authenticating with Authenticator password. It is a 6-digit code from Authenticator app.
-        The name of that code should be "<tt>{{ authenticator_id }}</tt>".
+        The name of that code should be "{{ authenticator_id }}".
         If this does not match and/or the code is not working, you can <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">sign in with SMS</a>.</p>
 {% endif %}
 
