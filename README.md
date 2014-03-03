@@ -13,12 +13,39 @@ For licensing, see [separate file](LICENSE.md).
 Installation
 ------------
 
-1. Install requirements: ```pip install -r requirements.txt```
-2. Configure your local settings: ```mv sso_frontend/local_settings.py.sample sso_frontend/local_settings.py; vim sso_frontend/local_settings.py```
-3. Implement your own SMS gateway: see ```login_frontend/send_sms.py.sample```.
-4. Find and replace branding: ```grep -i futurice * -R```
-5. Install redis
+1. Install packages: for Ubuntu/Debian: ```sudo apt-get install python-pip python-virtualenv swig python-ldap python-dev libssl-dev python-geoip libldap2-dev libsasl2-dev python-m2crypto python-mysqldb redis-server libmysqlclient-dev```
+2. Install requirements: ```pip install -r requirements.txt```
+3. Configure your local settings: ```mv sso_frontend/local_settings.py.sample sso_frontend/local_settings.py; vim sso_frontend/local_settings.py```
+4. Implement your own SMS gateway: see ```login_frontend/send_sms.py.sample```.
+5. Find and replace branding: ```grep -i futurice * -R```
 6. Configure WSGI server to apache2
+
+Using ```virtualenv``` is highly recommended.
+
+p0f (optional)
+------------------
+
+```
+sudo apt-get install libpcap-dev supervisor
+wget http://lcamtuf.coredump.cx/p0f3/releases/p0f-3.06b.tgz
+tar -xvzf p0f-3.06b.tgz
+cd p0f-3.06b
+./build.sh
+sudo adduser --system p0f
+sudo mkdir /var/local/p0f
+```
+
+Create file ```/etc/supervisor/conf.d/p0f.conf``` with contents
+
+```
+[program:p0f]
+user=root # p0f forks to p0f user
+command=/path/to/p0f-3.06b/p0f -i eth0 -f /path/to/p0f-3.06b/p0f.fp -s /var/local/p0f/p0f.sock -o /var/local/p0f/p0f_out.txt -u p0f "port 80 or port 443"
+stderr_logfile = /var/log/p0f-err.log
+stdout_logfile = /var/log/p0f-stdout.log
+```
+
+Set ```P0FSOCKET=/var/local/p0f/p0f.sock``` in local_settings.py.
 
 Cookies
 -------
