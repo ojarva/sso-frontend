@@ -13,7 +13,7 @@ For licensing, see [separate file](LICENSE.md).
 Installation
 ------------
 
-1. Install packages: for Ubuntu/Debian: ```sudo apt-get install python-pip python-virtualenv swig python-ldap python-dev libssl-dev python-geoip libldap2-dev libsasl2-dev python-m2crypto python-mysqldb redis-server libmysqlclient-dev```
+1. Install packages: for Ubuntu/Debian: ```sudo apt-get install python-pip python-virtualenv swig python-ldap python-dev libssl-dev python-geoip libldap2-dev libsasl2-dev python-m2crypto python-mysqldb redis-server libmysqlclient-dev zlib1g libjpeg-dev```
 2. Install requirements: ```pip install -r requirements.txt```
 3. Configure your local settings: ```mv sso_frontend/local_settings.py.sample sso_frontend/local_settings.py; vim sso_frontend/local_settings.py```
 4. Implement your own SMS gateway: see ```login_frontend/send_sms.py.sample```.

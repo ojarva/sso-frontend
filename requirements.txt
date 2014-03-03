@@ -2,7 +2,7 @@ p0f
 BeautifulSoup==3.2.1
 Django==1.6
 M2Crypto==0.21.1
-PIL==1.1.7
+pillow
 South==0.8.3
 auth-pubtkt
 django-compressor==1.3
