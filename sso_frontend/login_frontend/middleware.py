@@ -124,7 +124,7 @@ class P0fMiddleware(object):
               
                 if expected_uptime > up_mod_sec:
                     log.debug("p0f: %s@%s - uptime wraparound detected: %s", browser.bid_public, remote_addr, expected_uptime)
-                    newest.wraparound += 1
+                    newest.wraparounds += 1
                     expected_uptime -= up_mod_sec
 
             uptime_diff = expected_uptime - remote_info["uptime_sec"]
