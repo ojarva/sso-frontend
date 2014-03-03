@@ -57,7 +57,6 @@
 {% include 'login_frontend/snippets/remember_me.html' %}
 <input type="hidden" name="timing_data" value="" id="timing_data">
 </form>
-<p><form method="post" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">{% csrf_token %}<button class="btn btn-link">Not {{ first_name }}?</button></form></p>
 
 <p><small>Problems with Authenticator app? <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">Authenticate with SMS</a>.</small></p>
 </div>
