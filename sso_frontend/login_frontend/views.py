@@ -15,6 +15,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseNotFound, Http404
 from django.shortcuts import render_to_response
+from django.template.loader import render_to_string
 from django.template import RequestContext
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -32,6 +33,7 @@ from ratelimit.decorators import ratelimit
 import datetime
 import json
 import logging
+import math
 import os
 import pyotp
 import qrcode
@@ -197,6 +199,7 @@ def indexview(request):
     elif auth_level == Browser.L_BASIC:
         ret["auth_level"] = "basic"
     ret["remembered"] = request.browser.save_browser
+    ret["should_timesync"] = request.browser.should_timesync()
 
     response = render_to_response("login_frontend/indexview.html", ret, context_instance=RequestContext(request))
     return response
@@ -591,6 +594,7 @@ def authenticate_with_authenticator(request):
     ret["authenticator_id"] = user.get_authenticator_id()
     ret["get_params"] = urllib.urlencode(request.GET)
     ret["my_computer"] = request.browser.save_browser
+    ret["should_timesync"] = request.browser.should_timesync()
     request.session.set_test_cookie()
 
     response = render_to_response("login_frontend/authenticate_with_authenticator.html", ret, context_instance=RequestContext(request))
@@ -619,6 +623,7 @@ def authenticate_with_sms(request):
     if not (user.primary_phone or user.secondary_phone):
         # Phone numbers are not available.
         custom_log(request, "2f-sms: No phone number available - unable to authenticate.", level="error")
+        ret["should_timesync"] = request.browser.should_timesync()
         return render_to_response("login_frontend/no_phone_available.html", ret, context_instance=RequestContext(request))
 
     skips_available = user.strong_skips_available
@@ -747,6 +752,7 @@ def authenticate_with_sms(request):
     ret["form"] = form
     ret["get_params"] = urllib.urlencode(request.GET)
     ret["my_computer"] = request.browser.save_browser
+    ret["should_timesync"] = request.browser.should_timesync()
 
     response = render_to_response("login_frontend/authenticate_with_sms.html", ret, context_instance=RequestContext(request))
     return response
@@ -785,6 +791,84 @@ def get_pubkey(request, **kwargs):
         raise Http404
     response = HttpResponse(open(filename).read(), content_type="application/x-x509-ca-cert")
     return response
+
+
+@require_http_methods(["GET"])
+def timesync(request, **kwargs):
+    """ Calculates difference between server and client timestamps """
+    ret = {}
+    browser_random = kwargs.get("browser_random")
+    redis_id = browser_random
+
+    if not "browser_timezone" in kwargs:
+        return render_to_response("login_frontend/timesync.html", {}, context_instance=RequestContext(request))
+
+    browser = None
+    if hasattr(request, "browser") and request.browser:
+        browser = request.browser
+        redis_id = browser.bid_public
+
+    browser_timezone = kwargs.get("browser_timezone")
+    browser_time = kwargs.get("browser_time")
+    try:
+        browser_time = int(browser_time)
+    except ValueError:
+        browser_time = None
+    server_time = kwargs.get("last_server_time")
+    recv_time = int(time.time() * 1000)
+
+    def report():
+        browser_times = []
+        recv_times = []
+        while True:
+            val = r.lpop(r_k+"browser_time")
+            if val is None:
+                break
+            browser_times.append(int(val))
+            val = r.lpop(r_k+"recv_time")
+            recv_times.append(int(val))
+        if len(recv_times) < 2:
+            ret["no_values"] = True
+            return
+        best_sync = None
+        smallest_rtt = None
+        errors = []
+        for i, _ in enumerate(browser_times):
+            if i == 0:
+                continue
+            bt = browser_times[i]
+            rt = recv_times[i]
+            rtt = (recv_times[i] - recv_times[i-1]) / 2
+            clock_off = rt - bt - rtt
+            errors.append(clock_off)
+            if smallest_rtt is None or rtt < smallest_rtt:
+                best_sync = clock_off
+                smallest_rtt = rtt
+        def avg(d): return float(sum(d)) / len(d)
+        avg_err = avg(errors)
+        variance = map(lambda x: (x - avg_err)**2, errors)
+        ret["errors_std"] = math.sqrt(avg(variance))
+        ret["errors"] = errors
+        ret["best_sync"] = best_sync
+        ret["report"] = render_to_string("login_frontend/snippets/timesync_results.html", {"best_sync": round(best_sync, 2), "std": round(ret["errors_std"], 2)})
+        if browser:
+            BrowserTime.objects.create(browser=browser, timezone=browser_timezone, time_diff=best_sync, measurement_error=ret["errors_std"])
+        custom_log(request, "Browser timesync: %s ms with +-%s error. bt: %s; rt: %s" % (best_sync, ret["errors_std"], bt, rt), level="info")
+
+    r_k = "timesync-%s-" % redis_id
+    r.rpush(r_k+"browser_time", browser_time)
+    r.rpush(r_k+"recv_time", recv_time)
+    r.expire(r_k+"browser_time", 30)
+    r.expire(r_k+"recv_time", 30)
+
+    if kwargs.get("command") == "results":
+        report()
+
+    ret["browser_time"] = float(browser_time)
+    ret["server_time"] = int(time.time() * 1000)
+    response = HttpResponse(json.dumps(ret), content_type="application/json")
+    return response
+
 
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
@@ -863,6 +947,7 @@ def sessions(request):
     ret["num_sessions"] = len(sessions)
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
+    ret["should_timesync"] = request.browser.should_timesync()
     response = render_to_response("login_frontend/sessions.html", ret, context_instance=RequestContext(request))
     return response
 
@@ -1072,7 +1157,7 @@ def logoutview(request):
     a GET request, page with logout button is shown.
     """        
 
-    if request.method == 'POST' and request.browser and request.browser.user:
+    if request.method == 'POST' and hasattr(request, "browser") and request.browser and request.browser.user:
         ret_dict = request.GET.dict()
         ret_dict["logout"] = "on"
         logins = BrowserLogin.objects.filter(user=request.browser.user, browser=request.browser).filter(can_logout=False).filter(signed_out=False).filter(Q(expires_at__gte=timezone.now()) | Q(expires_at=None))
@@ -1089,8 +1174,7 @@ def logoutview(request):
             except KeyError:
                 pass
  
-        if request.browser is not None:
-            request.browser.logout(request)
+        request.browser.logout(request)
         django_auth.logout(request)
         request.session["active_sessions"] = active_sessions
         request.session["logout"] = True
@@ -1117,4 +1201,6 @@ def logoutview(request):
             ret["not_logged_in"] = True
         elif request.browser.get_auth_level() < Browser.L_BASIC:
             ret["not_logged_in"] = True
+        if request.browser:
+            ret["should_timesync"] = request.browser.should_timesync()
         return render_to_response("login_frontend/logout.html", ret, context_instance=RequestContext(request))

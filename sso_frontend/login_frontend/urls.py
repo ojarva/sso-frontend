@@ -39,6 +39,12 @@ urlpatterns = patterns('',
     url(r'^developer_introduction$', TemplateView.as_view(template_name="login_frontend/developer_introduction.html"), name='developer_introduction'),
     url(r'^robots.txt$', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
     url(r'^get_pubkey/(?P<service>(.+))$', views.get_pubkey),
+
+    # timesync
+    url(r'^timesync$', views.timesync),
+    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))$', views.timesync),
+    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))$', views.timesync),
+    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))/(?P<command>(.+))$', views.timesync),
 )
 
 if settings.FAKE_TESTING:

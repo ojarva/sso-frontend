@@ -22,7 +22,7 @@ import uuid
 
 log = logging.getLogger(__name__)
 
-__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f"]
+__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f", "BrowserTime"]
 
 r = redis.Redis()
 
@@ -204,6 +204,15 @@ class Browser(models.Model):
     authenticator_qr_nonce = models.CharField(max_length=37, null=True, blank=True)
 
     forced_sign_out = models.BooleanField(default=False)
+
+    def should_timesync(self):
+        try:
+            last_sync = BrowserTime.objects.filter(browser=self).latest()
+        except BrowserTime.DoesNotExist:
+            return True
+        if timezone.now() - last_sync.checked_at > datetime.timedelta(hours=12):
+            return True
+        return False
 
     def has_any_activity(self):
         if self.user != None:
@@ -504,6 +513,20 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
             if nu_v < ou_v:
                 return False # downgraded browser version
         return True
+
+class BrowserTime(models.Model):
+    class Meta:
+        get_latest_by = "checked_at"
+        ordering = ["checked_at"]
+
+    def __unicode__(self):
+        return u"%s: %s ms +- %s ms" % (self.browser.bid_public, self.time_diff, self.measurement_error)
+
+    browser = models.ForeignKey("Browser")
+    checked_at = models.DateTimeField(auto_now_add=True)
+    timezone = models.IntegerField(default=0, null=True, blank=True)
+    time_diff = models.IntegerField()
+    measurement_error = models.DecimalField(max_digits=11, decimal_places=3)
 
 class BrowserP0f(models.Model):
     OS_NORMAL = 0

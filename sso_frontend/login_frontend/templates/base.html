@@ -15,6 +15,9 @@
     <script src="/static/js/bootstrap.min.js" type="text/javascript"></script>
     <script src="/static/js/base.js" type="text/javascript"></script>
 {% endcompress %}
+{% if should_timesync %}
+    <script src="/static/js/timesync.js" type="text/javascript"></script>
+{% endif %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% block header %}{% endblock %}
 <meta property="og:title" content="Sign-in required" />
