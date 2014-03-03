@@ -59,13 +59,12 @@
 
 {% if num_sessions > 1 %}
 {# only show "sign out all" if other sessions exist. #}
-<p>You can also terminate all sessions, excluding this one: 
+<p>You can also terminate all sessions, excluding this one:</p>
  <form method="post" action="{% url 'login_frontend.views.sessions' %}?{{ get_params }}">
   {% csrf_token %}
   <input type="hidden" name="logout" value="all">
   <button type="submit" class="btn-lg btn btn-danger">Sign out all my sessions</button>
  </form>
-</p>
 
 {% endif %}
 </div>
@@ -117,7 +116,7 @@
 </form>
 <a class="btn btn-block btn-primary" href="{% url 'login_frontend.views.view_log' detailed.browser.bid_public %}">View log</a>
 {% if detailed.p0f %}
-<button class ="btn btn-block btn-primary" data-toggle="modal" data-target="#browser_info_{{ detailed.browser.bid_public }}">View info</a>
+<button class ="btn btn-block btn-primary" data-toggle="modal" data-target="#browser_info_{{ detailed.browser.bid_public }}">View info</button>
 {% endif %}
 </div>
 </div>
