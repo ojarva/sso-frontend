@@ -190,10 +190,13 @@ def pubtkt(request):
 
         # Add/update BrowserLogin
         d_valid_until = timezone.now() + datetime.timedelta(seconds=expiration_in_seconds)
-        (browser_login, _) = BrowserLogin.objects.get_or_create(user=browser.user, browser=browser, sso_provider="pubtkt", signed_out=False, defaults={"auth_timestamp": timezone.now(), "expires_at": d_valid_until, "remote_service": back_url})
-        browser_login.auth_timestamp = timezone.now()
-        browser_login.expires_at = d_valid_until
-        browser_login.save()
+        try:
+            (browser_login, _) = BrowserLogin.objects.get_or_create(user=browser.user, browser=browser, sso_provider="pubtkt", signed_out=False, defaults={"auth_timestamp": timezone.now(), "expires_at": d_valid_until, "remote_service": back_url})
+            browser_login.auth_timestamp = timezone.now()
+            browser_login.expires_at = d_valid_until
+            browser_login.save()
+        except:
+            pass
 
         add_user_log(request, "Granted pubtkt access (%s)" % back_url, "share-square-o")
 
