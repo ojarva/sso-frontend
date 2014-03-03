@@ -27,7 +27,7 @@ else:
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.send_sms import send_sms
-from login_frontend.utils import save_timing_data, get_geoip_string, redirect_with_get_params, redir_to_sso, paginate
+from login_frontend.utils import save_timing_data, get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, get_return_url
 from ratelimit.decorators import ratelimit
 import datetime
 import json
@@ -222,6 +222,8 @@ def authenticate_with_password(request):
     ret = {}
     cookies = []
     browser = None
+
+    ret["return_readable"] = get_return_url(request)
 
     if request.browser is None:
         # No Browser object is initialized. Create one.
@@ -487,6 +489,7 @@ def authenticate_with_authenticator(request):
     ret = {}
     user = request.browser.user
     assert user != None, "Browser is authenticated but no User object exists."
+    ret["return_readable"] = get_return_url(request)
 
     skips_available = user.strong_skips_available
     ret["skips_available"] = skips_available
@@ -620,6 +623,7 @@ def authenticate_with_sms(request):
 
     skips_available = user.strong_skips_available
     ret["skips_available"] = skips_available
+    ret["return_readable"] = get_return_url(request)
 
     if request.method == "POST" and request.POST.get("skip"):
         if skips_available > 0:

@@ -10,6 +10,9 @@
 <div class="row">
 <div class="col-md-8 col-centered">
 <h3>SMS</h3>
+{% if return_readable %}
+<p><small>After signing in, you'll be redirected to <b>{{ return_readable }}</b>.</small></p>
+{% endif %}
 
 {% if authentication_failed %}
 <div class="alert alert-danger">

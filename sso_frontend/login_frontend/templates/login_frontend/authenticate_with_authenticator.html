@@ -12,6 +12,9 @@
 <div class="col-md-8 col-centered">
 
 <h3>Authenticator</h3>
+{% if return_readable %}
+<p><small>After signing in, you'll be redirected to <b>{{ return_readable }}</b>.</small></p>
+{% endif %}
 {% if authenticator_not_used %}
 	<div class="alert alert-info">
 		You have Authenticator generated {% include "snippets/timestamp.html" with timestamp=authenticator_generated %}, but you have not used current configuration.
@@ -21,12 +24,12 @@
 {% endif %}
 {% if invalid_otp %}
 	<div class="alert alert-danger">
-	{{ invalid_otp }}
+	<i class="fa fa-exclamation-triangle"></i> {{ invalid_otp }}
 	</div>
 
 	<p>You're authenticating with Authenticator password. It is a 6-digit code from Authenticator app.
         The name of that code should be "<tt>{{ authenticator_id }}</tt>".
-        If this does match and/or the code is not working, you can <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">sign in with SMS</a>.</p>
+        If this does not match and/or the code is not working, you can <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">sign in with SMS</a>.</p>
 {% endif %}
 
 {% if message %}

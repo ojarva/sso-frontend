@@ -23,7 +23,7 @@ import login_frontend._slumber_auth as _slumber_auth
 import slumber
 import time
 import urllib
-        
+import urlparse
 
 
 log = logging.getLogger(__name__)
@@ -32,7 +32,43 @@ timing_log = logging.getLogger("timing_data")
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
 
-__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate"]
+__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate", "get_return_url"]
+
+
+LOCAL_URLS = {
+    "/sessions": "sessions page",
+    "/configure": "settings page",
+    "/index": "index page",
+}
+
+def get_return_url(request):
+    try:
+        if request.GET.get("next"):
+            return_url = request.GET.get("next")
+            parsed = urlparse.urlparse(return_url)
+            if parsed.netloc == settings.FQDN:
+                # Local URL
+                for url in LOCAL_URLS:
+                    if parsed.path.startswith(url):
+                        return LOCAL_URLS[url]
+                return "login service"
+            elif return_url.startswith("/openid/"):
+                params = urlparse.parse_qs(return_url)
+                if "openid.return_to" in params:
+                    parsed = urlparse.urlparse(params["openid.return_to"][0])
+                    if parsed.netloc:
+                        return parsed.netloc
+                    return "unknown OpenID"
+
+        elif request.GET.get("back"):
+            return_url = request.GET.get("back")
+            parsed = urlparse.urlparse(return_url)
+            if parsed.netloc:
+                return parsed.netloc
+    except Exception, e:
+        log.error("get_return_url failed with %s" % e)
+
+    return None
 
 def dedup_messages(request, level, message):
     storage = messages.get_messages(request)
