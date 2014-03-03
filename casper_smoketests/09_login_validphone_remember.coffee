@@ -19,7 +19,6 @@ casper.start 'http://localhost:8000', ->
 
    @.thenOpen("http://localhost:8000/index")
    @.then ->
-    @.capture("test1.png")
     @.test.assertSelectorHasText "p",  "You are remembered on this browser."
 
    @.then ->
