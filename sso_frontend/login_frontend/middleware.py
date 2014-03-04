@@ -11,7 +11,7 @@ Also, session cookie is automatically added if it does not exist yet.
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ObjectDoesNotExist, MiddlewareNotUsed
+from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -27,6 +27,9 @@ import re
 import redis
 import socket
 import time
+import statsd
+
+sd = statsd.StatsClient()
 
 r = redis.Redis()
 log = logging.getLogger(__name__)
@@ -44,18 +47,22 @@ DISALLOWED_UA = [
 
 __all__ = ["get_browser", "BrowserMiddleware"]
 
-def get_browser_instance(request):
+@sd.timer("get_browser_instance")
+def get_browser_instance(request):    
     bid = request.COOKIES.get(Browser.C_BID)
     if not bid:
         return None
     try:
         browser = Browser.objects.get(bid=bid)
-    except ObjectDoesNotExist:
+        sd.incr("get_browser_instance.success", 1)
+    except Browser.DoesNotExist:
+        sd.incr("get_browser_instance.invalid", 1)
         log.info("Unknown browser id '%s' from '%s'", bid, request.META.get("REMOTE_ADDR"))
         return None
 
     return browser
 
+@sd.timer("get_browser")
 def get_browser(request):
     browser = get_browser_instance(request)
     if browser is None:
@@ -64,6 +71,7 @@ def get_browser(request):
 
     if request.path.startswith("/csp-report") or request.path.startswith("/timesync"):
         log.debug("Browser '%s' from '%s' reporting CSP/timesync - skip sign-out processing", bid, request.META.get("REMOTE_ADDR"))
+        sd.incr("get_browser.skip", 1)
         return browser
 
     if request.COOKIES.get(Browser.C_BID_SESSION) == browser.bid_session:
@@ -79,15 +87,18 @@ def get_browser(request):
         if not browser.save_browser:
             # Browser was restarted, and save_browser is not set. Logout.
             log.info("Browser bid_public=%s was restarted. Logging out. path: %s", browser.bid_public, request.path)
+            sd.incr("get_browser.browser_restart", 1)
             dedup_messages(request, messages.INFO, "According to our records, your browser was restarted. Therefore, you were signed out. If this is your own computer, you can avoid this by checking 'Remember this browser' below the sign-in form.")
             browser.logout(request)
 
     if browser.user:
         user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)
         if request.path.startswith("/ping"):
+            sd.incr("get_browser.passive_access", 1)
             user_to_browser.remote_ip_passive = request.META.get("REMOTE_ADDR")
             user_to_browser.last_seen_passive = timezone.now()
         else:
+            sd.incr("get_browser.active_access", 1)
             user_to_browser.remote_ip = request.META.get("REMOTE_ADDR")
             user_to_browser.last_seen = timezone.now()
         user_to_browser.save()
@@ -99,6 +110,7 @@ class P0fMiddleware(object):
         if settings.P0F_SOCKET is None:
             raise MiddlewareNotUsed
 
+    @sd.timer("P0fMiddleware.process_request")
     def process_request(self, request):
         if request.path.startswith("/timesync"):
             return
@@ -155,13 +167,17 @@ class P0fMiddleware(object):
         try:
             p0fapi = p0f.P0f(settings.P0F_SOCKET)
             try:
+                sd.incr("p0f.queried", 1)
                 remote_info = p0fapi.get_info(remote_addr)
+                sd.incr("p0f.fetched", 1)
             except KeyError, e:
                 # No information exists.
+                sd.incr("p0f.error.no_info", 1)
                 log.debug("p0f: %s", str(e))
                 return
             except (ValueError, p0f.P0fException), e:
                 # Invalid information received from p0f
+                sd.incr("p0f.error.invalid", 1)
                 log.error("p0f raised KeyError: %s", str(e))
                 return
 
@@ -173,6 +189,7 @@ class P0fMiddleware(object):
 
             if remote_info["last_nat"] != None:
                 # NAT detected. Don't store/update anything.
+                sd.incr("p0f.nat", 1)
                 log.debug("p0f: %s@%s - NAT detected", browser.bid_public, remote_addr)
                 return
 
@@ -200,12 +217,13 @@ class P0fMiddleware(object):
                 BrowserP0f.objects.create(**data)
 
         except socket.error, e:
+             sd.incr("p0f.error.socket", 1)
              log.error("p0f raised socket.error: %s" % e)
-
 
 class BrowserMiddleware(object):
     """ Adds request.browser. """ 
 
+    @sd.timer("BrowserMiddleware.process_request")
     def process_request(self, request):
         """ Adds request.browser. Filters out monitoring bots. """
         ua = request.META.get("HTTP_USER_AGENT") 
@@ -221,6 +239,7 @@ class BrowserMiddleware(object):
         request.browser = get_browser(request)
 
 
+    @sd.timer("BrowserMiddleware.process_response")
     def process_response(self, request, response):
         """ Automatically adds session cookie if old one is not available. """
         
@@ -254,6 +273,7 @@ class BrowserMiddleware(object):
         return response
 
 class TimesyncMiddleware(object):
+    @sd.timer("TimesyncMiddleware.process_request")
     def process_request(self, request):
         request.should_timesync = False
         bid_public = request.COOKIES.get(Browser.C_BID_PUBLIC)
