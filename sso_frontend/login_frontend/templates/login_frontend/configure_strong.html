@@ -1,6 +1,10 @@
 {% extends "login_frontend/base.html" %}
 
 {% block title %}Configure - {% endblock %}
+{% block header %}
+<script src="/static/js/configure.js" type="text/javascript"></script>
+{% endblock %}
+
 {% block content %}
 
 <h1>Settings</h1>
@@ -129,6 +133,83 @@
 	{% endif %}
 
 {% endif %}
+
+<div id="enable-notification" class="hidden">
+
+<h3>Notifications</h3>
+
+<p>If you want to, you can enable desktop notifications from this service. 
+Right now these are not in use, but in the future you'll receive notification 
+for sign-in from unknown devices and when your session is about to expire.</p>
+
+<button id="enable-notification-btn" class="btn btn-primary inline-block">Enable notifications</button>
+
+</div>
+
+<div id="enable-notification-thanks" class="hidden">
+<h3>Notifications</h3>
+
+<p>Thanks! Notifications are now enabled. You can always disable this from
+your browser settings, if it ever annoys you. You'll notice when these are in
+use. But you'll get notifications only for things that are important for you.</p>
+</div>
+
+{% if not user.location_authorized %}
+
+<div id="enable-location" class="hidden">
+
+<h3>Location sharing</h3>
+
+<p>You can help improving this service by automatically sharing your location.
+Location information is only collected (or available) when you use this service.
+Opting to this is voluntary.</p>
+
+<p>In the future, it will improve your sign-in experience
+(fewer challenges), but right now this data is collected for validating
+the data collected from WHOIS and geoip databases.
+You can cancel this at any time either from this page or from your
+browser settings.</p>
+
+<div class="alert alert-warning hidden" id="location-error">Requesting location failed. Either your browser does not support location services, or you denied authorization.
+That is totally okay. If you still want to enable this, you have to clear your preference from your browser before clicking "Share your location"
+again.</div>
+
+<button class="btn btn-primary inline-block" id="enable-location-btn"><i class="fa fa-location-arrow"></i> Share your location</button>
+</div>
+
+{% else %}
+
+<div id="disable-location">
+
+<h3>Location sharing</h3>
+
+<p>You've indicated you want to share your location to improve this service.
+The location is only recorded when you open this service. Additionally, 
+you can deny sharing the location on per-browser basis, if needed.</p>
+
+<p>If you want to, you can disable this feature. 
+If you click "Disable location sharing", this service will not 
+ask for your location in the future.</p>
+
+<form method="POST" action="?{{ get_params }}" role="form">
+{% csrf_token %}
+<input type="hidden" name="location" value="off">
+<button class="btn btn-default" id="disable-location-btn" type="submit">Disable location sharing</button>
+</form>
+</div>
+
+{% endif %}
+
+<div id="enable-location-thanks" class="hidden">
+
+<h3>Location sharing enabled</h3>
+
+<p>Thanks! You'll be asked for authorization on each device you use to sign in. Feel free to
+deny this at any time on any browser - it won't break anything. However, sharing this information
+helps making this service better.</p>
+</div>
+
+
 
 <h3>Properties</h3>
 <ul>

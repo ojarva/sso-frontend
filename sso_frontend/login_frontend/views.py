@@ -1024,7 +1024,6 @@ def configure_strong(request):
             user.strong_skips_available = 0
             user.save()
             messages.success(request, "Switched to SMS authentication")
-            return redirect_with_get_params("login_frontend.views.configure_strong", request.GET.dict())
         elif request.POST.get("always_sms") == "off":
             add_user_log(request, "Switched to Authenticator authentication", "info")
             custom_log(request, "cstrong: Switched to Authenticator authentication", level="info")
@@ -1035,7 +1034,24 @@ def configure_strong(request):
             user.strong_skips_available = 0
             user.save()
             messages.success(request, "Default setting changed to Authenticator")
-            return redirect_with_get_params("login_frontend.views.configure_strong", request.GET.dict())
+        elif request.POST.get("location"):
+            action = request.POST.get("location")
+            if action == "share":
+                if not user.location_authorized:
+                    user.location_authorized = True
+                    custom_log(request, "Enabled location sharing", level="info")
+                    add_user_log(request, "Enabled location sharing", "location-arrow")
+            elif action == "off":
+                if user.location_authorized:
+                    user.location_authorized = False
+                    custom_log(request, "Disabled location sharing", level="info")
+                    add_user_log(request, "Disabled location sharing", "location-arrow")
+                    messages.success(request, "Location sharing is now disabled")
+            elif action == "error":
+                custom_log(request, "Encountered error with location sharing settings: %s" % request.POST.get("location-error"), level="warn")
+            user.save()
+        return redirect_with_get_params("login_frontend.views.configure_strong", request.GET.dict())
+
 
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
