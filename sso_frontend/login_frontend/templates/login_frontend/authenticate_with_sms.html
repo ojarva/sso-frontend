@@ -78,7 +78,6 @@ Incorrect one-time code. Only code from message with id #{{ expected_sms_id }} i
 {% include 'login_frontend/snippets/remember_me.html' %}
 <input type="hidden" name="timing_data" value="" id="timing_data">
 </form>
-<p><form method="post" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">{% csrf_token %}<button class="btn btn-link">Not {{ first_name }}?</button></form></p>
 
 {% if can_use_authenticator %}
 	<p><small>Want to <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">use Authenticator</a> instead of SMS?</small></p>
