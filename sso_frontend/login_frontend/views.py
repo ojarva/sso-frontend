@@ -41,12 +41,16 @@ import redis
 import sys
 import time
 import urllib
+import statsd
+
+sd = statsd.StatsClient()
 
 log = logging.getLogger(__name__)
 r = redis.Redis()
 
 user_log = logging.getLogger("users.%s" % __name__)
 
+@sd.timer("login_frontend.views.custom_log")
 def custom_log(request, message, **kwargs):
     """ Automatically logs username, remote IP and bid_public """
     custom_log_inner(request, message, **kwargs)
@@ -78,7 +82,7 @@ def custom_log_inner(request, message, **kwargs):
     method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name, 
                             remote_addr, username, bid_public, message)
 
-
+@sd.timer("login_frontend.views.protect_view")
 def protect_view(current_step, **main_kwargs):
     """ After this is executed, kwargs["required_level"] is satisfied.
         If not given, Browser.L_STRONG is required.
@@ -145,6 +149,7 @@ def protect_view(current_step, **main_kwargs):
         return inner
     return wrap
 
+@sd.timer("login_frontend.views.main_redir")
 @require_http_methods(["GET", "POST"])
 def main_redir(request):
     """ Hack to enable backward compatibility with pubtkt.
@@ -155,6 +160,7 @@ def main_redir(request):
         return redirect_with_get_params("login_frontend.providers.pubtkt", request.GET)
     return redirect_with_get_params("login_frontend.views.indexview", request.GET)
 
+@sd.timer("login_frontend.views.indexview")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -204,6 +210,7 @@ def indexview(request):
     response = render_to_response("login_frontend/indexview.html", ret, context_instance=RequestContext(request))
     return response
 
+@sd.timer("login_frontend.views.firststepauth")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -214,6 +221,7 @@ def firststepauth(request):
     Currently only username/password query """
     return redirect_with_get_params("login_frontend.views.authenticate_with_password", request.GET)
 
+@sd.timer("login_frontend.views.authenticate_with_password")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -365,6 +373,7 @@ def authenticate_with_password(request):
     return response
 
 
+@sd.timer("login_frontend.views.secondstepauth")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -402,6 +411,7 @@ def secondstepauth(request):
     custom_log(request, "2f: No proper redirect configured.", level="error")
     return HttpResponse("Second step auth: no proper redirect configured.")
 
+@sd.timer("login_frontend.views.authenticate_with_url")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -474,6 +484,7 @@ def authenticate_with_url(request, **kwargs):
     return redirect_with_get_params("login_frontend.views.secondstepauth", get_params_dict)
 
 
+@sd.timer("login_frontend.views.authenticate_with_authenticator")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -602,6 +613,7 @@ def authenticate_with_authenticator(request):
        
 
 
+@sd.timer("login_frontend.views.authenticate_with_sms")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -758,6 +770,7 @@ def authenticate_with_sms(request):
     return response
 
 
+@sd.timer("login_frontend.views.js_ping")
 @require_http_methods(["GET"]) 
 def js_ping(request, **kwargs):
     """ Handles time browser queries, and updates browser status when required. """
@@ -777,6 +790,7 @@ def js_ping(request, **kwargs):
         pubtkt_logout(request, response)
     return response
 
+@sd.timer("login_frontend.views.get_pubkey")
 @require_http_methods(["GET"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -793,6 +807,7 @@ def get_pubkey(request, **kwargs):
     return response
 
 
+@sd.timer("login_frontend.views.timesync")
 @require_http_methods(["GET"])
 def timesync(request, **kwargs):
     """ Calculates difference between server and client timestamps """
@@ -871,6 +886,7 @@ def timesync(request, **kwargs):
     return response
 
 
+@sd.timer("login_frontend.views.sessions")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -958,6 +974,7 @@ def sessions(request):
     return response
 
 
+@sd.timer("login_frontend.views.view_log")
 @require_http_methods(["GET"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1006,6 +1023,7 @@ def view_log(request, **kwargs):
 
 
 
+@sd.timer("login_frontend.views.configure_strong")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1066,6 +1084,7 @@ def configure_strong(request):
     response = render_to_response("login_frontend/configure_strong.html", ret, context_instance=RequestContext(request))
     return response
 
+@sd.timer("login_frontend.views.get_authenticator_qr")
 @require_http_methods(["GET"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1094,6 +1113,7 @@ def get_authenticator_qr(request, **kwargs):
     custom_log(request, "qr: Downloaded Authenticator secret QR code", level="info")
     return HttpResponse(stringio.read(), content_type="image/png")
 
+@sd.timer("login_frontend.views.configure_authenticator")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1158,6 +1178,7 @@ def configure_authenticator(request):
     response = render_to_response("login_frontend/configure_authenticator.html", ret, context_instance=RequestContext(request))
     return response
 
+@sd.timer("login_frontend.views.authenticate_with_emergency")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='12/2s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='120/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1171,6 +1192,7 @@ def authenticate_with_emergency(request):
         # No emergency codes generated. Show error message.
         pass
 
+@sd.timer("login_frontend.views.logoutview")
 @require_http_methods(["GET", "POST"])
 def logoutview(request):
     """ Handles logout as well as possible. 
