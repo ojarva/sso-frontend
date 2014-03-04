@@ -30,6 +30,23 @@ function refresh_timestamps() {
  });
 }
 
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    crossDomain: false, // obviates need for sameOrigin test
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type)) {
+            csrftoken = $("#csrf_token").html();
+            if (csrftoken) {
+             xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    }
+});
+
+
 $(document).ready(function() {
  refresh_timestamps();
  setInterval(refresh_timestamps, 3000);
