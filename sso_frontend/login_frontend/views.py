@@ -853,6 +853,7 @@ def timesync(request, **kwargs):
         ret["report"] = render_to_string("login_frontend/snippets/timesync_results.html", {"best_sync": round(best_sync, 2), "std": round(ret["errors_std"], 2), "meaningful": abs(best_sync) > ret["errors_std"]})
         if browser:
             BrowserTime.objects.create(browser=browser, timezone=browser_timezone, time_diff=best_sync, measurement_error=ret["errors_std"])
+            r.setex("timesync-at-%s" % browser.bid_public, int(time.time()*1000), 60*60*12)
         custom_log(request, "Browser timesync: %s ms with +-%s error. bt: %s; rt: %s" % (best_sync, ret["errors_std"], browser_times, recv_times), level="info")
 
     r_k = "timesync-%s-" % redis_id

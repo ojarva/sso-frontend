@@ -24,9 +24,11 @@ import logging
 import p0f
 import pytz
 import re
+import redis
 import socket
 import time
 
+r = redis.Redis()
 log = logging.getLogger(__name__)
 
 timing_log = logging.getLogger("request_timing")
@@ -60,8 +62,8 @@ def get_browser(request):
         return None
     bid = browser.bid_public
 
-    if request.path.startswith("/csp-report"):
-        log.debug("Browser '%s' from '%s' reporting CSP - skip sign-out processing", bid, request.META.get("REMOTE_ADDR"))
+    if request.path.startswith("/csp-report") or request.path.startswith("/timesync"):
+        log.debug("Browser '%s' from '%s' reporting CSP/timesync - skip sign-out processing", bid, request.META.get("REMOTE_ADDR"))
         return browser
 
     if request.COOKIES.get(Browser.C_BID_SESSION) == browser.bid_session:
@@ -98,6 +100,9 @@ class P0fMiddleware(object):
             raise MiddlewareNotUsed
 
     def process_request(self, request):
+        if request.path.startswith("/timesync"):
+            return
+
         remote_addr = request.META.get("REMOTE_ADDR")
         browser = get_browser_instance(request)
         if not browser:
@@ -248,10 +253,19 @@ class BrowserMiddleware(object):
 
         return response
 
+class TimesyncMiddleware(object):
+    def process_request(self, request):
+        request.should_timesync = False
+        bid_public = request.COOKIES.get(Browser.C_BID_PUBLIC)
+        if not bid_public:
+            return
+        last_timesync = r.get("timesync-at-%s" % bid_public)
+        if not last_timesync:
+            request.should_timesync
 
 def log_request_timing(phase, request):
     timing_log.info("%s: %.5f - %s - %s - [%s] - [bid_public=%s]", phase, time.time(), request.META.get("REMOTE_ADDR"), request.get_full_path(), request.META.get("HTTP_USER_AGENT"), request.COOKIES.get(Browser.C_BID_PUBLIC))
-    
+
 
 class InLoggingMiddleware(object):
     def __init__(self):

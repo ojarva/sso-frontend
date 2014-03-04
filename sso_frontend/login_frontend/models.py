@@ -206,6 +206,9 @@ class Browser(models.Model):
     forced_sign_out = models.BooleanField(default=False)
 
     def should_timesync(self):
+        last_sync = r.get("timesync-at-%s" % self.bid_public)
+        if last_sync:
+            return False
         try:
             last_sync = BrowserTime.objects.filter(browser=self).latest()
         except BrowserTime.DoesNotExist:
