@@ -23,11 +23,15 @@ import time
 import urllib
 import os
 import sys
+import statsd
+
+sd = statsd.StatsClient()
 
 privkey = settings.PUBTKT_PRIVKEY
 
 log = logging.getLogger(__name__)
 
+@sd.timer("login_frontend.providers.custom_log")
 def custom_log(request, message, **kwargs):
     """ Automatically logs username, remote IP and bid_public """
     custom_log_inner(request, message, **kwargs)
@@ -62,6 +66,7 @@ def custom_log_inner(request, message, **kwargs):
 
 __all__ = ["internal_login", "pubtkt_logout", "pubtkt"]
 
+@sd.timer("login_frontend.providers.internal_login")
 def internal_login(request):
     """ Internal login using Django authentication framework """
     custom_log(request, "Internal login requested. back_url=%s" % request.GET.get("next"), level="debug")
@@ -96,6 +101,7 @@ def internal_login(request):
     return redirect_with_get_params("login_frontend.views.firststepauth", params)
 
 
+@sd.timer("login_frontend.providers.pubtkt_logout")
 def pubtkt_logout(request, response = None):
     """ Sets pubtkt logout cookie. """
     if response:
@@ -121,6 +127,7 @@ def pubtkt_logout(request, response = None):
         login.save()
     return response
 
+@sd.timer("login_frontend.providers.pubtkt")
 def pubtkt(request):
     """ pubtkt login """
     def is_valid_back_url(back_url):

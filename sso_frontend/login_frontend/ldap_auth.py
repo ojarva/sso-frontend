@@ -2,6 +2,9 @@
 import ldap
 import logging
 from django.conf import settings
+import statsd
+
+sd = statsd.StatsClient()
 
 __all__ = ["LdapLogin"]
 
@@ -20,6 +23,7 @@ class LdapLogin: # pragma: no cover
             raise Exception("No redis instance provided")
         self.authenticated = False
 
+    @sd.timer("login_frontend.ldap_auth.map_username")
     def map_username(self, username):
         """ Maps user aliases to username """
         r_k = "email-to-username-%s" % username
@@ -29,6 +33,7 @@ class LdapLogin: # pragma: no cover
         return username
 
     @property
+    @sd.timer("login_frontend.ldap_auth.ldap")
     def ldap(self):
         """ Opens LDAP connection or returns cached connection, if available """
         if self._ldap is None:
@@ -43,6 +48,7 @@ class LdapLogin: # pragma: no cover
                 raise Exception("Unknown error while connecting to LDAP server")
         return self._ldap
 
+    @sd.timer("login_frontend.ldap_auth.login")
     def login(self):
         """ Tries to login with provided user credentials """
         try:
@@ -59,6 +65,7 @@ class LdapLogin: # pragma: no cover
         self.authenticated = True
         return True
 
+    @sd.timer("login_frontend.ldap_auth.get_auth_tokens")
     def get_auth_tokens(self):
         """ Gets user tokens for pubtkt """
         if not self.authenticated:

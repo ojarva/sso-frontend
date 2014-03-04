@@ -19,6 +19,9 @@ import os
 import time
 import urllib
 import uuid
+import statsd
+
+sd = statsd.StatsClient()
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +30,7 @@ __all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_l
 r = redis.Redis()
 
 
+@sd.timer("login_frontend.models.custom_log")
 def custom_log(request, message, **kwargs):
     """ Automatically logs username, remote IP and bid_public """
     custom_log_inner(request, message, **kwargs)
@@ -69,6 +73,7 @@ class EmergencyCodes(models.Model):
     generated_at = models.DateTimeField(null=True)
     current_code = models.ForeignKey("EmergencyCode", null=True)
 
+    @sd.timer("login_frontend.models.EmergencyCodes.use_code")
     def use_code(self, code):
         if self.current_code is None:
             return False
@@ -88,17 +93,20 @@ class EmergencyCodes(models.Model):
     def codes_left(self):
         return EmergencyCode.objects.filter(codegroup=self).count()
 
+    @sd.timer("login_frontend.models.EmergencyCodes.revoke_codes")
     def revoke_codes(self):
         self.current_code = None
         self.generated_at = None
         self.save()
         EmergencyCode.objects.filter(codegroup=self).delete()
 
+    @sd.timer("login_frontend.models.EmergencyCodes.generate_code")
     def generate_code(self):
         p = subprocess.Popen(["pwgen", "15", "1"], stdout=subprocess.PIPE)
         (code, _) = p.communicate()
         return code.strip()
 
+    @sd.timer("login_frontend.models.EmergencyCodes.generate_codes")
     def generate_codes(self, num):
         """ Revokes old codes and generates new ones """
         self.revoke_codes()
@@ -119,6 +127,7 @@ class EmergencyCode(models.Model):
         unique_together = (("codegroup", "code_id"), ("codegroup", "code_val"))
 
 
+@sd.timer("login_frontend.models.add_user_log")
 def add_user_log(request, message, status="question", **kwargs):
     if request.browser is None or request.browser.user is None:
         return
@@ -205,6 +214,7 @@ class Browser(models.Model):
 
     forced_sign_out = models.BooleanField(default=False)
 
+    @sd.timer("login_frontend.models.Browser.should_timesync")
     def should_timesync(self):
         last_sync = r.get("timesync-at-%s" % self.bid_public)
         if last_sync:
@@ -217,6 +227,7 @@ class Browser(models.Model):
             return True
         return False
 
+    @sd.timer("login_frontend.models.Browser.has_any_activity")
     def has_any_activity(self):
         if self.user != None:
             return True
@@ -235,6 +246,7 @@ class Browser(models.Model):
            (Browser.C_BID_SESSION, {"value": self.bid_session, "secure": settings.SECURE_COOKIES, "httponly": True})
         ]
 
+    @sd.timer("login_frontend.models.Browser.set_auth_state")
     def set_auth_state(self, state):
         # TODO: logic for determining proper timeouts
         self.auth_state = state
@@ -248,6 +260,7 @@ class Browser(models.Model):
         self.auth_state_valid_until = timezone.now() + validity_time
         self.save()
 
+    @sd.timer("login_frontend.models.Browser.set_auth_level")
     def set_auth_level(self, level):
         # TODO: logic for determining proper timeouts
         self.auth_level = level
@@ -269,6 +282,7 @@ class Browser(models.Model):
                 browser_user.max_auth_level = level
             browser_user.save()
 
+    @sd.timer("login_frontend.models.Browser.get_auth_state_level")
     def get_auth_state_level(self):
         # TODO: logic for determining proper authentication state
         if not self.user:
@@ -307,25 +321,30 @@ class Browser(models.Model):
 
         return (self.auth_state, self.auth_level)
 
+    @sd.timer("login_frontend.models.Browser.get_auth_state")
     def get_auth_state(self):
         (auth_state, auth_level) = self.get_auth_state_level()
         return auth_state
 
+    @sd.timer("login_frontend.models.Browser.get_auth_level")
     def get_auth_level(self):
         (auth_state, auth_level) = self.get_auth_state_level()
         return auth_level
 
+    @sd.timer("login_frontend.models.Browser.is_authenticated")
     def is_authenticated(self):
         if self.get_auth_level() >= Browser.L_STRONG and self.get_auth_state() == Browser.S_AUTHENTICATED:
             return True
         return False
 
+    @sd.timer("login_frontend.models.Browser.revoke_sms")
     def revoke_sms(self):
         self.sms_code = None
         self.sms_code_id = None
         self.sms_code_generated_at = None
         self.save()
 
+    @sd.timer("login_frontend.models.Browser.valid_sms_exists")
     def valid_sms_exists(self):
         if not self.sms_code or not self.sms_code_generated_at:
             return False
@@ -335,6 +354,7 @@ class Browser(models.Model):
             return False
         return True
 
+    @sd.timer("login_frontend.models.Browser.validate_sms")
     def validate_sms(self, otp):
         if self.sms_code is None:
             return (False, "No OTP code exists for this browser.")
@@ -350,6 +370,7 @@ class Browser(models.Model):
         self.revoke_sms()
         return (True, None)        
 
+    @sd.timer("login_frontend.models.Browser.is_mobile_phone")
     def is_mobile_phone(self):
         tablet_matches = ["iPad", "Nexus 7"]
         for tablet in tablet_matches:
@@ -358,6 +379,7 @@ class Browser(models.Model):
         if "Mobile" in self.ua:
             return True
 
+    @sd.timer("login_frontend.models.Browser.generate_sms_text")
     def generate_sms_text(self, length=5, **kwargs):
         """ Generates new SMS code and returns contents of SMS.
 
@@ -390,6 +412,7 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
 
 %s%s""" % (sms_code_id, settings.FQDN, sms_code, extra)
 
+    @sd.timer("login_frontend.models.Browser.generate_sms")
     def generate_sms(self, length=5):
         """ Generates new SMS code, but does not send the message.
         Returns (code_id, sms_code) tuple. code_id is random
@@ -406,6 +429,7 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
         self.save()
         return (self.sms_code_id, self.sms_code)
 
+    @sd.timer("login_frontend.models.Browser.logout")
     def logout(self, request = None):
         """ User requested logout.
 
@@ -431,6 +455,7 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
             django_logout(request)
         self.save()
 
+    @sd.timer("login_frontend.models.Browser.get_readable_ua")
     def get_readable_ua(self):
         """ Returns user-agent in readable format """
         data = httpagentparser.detect(self.ua)
@@ -483,6 +508,7 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
         ".*Linux": ["linux"],
     }
 
+    @sd.timer("login_frontend.models.Browser.get_ua_icons")
     def get_ua_icons(self):
         """ Returns Font Awesome icons for platform and OS """
         icon = ["question"] # By default, show unknown icon
@@ -491,6 +517,7 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
                 return icons
         return icon
 
+    @sd.timer("login_frontend.models.Browser.compare_ua")
     def compare_ua(self, ua):
         # TODO: Validate this code.
         if ua == self.ua:
@@ -704,6 +731,7 @@ class User(models.Model):
             #TODO: futurice
             return "%s@futu" % self.username
 
+    @sd.timer("login_frontend.models.User.sign_out_all")
     def sign_out_all(self, **kwargs):
         browsers = Browser.objects.filter(user=self)
         request = kwargs.get("request")
@@ -735,6 +763,7 @@ class User(models.Model):
         self.strong_authenticator_used = False
         self.save()
 
+    @sd.timer("login_frontend.models.User.gen_authenticator")
     def gen_authenticator(self):
         """ Generates and stores new secret for authenticator. """
         timestamp = timezone.now()
@@ -748,6 +777,7 @@ class User(models.Model):
         AuthenticatorCode.objects.create(user=self, generated_at=timestamp, authenticator_secret=self.strong_authenticator_secret, authenticator_id=self.strong_authenticator_id)
         return self.strong_authenticator_secret
 
+    @sd.timer("login_frontend.models.User.validate_authenticator_code")
     def validate_authenticator_code(self, code, request):
         """ Validates authenticator OTP. 
 
@@ -805,7 +835,7 @@ class User(models.Model):
 
         return (False, "Incorrect OTP code.")
 
-
+    @sd.timer("login_frontend.models.User.refresh_strong")
     def refresh_strong(self, email, phone1, phone2, **kwargs):
         """ Refreshes strong authentication details,
         and revokes configuration when needed. """

@@ -24,6 +24,9 @@ import slumber
 import time
 import urllib
 import urlparse
+import statsd
+
+sd = statsd.StatsClient()
 
 
 log = logging.getLogger(__name__)
@@ -41,6 +44,7 @@ LOCAL_URLS = {
     "/index": "index page",
 }
 
+@sd.timer("login_frontend.utils.get_return_url")
 def get_return_url(request):
     try:
         if request.GET.get("next"):
@@ -70,6 +74,7 @@ def get_return_url(request):
 
     return None
 
+@sd.timer("login_frontend.utils.dedup_messages")
 def dedup_messages(request, level, message):
     storage = messages.get_messages(request)
     for amessage in storage:
@@ -79,6 +84,7 @@ def dedup_messages(request, level, message):
     storage.used = False
     messages.add_message(request, level, message)
 
+@sd.timer("login_frontend.utils.paginate")
 def paginate(request, queryset, **kwargs):
     per_page = kwargs.get("per_page", 100)
     paginator = Paginator(queryset, per_page)
@@ -95,6 +101,7 @@ def paginate(request, queryset, **kwargs):
     return entries
 
 
+@sd.timer("login_frontend.utils.redir_to_sso")
 def redir_to_sso(request, **kwargs):
     """ Returns HttpResponseRedirect to proper login service. """
     sso = request.GET.get("_sso")
@@ -113,6 +120,7 @@ def redir_to_sso(request, **kwargs):
         return None
 
 
+@sd.timer("login_frontend.utils.is_private_net")
 def is_private_net(ip_address):
     """ Returns True if specified in private networks, imported from
         local_settings """
@@ -129,6 +137,7 @@ def is_private_net(ip_address):
             return description
     return False
 
+@sd.timer("login_frontend.utils.save_timing_data")
 def save_timing_data(request, user, timing_data):
     """ Saves timing data with username, UA and bid. """
     if not (hasattr(request, "browser") and request.browser):
@@ -186,12 +195,14 @@ def save_timing_data(request, user, timing_data):
 
 
 
+@sd.timer("login_frontend.utils.get_and_refresh_user")
 def get_and_refresh_user(username): # pragma: no cover
     """ Loads and refreshes user information from LDAP """
     log.info("Refreshing %s" % username)
     api = slumber.API(settings.FUM_API_ENDPOINT, auth=_slumber_auth.TokenAuth(settings.FUM_ACCESS_TOKEN))
     refresh_user(api.users().get(username=username))
 
+@sd.timer("login_frontend.utils.refresh_user")
 def refresh_user(user): # pragma: no cover
     """ Refreshes user details, if necessary. """
     username = user.get("username")
@@ -223,6 +234,7 @@ def refresh_user(user): # pragma: no cover
         log.info("Changed or created new objects")
         return True
 
+@sd.timer("login_frontend.utils.get_geoip_string")
 def get_geoip_string(ip_address):
     """ Returns short location string for IP address. """
     private_net = is_private_net(ip_address)
@@ -238,6 +250,7 @@ def get_geoip_string(ip_address):
         return "%s" % country
     return "%s (%s)" % (country, city)
 
+@sd.timer("login_frontend.utils.redirect_with_get_params")
 def redirect_with_get_params(url_name, get_params = None):
     """ Returns HttpResponseRedirect with query string. """
     url = reverse(url_name)

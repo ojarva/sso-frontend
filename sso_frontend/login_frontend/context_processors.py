@@ -12,15 +12,20 @@ These overwrite
 
 from django.contrib.auth.models import User as DjangoUser
 from login_frontend.models import Browser
+import statsd
+
+sd = statsd.StatsClient()
 
 
 __all__ = ["add_static_timestamp", "add_browser", "add_user", "session_info"]
 
+@sd.timer("login_frontend.context_processors.add_static_timestamp")
 def add_static_timestamp(request):
     """ Adds unique number used for static files. """
     #TODO: determine automatically
     return {"static_timestamp": 1}
 
+@sd.timer("login_frontend.context_processors.add_browser")
 def add_browser(request):
     """ Adds "browser" to context, if available. """
     try:
@@ -30,6 +35,7 @@ def add_browser(request):
         pass
     return {}
 
+@sd.timer("login_frontend.context_processors.add_user")
 def add_user(request):
     """ Adds user, username, emulate_legacy, first_name and last_name to context, if user is signed in. """
     try:
@@ -47,6 +53,7 @@ def add_user(request):
         pass
     return {}
 
+@sd.timer("login_frontend.context_processors.session_info")
 def session_info(request):
     """ Adds number of open sessions to the context. """
     ret = {}
