@@ -48,6 +48,7 @@ $.ajaxSetup({
 
 
 $(document).ready(function() {
+ stick.send('/services/timing/record');
  refresh_timestamps();
  setInterval(refresh_timestamps, 3000);
  $(".popover-link").popover();

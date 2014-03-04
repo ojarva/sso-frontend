@@ -1,3 +1,4 @@
+django-statsd-mozilla
 statsd
 p0f
 BeautifulSoup==3.2.1

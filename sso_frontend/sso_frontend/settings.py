@@ -180,6 +180,8 @@ MIDDLEWARE_CLASSES = (
     'login_frontend.middleware.OutLoggingMiddleware', # logging middleware should be before browsermiddleware, as browsermiddleware might abort on process_request.
     'login_frontend.middleware.BrowserMiddleware',
     'login_frontend.middleware.ViewLoggingMiddleware',
+    'django_statsd.middleware.GraphiteRequestTimingMiddleware',
+    'django_statsd.middleware.GraphiteMiddleware',
 )
 
 DISABLE_TIMING_LOGGING=False
@@ -245,6 +247,7 @@ INSTALLED_APPS = (
     'admin_frontend',
     'cspreporting',
     'django_extensions',
+    'django_statsd',
 )
 
 # A sample logging configuration. The only tangible logging
