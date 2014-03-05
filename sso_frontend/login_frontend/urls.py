@@ -27,7 +27,10 @@ urlpatterns = patterns('',
 
     # Other URLs
     url(r'^sessions$', views.sessions),
-    url(r'^ping/internal/js$', views.js_ping, {"internal": True}),
+    url(r'^ping/internal/js$', views.automatic_ping, {"internal": True}),
+    url(r'^ping/external/js$', views.automatic_ping, {"external": True}),
+    url(r'^ping/internal/img$', views.automatic_ping, {"internal": True, "img": True}),
+    url(r'^ping/external/img$', views.automatic_ping, {"external": True, "img": True}),
     url(r'^configure$', views.configure_strong),
     url(r'^view_log$', views.view_log),
     url(r'^view_log/(?P<bid_public>(.+))$', views.view_log),

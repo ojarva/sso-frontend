@@ -1,10 +1,13 @@
 var socket;
 $(document).ready(function (){
+ var rand_id = Math.random();
  socket = io.connect('https://login.futurice.com');
- bid_public = $.cookie("v2public-browserid");
- if (bid_public) {
-  socket.emit("authenticate", { "bid_public": bid_public });
- }
+ socket.on("connect", function() {
+   bid_public = $.cookie("v2public-browserid");
+   if (bid_public) {
+     socket.emit("authenticate", { "bid_public": bid_public, "tab_id": rand_id });
+   }
+ });
  socket.on('server_event', function (data) {
     try {
       parsed = JSON.parse(data);

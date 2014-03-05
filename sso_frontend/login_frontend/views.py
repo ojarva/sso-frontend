@@ -43,6 +43,7 @@ import statsd
 import sys
 import time
 import urllib
+import urlparse
 
 sd = statsd.StatsClient()
 
@@ -778,8 +779,10 @@ def authenticate_with_sms(request):
 
 @sd.timer("login_frontend.views.js_ping")
 @require_http_methods(["GET"]) 
-def js_ping(request, **kwargs):
-    """ Handles time browser queries, and updates browser status when required. """
+def automatic_ping(request, **kwargs):
+    """ Handles browser queries, and updates browser status when required. """
+    if request.GET.get("location"):
+        custom_log(request, "JS ping from %s" % request.GET.get("location"))
     ret = {}
     sign_out = False
     if not request.browser:
@@ -787,11 +790,24 @@ def js_ping(request, **kwargs):
         pass
     elif request.browser.forced_sign_out and not request.GET.get("forced_sign_out"):
         # User is not authenticated. If the browser thinks otherwise, fix that.
-        ret["not_logged_in"] = True
+        ret["not_signed_in"] = True
         ret["redirect_location"] = reverse("login_frontend.views.indexview")+"?forced_sign_out=true"
         sign_out = True
 
-    response = HttpResponse(json.dumps(ret), content_type="application/json")
+    if kwargs.get("img"):
+        #response = HttpResponse(open(settings.PROJECT_ROOT+"/static/img/clear.gif").read(), content_type="image/gif")
+        response = HttpResponse()
+        response.status_code = 204
+        response.reason_phrase = "No Content"
+    else:
+        response = HttpResponse(json.dumps(ret), content_type="application/json")
+        if kwargs.get("external") and request.GET.get("location"):
+            try:
+                parsed = urlparse.urlparse(request.GET.get("location"))
+                if parsed.hostname.endswith(".futurice.com"):
+                    response["Access-Control-Allow-Origin"] = "https://"+parsed.hostname
+            except:
+                pass
     if sign_out:
         pubtkt_logout(request, response)
     return response
