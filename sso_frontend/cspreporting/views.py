@@ -20,6 +20,9 @@ from login_frontend.views import protect_view
 import json
 import logging
 import re
+import statsd
+
+sd = statsd.StatsClient()
 
 log = logging.getLogger(__name__)
 user_log = logging.getLogger(__name__)
@@ -29,6 +32,7 @@ def test_csp(request, *args, **kwargs):
     """ Outputs page that violates CSP policy """
     return render_to_response("cspreporting/fail.html", {}, context_instance=RequestContext(request))
 
+@sd.timer("cspreporting.views.view_warnings")
 @require_http_methods(["GET"])
 @protect_view("indexview", required_level=Browser.L_STRONG, admin_only=True)
 def view_warnings(request):
@@ -68,6 +72,7 @@ def view_warnings(request):
     return render_to_response("cspreporting/view_warnings.html", ret, context_instance=RequestContext(request))
 
 
+@sd.timer("cspreporting.views.view_reports")
 @require_http_methods(["GET"])
 @protect_view("indexview", required_level=Browser.L_STRONG)
 def view_reports(request):
@@ -93,6 +98,7 @@ def view_reports(request):
     browsers = {}
 
     for entry in entries:
+        sd.incr("cspreporting.views.view_reports.load_entry", 1)
         if entry.bid_public == request.browser.bid_public:
             entry.current_browser = True
         browser = browsers.get(entry.bid_public)
@@ -100,8 +106,12 @@ def view_reports(request):
             try:
                 browser = Browser.objects.get(bid_public=entry.bid_public)
                 browsers[entry.bid_public] = browser
+                sd.incr("cspreporting.views.view_reports.get_browser.database", 1)
             except Browser.DoesNotExist:
                 pass
+        else:
+            sd.incr("cspreporting.views.view_reports.get_browser.cache", 1)
+
         if browser:
             entry.browser = browser
         entry.linked_source_file = entry.source_file
@@ -114,12 +124,15 @@ def view_reports(request):
     return render_to_response("cspreporting/view_reports.html", ret, context_instance=RequestContext(request))
 
 
+@sd.timer("cspreporting.views.log_report")
 @require_http_methods(["GET", "POST"])
 @csrf_exempt
 def log_report(request, *args, **kwargs):
     """ Logs CSP report. Cookies may or may not be available. """
+    sd.incr("cspreporting.views.log_report", 1)
     csp_data = request.read()
     if len(csp_data) < 50 or len(csp_data) > 2000:
+        sd.incr("cspreporting.views.log_report.invalid_report", 1)
         return HttpResponse("Invalid CSP report.")
 
     remote_ip = request.META.get("REMOTE_ADDR")
@@ -134,19 +147,24 @@ def log_report(request, *args, **kwargs):
     try:
         data = json.loads(csp_data)
     except (ValueError, EOFError):
+        sd.incr("cspreporting.views.log_report.invalid_json", 1)
         return HttpResponse("Invalid CSP report.")
     if not "csp-report" in data:
+        sd.incr("cspreporting.views.log_report.missing_data", 1)
         return HttpResponse("Invalid CSP report: missing csp-report element")
 
     data = data["csp-report"]
     mandatory_keys = ['blocked-uri', 'document-uri', 'original-policy', 'referrer', 'source-file', 'violated-directive']
     if not all (k in data for k in mandatory_keys):
+        sd.incr("cspreporting.views.log_report.missing_mandatory_key", 1)
         return HttpResponse("Invalid CSP report: missing mandatory keys")
 
     if CSPReport.objects.filter(username=username, bid_public=bid_public).filter(source_file=data.get("source-file"), line_number=data.get("line-number"), violated_directive=data.get("violated-directive")).count() > 0:
+        sd.incr("cspreporting.views.log_report.duplicate", 1)
         return HttpResponse("Duplicate CSP report. Not stored.")
 
 
+    sd.incr("cspreporting.views.log_report.created", 1)
     a = CSPReport.objects.create(username=username, bid_public=bid_public, csp_raw=csp_data, document_uri=data.get("document-uri"),
                                       referrer=data.get("referrer"), violated_directive=data.get("violated-directive"),
                                       blocked_uri=data.get("blocked-uri"), source_file=data.get("source-file"),
