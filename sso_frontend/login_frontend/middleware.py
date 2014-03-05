@@ -45,7 +45,7 @@ DISALLOWED_UA = [
  re.compile("^nutch-.*"),
 ]
 
-__all__ = ["get_browser", "BrowserMiddleware"]
+__all__ = ["get_browser", "BrowserMiddleware", "get_browser_instance", "P0fMiddleware"]
 
 @sd.timer("get_browser_instance")
 def get_browser_instance(request):    
@@ -53,7 +53,7 @@ def get_browser_instance(request):
     if not bid:
         return None
     try:
-        browser = Browser.objects.get(bid=bid)
+        browser = Browser.objects.select_related("user").get(bid=bid)
         sd.incr("get_browser_instance.success", 1)
     except Browser.DoesNotExist:
         sd.incr("get_browser_instance.invalid", 1)
@@ -92,16 +92,21 @@ def get_browser(request):
             browser.logout(request)
 
     if browser.user:
-        user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)
-        if request.path.startswith("/ping"):
-            sd.incr("get_browser.passive_access", 1)
-            user_to_browser.remote_ip_passive = request.META.get("REMOTE_ADDR")
-            user_to_browser.last_seen_passive = timezone.now()
-        else:
-            sd.incr("get_browser.active_access", 1)
-            user_to_browser.remote_ip = request.META.get("REMOTE_ADDR")
-            user_to_browser.last_seen = timezone.now()
-        user_to_browser.save()
+        r_k = "browser-location-last-update-%s-%s" % (browser.user.username, browser.bid_public)
+        last_update = r.get(r_k)
+        remote_address = request.META.get("REMOTE_ADDR")
+        if last_update != remote_address:
+            user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)
+            if request.path.startswith("/ping"):
+                sd.incr("get_browser.passive_access", 1)
+                user_to_browser.remote_ip_passive = remote_address
+                user_to_browser.last_seen_passive = timezone.now()
+            else:
+                sd.incr("get_browser.active_access", 1)
+                user_to_browser.remote_ip = remote_address
+                user_to_browser.last_seen = timezone.now()
+            user_to_browser.save()
+            r.setex(r_k, remote_address, 30)
     return browser
 
 
@@ -115,10 +120,15 @@ class P0fMiddleware(object):
         if request.path.startswith("/timesync"):
             return
 
-        remote_addr = request.META.get("REMOTE_ADDR")
-        browser = get_browser_instance(request)
-        if not browser:
+        if not hasattr(request, "browser") or not request.browser:
             return
+        browser = request.browser
+        remote_addr = request.META.get("REMOTE_ADDR")
+        r_k = "p0f-last-update-%s" % (browser.bid_public)
+        last_update = r.get(r_k)
+        if last_update == remote_addr:
+            return
+        r.setex(r_k, remote_addr, 30)
 
         def update_newest(newest, remote_info):
             if remote_info["uptime_sec"] == None and newest.uptime_sec == None:
@@ -160,7 +170,7 @@ class P0fMiddleware(object):
             update_keys = ("total_conn", "uptime_sec", "os_flavor", "os_name", "os_match_q", "distance", "last_seen")
             for k in update_keys:
                 setattr(newest, k, remote_info[k])
-            log.debug("p0f: updated %s", newest.browser.bid_public)
+            log.debug("p0f: updated %s", browser.bid_public)
             newest.save()
             return True
 

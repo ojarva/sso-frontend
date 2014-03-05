@@ -1,7 +1,7 @@
 import os.path
 
 # Django settings for sso_frontend project.
-
+INTERNAL_IPS=["127.0.0.1"]
 URL_PREFIX = ""
 
 DEBUG = False
@@ -176,9 +176,9 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'login_frontend.middleware.P0fMiddleware',
     'login_frontend.middleware.OutLoggingMiddleware', # logging middleware should be before browsermiddleware, as browsermiddleware might abort on process_request.
     'login_frontend.middleware.BrowserMiddleware',
+    'login_frontend.middleware.P0fMiddleware',
     'login_frontend.middleware.ViewLoggingMiddleware',
     'django_statsd.middleware.GraphiteRequestTimingMiddleware',
     'django_statsd.middleware.GraphiteMiddleware',
@@ -228,7 +228,7 @@ TEMPLATE_DIRS = (
 )
 
 COMPRESS_ENABLED = True
-#COMPRESS_OFFLINE = True
+COMPRESS_OFFLINE = True
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -413,7 +413,6 @@ LOGGING = {
 
 
 
-from M2Crypto import DSA
 IP_NETWORKS = [
 ]
 
@@ -444,7 +443,6 @@ OPENID_PROVIDER_AX_EXTENSION=True
 OPENID_FAILED_DISCOVERY_AS_VALID=False
 OPENID_TRUSTED_ROOTS=[]
 
-
 from local_settings import *
 try:
    pass
@@ -456,3 +454,9 @@ for key_name in check_keys:
     if key_name not in locals():
         from django.core.exceptions import ImproperlyConfigured
         raise ImproperlyConfigured("%s is not defined." % key_name)
+
+
+if DEBUG and not FAKE_TESTING:
+    INSTALLED_APPS += (
+     "debug_toolbar",
+    )

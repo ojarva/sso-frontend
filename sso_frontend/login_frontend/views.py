@@ -307,6 +307,8 @@ def authenticate_with_password(request):
                     custom_log(request, "User tokens: %s" % user.user_tokens, level="info")
                     user.save()
                     browser.user = user
+                    # Delete cached counter
+                    r.delete("num_sessions-%s" % username)
 
                 request.browser = browser
 

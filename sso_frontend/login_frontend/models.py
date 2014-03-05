@@ -448,6 +448,10 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
         else:
             log.info("Logging out: bid=%s" % self.bid)
         self.revoke_sms()
+        if self.user:
+            # Remove cached value
+            r.delete("num_sessions-%s" % self.user.username)
+
         self.user = None
         self.save_browser = False
         self.auth_level = Browser.L_UNAUTH
