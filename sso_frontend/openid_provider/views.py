@@ -76,6 +76,7 @@ def custom_log(request, message, **kwargs):
 
 
 
+@sd.timer("openid_provider.views.openid_server")
 @csrf_exempt
 def openid_server(request):
     """
@@ -89,10 +90,12 @@ def openid_server(request):
 
     if not request.is_secure():
         # if request is not secure allow only encrypted association sessions
+        custom_log(request, "Request is not secure. Switching to encrypted negotiator", level="debug")
         server.negotiator = encrypted_negotiator
 
     # Clear AuthorizationInfo session var, if it is set
     if request.session.get('AuthorizationInfo', None):
+        custom_log(request, "Clearing AuthorizationInfo session var", level="debug")
         del request.session['AuthorizationInfo']
 
     querydict = dict(request.REQUEST.items())
@@ -101,6 +104,7 @@ def openid_server(request):
         orequest = server.decodeRequest(request.session.get('OPENID_REQUEST', None))
         if orequest:
             # remove session stored data:
+            custom_log(request, "Removing stored data from session", level="debug")
             del request.session['OPENID_REQUEST']
         else:
             # not request, render info page:
@@ -109,7 +113,7 @@ def openid_server(request):
                 'xrds_location': request.build_absolute_uri(
                     reverse('openid-provider-xrds')),
             }
-            custom_log(request, "Invalid request, sending info: %s" % data, level="info")
+            custom_log(request, "Not an OpenID request, sending info: %s" % data, level="info")
             if request.browser and request.browser.user:
                 data["openid_identifier"] = "https://" + request.get_host() +  reverse('openid-provider-identity', args=[request.browser.user.username])
             else:
@@ -134,14 +138,17 @@ def openid_server(request):
 
         # Allow per-url exceptions for trust roots.
         if orequest.trust_root in settings.OPENID_TRUSTED_ROOTS:
+            custom_log(request, "Trust root %s is in always trusted roots. Set validated=True" % orequest.trust_root, level="debug")
             validated = True
 
         if conf.FAILED_DISCOVERY_AS_VALID:
             if trust_root_valid == 'DISCOVERY_FAILED':
+                custom_log(request, "Setting validated=True as FAILED_DISCOVERY_AS_VALID is True", level="debug")
                 validated = True
         else:
             # if in decide already took place, set as valid:
             if request.session.get(get_trust_session_key(orequest), False):
+                custom_log(request, "Setting validated=True as session var %s is True" % (get_trust_session_key(orequest)), level="debug")
                 validated = True
 
         if openid is not None and (validated or trust_root_valid == 'Valid'):
@@ -162,10 +169,13 @@ def openid_server(request):
             return HttpResponseRedirect(reverse('openid-provider-decide'))
     else:
         oresponse = server.handleRequest(orequest)
+
     if (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
         add_sreg_data(request, orequest, oresponse)
+        custom_log(request, "Added sreg data", level="debug")
         if conf.AX_EXTENSION:
             add_ax_data(request, orequest, oresponse)
+            custom_log(request, "Added AX data", level="debug")
 
     if (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
         # Add/update BrowserLogin object.
@@ -175,6 +185,7 @@ def openid_server(request):
 
         # Add entry to user log
         add_user_log(request, "Signed in with OpenID to %s" % orequest.trust_root, "share-square-o")
+        custom_log(request, "Signed in with OpenID to %s" % orequest.trust_root, level="info")
 
     # Convert a webresponse from the OpenID library in to a Django HttpResponse
     webresponse = server.encodeResponse(oresponse)
@@ -190,10 +201,13 @@ def openid_server(request):
         response.status_code = webresponse.code
         for key, value in webresponse.headers.items():
             response[key] = value
+        custom_log(request, "Set keys: %s" % webresponse.headers.items(), level="debug")
         custom_log(request, "rendering raw response", level="debug")
     return response
 
+@sd.timer("openid_provider.views.openid_xrds")
 def openid_xrds(request, identity=False, id=None):
+    custom_log(request, "Requested openid_xrds")
     if identity:
         types = [OPENID_2_0_TYPE]
     else:
@@ -209,6 +223,7 @@ def openid_xrds(request, identity=False, id=None):
     custom_log(request, "Options: %s" % ret, level="debug")
     return render_to_response('openid_provider/xrds.xml', ret, context_instance=RequestContext(request), content_type=YADIS_CONTENT_TYPE)
 
+@sd.timer("openid_provider.views.openid_decide")
 def openid_decide(request):
     """
     The page that asks the user if they really want to sign in to the site, and
@@ -216,33 +231,40 @@ def openid_decide(request):
     # If user is logged in, ask if they want to trust this trust_root
     # If they are NOT logged in, show the landing page
     """
+    custom_log(request, "User entered openid_decide page", level="debug")
     server = Server(get_store(request),
 	op_endpoint=request.build_absolute_uri(reverse('openid-provider-root')))
     orequest = server.decodeRequest(request.session.get('OPENID_REQUEST'))
     trust_root_valid = request.session.get('OPENID_TRUSTROOT_VALID')
 
     if not (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
+        custom_log(request, "User is not authenticated. Redirect to sign-in page", level="debug")
         return landing_page(request, orequest)
 
     openid = openid_get_identity(request, orequest.identity)
     if openid is None:
+        custom_log(request, "No OpenID exists for user %s" % request.browser.user, level="warn")
         return error_page(
             request, "You are signed in but you don't have OpenID here!")
 
     if request.method == 'POST' and request.POST.get('decide_page', False):
         if request.POST.get("cancel"):
+            custom_log(request, "User cancelled authentication from the decide page", level="info")
             for k in ["AuthorizationInfo", "OPENID_TRUSTROOT_VALID", "OPENID_REQUEST", get_trust_session_key(orequest)]:
                 try:
                     del request.session[k]
                 except KeyError:
                     pass
+            custom_log(request, "Cancelled. Redirect to front page", level="debug")
             return HttpResponseRedirect(reverse("login_frontend.views.indexview"))
         TrustedRoot.objects.get_or_create(
             openid=openid, trust_root=orequest.trust_root)
         if not conf.FAILED_DISCOVERY_AS_VALID:
+            custom_log(request, "Setting %s=True" % (get_trust_session_key(orequest)), level="debug")
             request.session[get_trust_session_key(orequest)] = True
         return HttpResponseRedirect(reverse('openid-provider-root'))
 
+    custom_log(request, "Showing decide page", level="info")
     return render_to_response('openid_provider/decide.html', {
         'title': _('Trust this site?'),
         'trust_root': orequest.trust_root,
@@ -252,7 +274,9 @@ def openid_decide(request):
         'sreg': get_default_sreg_data(request, orequest),
     }, context_instance=RequestContext(request))
 
+@sd.timer("openid_provider.views.error_page")
 def error_page(request, msg):
+    custom_log(request, "Showing error page: %s" % msg, level="warn")
     return render_to_response('openid_provider/error.html', {
         'title': _('Error'),
         'msg': msg,
@@ -277,6 +301,7 @@ class SafeQueryDict(QueryDict):
                            for v in list_])
         return '&'.join(output)
 
+@sd.timer("openid_provider.views.landing_page")
 def landing_page(request, orequest, login_url=None,
                  redirect_field_name=REDIRECT_FIELD_NAME):
     """
@@ -293,8 +318,10 @@ def landing_page(request, orequest, login_url=None,
         querystring = SafeQueryDict(login_url_parts[4], mutable=True)
         querystring[redirect_field_name] = path
         login_url_parts[4] = querystring.urlencode(safe='/')
+    custom_log(request, "Redirecting to %s" % (urlparse.urlunparse(login_url_parts)))
     return HttpResponseRedirect(urlparse.urlunparse(login_url_parts))
 
+@sd.timer("openid_provider.views.openid_is_authorized")
 def openid_is_authorized(request, identity_url, trust_root):
     """
     Check that they own the given identity URL, and that the trust_root is 
@@ -312,6 +339,7 @@ def openid_is_authorized(request, identity_url, trust_root):
 
     return openid
 
+@sd.timer("openid_provider.views.openid_get_identity")
 def openid_get_identity(request, identity_url):
     """
     Select openid based on claim (identity_url).
@@ -325,19 +353,21 @@ def openid_get_identity(request, identity_url):
     for openid in request.user.openid_set.iterator():
         if identity_url == request.build_absolute_uri(
                 reverse('openid-provider-identity', args=[openid.openid])):
+            custom_log(request, "Found a valid OpenID identity: %s" % openid)
             return openid
     if identity_url == 'http://specs.openid.net/auth/2.0/identifier_select':
         # no claim was made, choose user default openid:
         openids = request.user.openid_set.filter(default=True)
         if openids.count() == 1:
+            custom_log(request, "No claim was made. Chose ID %s" % openids[0])
             return openids[0]
         if request.user.openid_set.count() > 0:
+            custom_log(request, "No claim was made. Chose ID %s" % request.user.openid_set.all()[0])
             return request.user.openid_set.all()[0]
 
     (user, _) = DjangoUser.objects.get_or_create(username=request.browser.user.username, defaults={"email": request.browser.user.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
     user.backend = 'django.contrib.auth.backends.ModelBackend' # Horrible hack.
     django_login(request, user)
     custom_log(request, "Creating new OpenID association for %s" % user.username, level="info")
-    (openid, created) = OpenID.objects.get_or_create(user=user, openid=user.username)
-    openid.save()
+    (openid, _) = OpenID.objects.get_or_create(user=user, openid=user.username)
     return openid
