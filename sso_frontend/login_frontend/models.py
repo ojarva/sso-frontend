@@ -149,12 +149,6 @@ class Log(models.Model):
 
 class Browser(models.Model):
 
-    class Meta:
-        ordering = ["-created"]
-
-    def __unicode__(self):
-        return u"%s: %s" % (self.bid_public, self.ua)
-
     L_UNAUTH = 0
     L_PUBLIC = 1
     L_BASIC = 2
@@ -210,6 +204,20 @@ class Browser(models.Model):
 
     forced_sign_out = models.BooleanField(default=False)
 
+    class Meta:
+        ordering = ["-created"]
+
+    def __unicode__(self):
+        return u"%s: %s" % (self.bid_public, self.ua)
+
+
+    @sd.timer("login_frontend.models.Browser.auth_state_changed")
+    def auth_state_changed(self):
+        auth_state = self.get_auth_state()
+        if auth_state != Browser.S_REQUEST_STRONG:
+            r.publish("to-browser-%s" % self.bid_public, json.dumps({"reload_state": str(auth_state)}))
+
+
     @sd.timer("login_frontend.models.Browser.should_timesync")
     def should_timesync(self):
         last_sync = r.get("timesync-at-%s" % self.bid_public)
@@ -238,7 +246,7 @@ class Browser(models.Model):
     def get_cookie(self):
         return [
            (Browser.C_BID, {"value": self.bid, "secure": settings.SECURE_COOKIES, "httponly": True, "max_age": int(time.time() + 86400 * 1000)}),
-           (Browser.C_BID_PUBLIC, {"value": self.bid_public, "secure": settings.SECURE_COOKIES, "httponly": True, "max_age": int(time.time() + 86400 * 1000)}),
+           (Browser.C_BID_PUBLIC, {"value": self.bid_public, "secure": settings.SECURE_COOKIES, "httponly": False, "max_age": int(time.time() + 86400 * 1000)}),
            (Browser.C_BID_SESSION, {"value": self.bid_session, "secure": settings.SECURE_COOKIES, "httponly": True})
         ]
 
@@ -450,6 +458,7 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
         if request is not None:
             django_logout(request)
         self.save()
+        self.auth_state_changed()
 
     @sd.timer("login_frontend.models.Browser.get_readable_ua")
     def get_readable_ua(self):

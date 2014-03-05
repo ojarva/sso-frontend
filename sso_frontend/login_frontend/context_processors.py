@@ -28,12 +28,12 @@ def add_static_timestamp(request):
 @sd.timer("login_frontend.context_processors.add_browser")
 def add_browser(request):
     """ Adds "browser" to context, if available. """
-    try:
-        if request.browser:
-            return {"browser": request.browser}
-    except AttributeError:
-        pass
-    return {}
+    ret = {}
+    if hasattr(request, "browser") and request.browser:
+        browser = request.browser
+        ret["auth_status"] = browser.get_auth_state()
+        ret["browser"] = browser
+    return ret
 
 @sd.timer("login_frontend.context_processors.add_user")
 def add_user(request):

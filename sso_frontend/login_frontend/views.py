@@ -590,6 +590,7 @@ def authenticate_with_authenticator(request):
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
                 request.browser.save()
+                request.browser.auth_state_changed()
                 custom_log(request, "2f-auth: Redirecting back to SSO provider", level="debug")
                 return redir_to_sso(request)
             else:
@@ -656,6 +657,7 @@ def authenticate_with_sms(request):
             request.browser.set_auth_state(Browser.S_AUTHENTICATED)
             request.browser.set_auth_level_valid_until = timezone.now() + datetime.timedelta(hours=12)
             request.browser.save()
+            request.browser.auth_state_changed()
             custom_log(request, "2f-sms: Redirecting back to SSO provider", level="debug")
             return redir_to_sso(request)
         else:
@@ -729,6 +731,7 @@ def authenticate_with_sms(request):
                     custom_log(request, "2f-sms: User has not configured strong authentication. Redirect to configuration view", level="info")
                     return redirect_with_get_params("login_frontend.views.configure_strong", request.GET)
                 # Redirect back to SSO service
+                request.browser.auth_state_changed()
                 custom_log(request, "2f-sms: Redirecting back to SSO provider", level="debug")
                 return redir_to_sso(request)
             else:

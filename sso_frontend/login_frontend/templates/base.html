@@ -8,13 +8,16 @@
     <link href="/static/css/font-awesome.min.css" rel="stylesheet" />
     <link href="/static/css/style.css" rel="stylesheet" /> 
 {% endcompress %}
+    <script src="/socket.io/socket.io.js"></script>
 {% compress js %}
     <script src="/static/js/jquery-2.1.0.min.js" type="text/javascript"></script>
     <script src="/static/js/jquery.timing.js" type="text/javascript"></script>
+    <script src="/static/js/jquery.cookie.js" type="text/javascript"></script>
     <script src="/static/stick.js" type="text/javascript"></script>
     <script src="/static/js/moment.js" type="text/javascript"></script>
     <script src="/static/js/bootstrap.min.js" type="text/javascript"></script>
     <script src="/static/js/base.js" type="text/javascript"></script>
+    <script src="/static/js/socket.js" type="text/javascript"></script>
 {% endcompress %}
 {% if should_timesync %}
     <script src="/static/js/timesync.js" type="text/javascript"></script>
@@ -108,5 +111,6 @@
 {% endblock %}
 
 <span class="hidden" id="csrf_token">{{ csrf_token }}</span>
+<span class="hidden" id="auth_status">{{ auth_status }}</span>
 </body>
 </html>

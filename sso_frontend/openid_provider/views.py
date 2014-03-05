@@ -138,9 +138,11 @@ def openid_server(request):
         validated = False
 
         # Allow per-url exceptions for trust roots.
-        if orequest.trust_root in settings.OPENID_TRUSTED_ROOTS:
-            custom_log(request, "Trust root %s is in always trusted roots. Set validated=True" % orequest.trust_root, level="debug")
-            validated = True
+        for global_trusted_root in settings.OPENID_TRUSTED_ROOTS:
+            if orequest.trust_root.startswith(global_trusted_root):
+                custom_log(request, "Trust root %s is in always trusted roots. Set validated=True" % orequest.trust_root, level="debug")
+                validated = True
+                break
 
         if conf.FAILED_DISCOVERY_AS_VALID:
             if trust_root_valid == 'DISCOVERY_FAILED' or trust_root_valid == 'Unreachable':
