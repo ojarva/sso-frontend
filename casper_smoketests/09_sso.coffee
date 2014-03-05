@@ -69,7 +69,7 @@ casper.start 'http://localhost:8000', ->
    @.then ->
     @.test.assertHttpStatus 200, "pubtkt without return url"
     @.test.assertUrlMatch 'http://localhost:8000/pubtkt', "No redirect"
-    @.test.assertSelectorHasText("p", 'Requested service URL "" is invalid', "Invalid return url error")
+    @.test.assertSelectorHasText("p", 'No return URL was defined on your request.', "Empty return url error")
 
 
    @.thenOpen("http://localhost:8000/pubtkt?back=asdf&unauth=1")
