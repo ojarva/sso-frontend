@@ -195,6 +195,8 @@ def indexview(request):
     ret["username"] = request.browser.user.username
     ret["user"] = request.browser.user
     ret["get_params"] = urllib.urlencode(request.GET)
+    ret["user_services"] = UserService.objects.filter(user=request.browser.user).order_by("-access_count")[0:5]
+
     auth_level = request.browser.get_auth_level()
     if request.browser.user.emulate_legacy:
         ret["auth_level"] = "emulate_legacy"

@@ -25,7 +25,7 @@ sd = statsd.StatsClient()
 
 log = logging.getLogger(__name__)
 
-__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f", "BrowserTime"]
+__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f", "BrowserTime", "UserService"]
 
 r = redis.Redis()
 
@@ -873,6 +873,18 @@ class User(models.Model):
             self.strong_authenticator_used = False
         self.save()
         return changed
+
+class UserService(models.Model):
+    user = models.ForeignKey("User")
+    last_accessed = models.DateTimeField(auto_now=True)
+    service_url = models.CharField(max_length=2000)
+    access_count = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["access_count", "service_url"]
+
+    def __unicode__(self):
+        return u"%s - %s - %s" % (self.access_count, user.username, service_url)
 
 class AuthenticatorCode(models.Model):
     user = models.ForeignKey("User")

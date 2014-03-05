@@ -12,7 +12,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
-from login_frontend.models import Browser, BrowserLogin, add_user_log
+from login_frontend.models import Browser, BrowserLogin, add_user_log, UserService
 from urlparse import urlparse
 from login_frontend.utils import redirect_with_get_params
 import auth_pubtkt
@@ -34,10 +34,6 @@ log = logging.getLogger(__name__)
 @sd.timer("login_frontend.providers.custom_log")
 def custom_log(request, message, **kwargs):
     """ Automatically logs username, remote IP and bid_public """
-    custom_log_inner(request, message, **kwargs)
-
-def custom_log_inner(request, message, **kwargs):
-    """ Additional method call to get proper entry from call stack. """
     try:
         raise Exception
     except:
@@ -135,16 +131,16 @@ def pubtkt(request):
         valid_domains = settings.PUBTKT_ALLOWED_DOMAINS
         parsed_url = urlparse(back_url)
         if parsed_url.scheme != "https":
-            return False
+            return "wrong_protocol"
 
         if parsed_url.hostname:
             for domain in valid_domains:
                 if parsed_url.hostname.endswith(domain):
                     break
             else:
-                return False
+                return "invalid_domain"
         else:
-            return False
+            return "no_hostname"
         return True
 
     custom_log(request, "pubtkt provider initialized. Cookies: %s" % request.COOKIES)
@@ -165,6 +161,7 @@ def pubtkt(request):
 
     back_url = request.GET.get("back")
     custom_log(request, "Requested back_url=%s" % back_url, level="info")
+    back_url_status = is_valid_back_url(back_url)
     if "unauth" in request.GET:
         ret["unauth"] = True
         ret["back_url"] = back_url
@@ -173,13 +170,14 @@ def pubtkt(request):
     elif back_url is None:
         # No back url is defined. Show error page.
         show_error_page = True
-        ret["invalid_back_url"] = True
+        ret["back_url_not_defined"] = True
         custom_log(request, "pubtkt: back url is not defined", level="info")
-    elif not is_valid_back_url(back_url):
+    elif back_url_status != True:
         show_error_page = True
         ret["invalid_back_url"] = True
+        ret["invalid_back_url_reason"] = back_url_status
         ret["back_url"] = back_url
-        custom_log(request, "pubtkt: back url is invalid", level="info")
+        custom_log(request, "pubtkt: back url is invalid: %s" % back_url_status, level="info")
 
     if show_error_page:
         return render_to_response("login_frontend/pubtkt_error.html", ret, context_instance=RequestContext(request))
@@ -193,6 +191,15 @@ def pubtkt(request):
         ticket = auth_pubtkt.create_ticket(privkey, browser.user.username, valid_until, tokens=tokens)
         cookies.append(("auth_pubtkt", {"value": urllib.quote(ticket), "secure": True, "httponly": True, "domain": ".futurice.com"}))
         ret["back_url"] = back_url
+        invalid_extensions = (".jpg", ".png", ".js", ".json")
+        for extension in invalid_extensions:
+            if back_url.endswith(extension):
+                break
+        else:
+            (obj, created) = UserService.objects.get_or_create(user=browser.user, service_url=back_url, defaults={"access_count": 1})
+            if not created:
+                obj.access_count += 1
+                obj.save()
         response = render_to_response("login_frontend/html_redirect.html", ret, context_instance=RequestContext(request))
 
         # Add/update BrowserLogin

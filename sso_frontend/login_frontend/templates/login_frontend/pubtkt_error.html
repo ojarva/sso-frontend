@@ -2,20 +2,27 @@
 
 {% block title %}Invalid request - {% endblock %}
 {% block content %}
-{% if enable_cookies %}
-	<div class="alert alert-danger">
-		<i class="fa fa-exclamation-triangle"></i>
-		Please enable cookies. You're not able to sign in without properly working cookies.
-	</div>
-{% endif %}
 
-{% if invalid_back_url %}
-	<div class="alert alert-danger">
+{% if back_url_not_defined %}
+	<div class="alert alert-warning">
+		No return URL defined.
+	</div>
+
+	<p>No return URL was defined on your request. If you want to, you can still <a href="{% url 'login_frontend.views.indexview' %}">sign in</a>, but
+	you won't get redirected from this service.</p>
+{% elif invalid_back_url %}
+	<div class="alert alert-warning">
 		<i class="fa fa-exclamation-triangle"></i>
 		Unable to complete sign-in request.
 	</div>
 
-	<p>Requested service URL "{{ back_url }}" is invalid. You can still <a href="{% url 'login_frontend.views.indexview' %}">sign in</a>, but redirect is disabled.</p>
+	<p>Requested service URL "{{ back_url }}" is invalid. 
+{% if invalid_back_url_reason == "wrong_protocol" %}HTTPS is required, but it service URL specifies different protocol.
+{% elif invalid_back_url_reason == "invalid_domain" %}Domain is not valid. This protocol can only be used within a single domain.
+{% elif invalid_back_url_reason == "no_hostname" %}There's no hostname in service URL.
+{% endif %}</p>
+
+<p>You can still <a href="{% url 'login_frontend.views.indexview' %}">sign in</a>, but you'll stay on this service.</p>
 {% endif %}
 
 {% if unauth %}
