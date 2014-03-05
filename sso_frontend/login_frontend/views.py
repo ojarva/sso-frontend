@@ -1235,10 +1235,10 @@ def logoutview(request):
         ret = {}
         if request.GET.get("logout") == "on":
             ret["signed_out"] = True
-            active_sessions = request.session.get("active_sessions")
+            active_sessions = request.session.get("active_sessions", [])
             if len(active_sessions) > 0:
                 custom_log(request, "logout: active sessions: %s" % active_sessions, level="info")
-            ret["active_sessions"] = request.session.get("active_sessions")
+            ret["active_sessions"] = active_sessions
             try:
                 del request.session["active_sessions"]
             except KeyError:
