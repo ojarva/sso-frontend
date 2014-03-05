@@ -128,6 +128,8 @@ def pubtkt(request):
     """ pubtkt login """
     def is_valid_back_url(back_url):
         """ Returns true if back_url should be okay """
+        if not back_url:
+            return
         valid_domains = settings.PUBTKT_ALLOWED_DOMAINS
         parsed_url = urlparse(back_url)
         if parsed_url.scheme != "https":
