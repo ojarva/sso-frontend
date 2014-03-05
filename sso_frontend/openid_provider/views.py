@@ -134,6 +134,7 @@ def openid_server(request):
 
         # verify return_to:
         trust_root_valid = trust_root_validation(orequest)
+        custom_log(request, "trust_root_valid=%s" % trust_root_valid, level="debug")
         validated = False
 
         # Allow per-url exceptions for trust roots.
@@ -142,7 +143,7 @@ def openid_server(request):
             validated = True
 
         if conf.FAILED_DISCOVERY_AS_VALID:
-            if trust_root_valid == 'DISCOVERY_FAILED':
+            if trust_root_valid == 'DISCOVERY_FAILED' or trust_root_valid == 'Unreachable':
                 custom_log(request, "Setting validated=True as FAILED_DISCOVERY_AS_VALID is True", level="debug")
                 validated = True
         else:
@@ -151,6 +152,9 @@ def openid_server(request):
                 custom_log(request, "Setting validated=True as session var %s is True" % (get_trust_session_key(orequest)), level="debug")
                 validated = True
 
+        custom_log(request, "Session key: %s=%s" % (get_trust_session_key(orequest), request.session.get(get_trust_session_key(orequest))), level="debug")
+
+        custom_log(request, "OpenID is %s" % openid, level="debug")
         if openid is not None and (validated or trust_root_valid == 'Valid'):
             id_url = request.build_absolute_uri(
                 reverse('openid-provider-identity', args=[openid.openid]))
@@ -257,11 +261,16 @@ def openid_decide(request):
                     pass
             custom_log(request, "Cancelled. Redirect to front page", level="debug")
             return HttpResponseRedirect(reverse("login_frontend.views.indexview"))
-        TrustedRoot.objects.get_or_create(
+        (obj, created) = TrustedRoot.objects.get_or_create(
             openid=openid, trust_root=orequest.trust_root)
+        if created:
+            custom_log(request, "Created a new TrustRoot for %s" % orequest.trust_root)
+        else:
+            custom_log(request, "Old TrustRoot for %s exists" % orequest.trust_root)
         if not conf.FAILED_DISCOVERY_AS_VALID:
             custom_log(request, "Setting %s=True" % (get_trust_session_key(orequest)), level="debug")
             request.session[get_trust_session_key(orequest)] = True
+        custom_log(request, "Redirecting to OpenID server root", level="debug")
         return HttpResponseRedirect(reverse('openid-provider-root'))
 
     custom_log(request, "Showing decide page", level="info")
