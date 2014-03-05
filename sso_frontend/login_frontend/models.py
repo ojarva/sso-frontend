@@ -33,10 +33,6 @@ r = redis.Redis()
 @sd.timer("login_frontend.models.custom_log")
 def custom_log(request, message, **kwargs):
     """ Automatically logs username, remote IP and bid_public """
-    custom_log_inner(request, message, **kwargs)
-
-def custom_log_inner(request, message, **kwargs):
-    """ Additional method call to get proper entry from call stack. """
     try:
         raise Exception
     except:

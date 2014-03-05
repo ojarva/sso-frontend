@@ -37,8 +37,44 @@ from openid_provider.utils import add_sreg_data, add_ax_data, get_store, \
     trust_root_validation, get_trust_session_key, get_default_sreg_data
 from openid_provider.models import TrustedRoot, OpenID
 from django.contrib.auth.models import User as DjangoUser
+import statsd
+import sys
+import os
 
 logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
+
+sd = statsd.StatsClient()
+
+@sd.timer("openid_provider.views.custom_log")
+def custom_log(request, message, **kwargs):
+    """ Automatically logs username, remote IP and bid_public """
+    try:
+        raise Exception
+    except:
+        stack = sys.exc_info()[2].tb_frame.f_back
+    if stack is not None:
+        stack = stack.f_back
+    while hasattr(stack, "f_code"):
+        co = stack.f_code
+        filename = os.path.normcase(co.co_filename)
+        filename = co.co_filename
+        lineno = stack.f_lineno
+        co_name = co.co_name
+        break
+
+    level = kwargs.get("level", "info")
+    method = getattr(log, level)
+    remote_addr = request.META.get("REMOTE_ADDR")
+    bid_public = username = ""
+    if hasattr(request, "browser") and request.browser:
+        bid_public = request.browser.bid_public
+        if request.browser.user:
+            username = request.browser.user.username
+    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
+                            remote_addr, username, bid_public, message)
+
+
 
 @csrf_exempt
 def openid_server(request):
@@ -46,8 +82,8 @@ def openid_server(request):
     This view is the actual OpenID server - running at the URL pointed to by 
     the <link rel="openid.server"> tag. 
     """
-    logger.debug('server request %s: %s',
-                 request.method, request.POST or request.GET)
+    custom_log(request, "Server request: %s: %s" % (request.method, request.POST or request.GET), level="debug")
+
     server = Server(get_store(request),
         op_endpoint=request.build_absolute_uri(reverse('openid-provider-root')))
 
@@ -73,7 +109,7 @@ def openid_server(request):
                 'xrds_location': request.build_absolute_uri(
                     reverse('openid-provider-xrds')),
             }
-            logger.debug('invalid request, sending info: %s', data)
+            custom_log(request, "Invalid request, sending info: %s" % data, level="info")
             if request.browser and request.browser.user:
                 data["openid_identifier"] = "https://" + request.get_host() +  reverse('openid-provider-identity', args=[request.browser.user.username])
             else:
@@ -82,11 +118,11 @@ def openid_server(request):
                                       data,
                                       context_instance=RequestContext(request))
 
-    logger.debug("orequest.mode: %s" % orequest.mode)
+    custom_log(request, "orequest.mode: %s" % orequest.mode, level="debug")
 
     if orequest.mode in BROWSER_REQUEST_MODES:
         if not (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
-            logger.debug('no local authentication, sending landing page')
+            custom_log(request, "no local authentication, sending landing page", level="debug")
             return landing_page(request, orequest)
 
         openid = openid_is_authorized(request, orequest.identity,
@@ -115,14 +151,14 @@ def openid_server(request):
                 oresponse = orequest.answer(True, identity=id_url)
             except ValueError, e:
                 return render_to_response("openid_provider/error.html", {"title": "Invalid identity URL", "msg": e.message}, context_instance=RequestContext(request))
-            logger.debug('orequest.answer(True, identity="%s")', id_url)
+            custom_log(request, 'orequest.answer(True, identity="%s")' % id_url, level="debug")
         elif orequest.immediate:
-            logger.debug('checkid_immediate mode not supported')
+            custom_log(request, 'checkid_immediate mode not supported', level="debug")
             raise Exception('checkid_immediate mode not supported')
         else:
             request.session['OPENID_REQUEST'] = orequest.message.toPostArgs()
             request.session['OPENID_TRUSTROOT_VALID'] = trust_root_valid
-            logger.debug('redirecting to decide page')
+            custom_log(request, "redirecting to decide page", level="debug")
             return HttpResponseRedirect(reverse('openid-provider-decide'))
     else:
         oresponse = server.handleRequest(orequest)
@@ -142,19 +178,19 @@ def openid_server(request):
 
     # Convert a webresponse from the OpenID library in to a Django HttpResponse
     webresponse = server.encodeResponse(oresponse)
-    logger.debug("orequest.mode: %s" % orequest.mode)
-    logger.debug("webresponse.code: %s" % webresponse.code)
+    custom_log(request, "orequest.mode: %s" % orequest.mode, level="debug")
+    custom_log(request, "webresponse.code: %s" % webresponse.code, level="debug")
     if webresponse.code == 200 and orequest.mode in BROWSER_REQUEST_MODES:
         response = render_to_response('openid_provider/response.html', {
             'body': webresponse.body,
         }, context_instance=RequestContext(request))
-        logger.debug('rendering browser response')
+        custom_log(request, 'rendering browser response', level="debug")
     else:
         response = HttpResponse(webresponse.body)
         response.status_code = webresponse.code
         for key, value in webresponse.headers.items():
             response[key] = value
-        logger.debug('rendering raw response')
+        custom_log(request, "rendering raw response", level="debug")
     return response
 
 def openid_xrds(request, identity=False, id=None):
@@ -170,7 +206,7 @@ def openid_xrds(request, identity=False, id=None):
         'types': types,
         'endpoints': endpoints,
     }
-    logger.info("Options: %s" % ret)
+    custom_log(request, "Options: %s" % ret, level="debug")
     return render_to_response('openid_provider/xrds.xml', ret, context_instance=RequestContext(request), content_type=YADIS_CONTENT_TYPE)
 
 def openid_decide(request):
@@ -301,7 +337,7 @@ def openid_get_identity(request, identity_url):
     (user, _) = DjangoUser.objects.get_or_create(username=request.browser.user.username, defaults={"email": request.browser.user.email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": datetime.datetime.now(), "date_joined": datetime.datetime.now()})
     user.backend = 'django.contrib.auth.backends.ModelBackend' # Horrible hack.
     django_login(request, user)
-    logger.debug("Creating new OpenID association for %s", user.username)
+    custom_log(request, "Creating new OpenID association for %s" % user.username, level="info")
     (openid, created) = OpenID.objects.get_or_create(user=user, openid=user.username)
     openid.save()
     return openid

@@ -19,23 +19,42 @@ from login_frontend.utils import get_and_refresh_user, paginate
 from login_frontend.views import protect_view
 import logging
 import redis
+import sys
+import os
+import statsd
 
-
+sd = statsd.StatsClient()
 log = logging.getLogger(__name__)
+user_log = logging.getLogger(__name__)
 r = redis.Redis()
 
-user_log = logging.getLogger(__name__)
+@sd.timer("admin_frontend.views.custom_log")
 def custom_log(request, message, **kwargs):
     """ Automatically adds remote IP address and public browser ID to log entries """
+    try:
+        raise Exception
+    except:
+        stack = sys.exc_info()[2].tb_frame.f_back
+    if stack is not None:
+        stack = stack.f_back
+    while hasattr(stack, "f_code"):
+        co = stack.f_code
+        filename = os.path.normcase(co.co_filename)
+        filename = co.co_filename
+        lineno = stack.f_lineno
+        co_name = co.co_name
+        break
+
     level = kwargs.get("level", "info")
     method = getattr(user_log, level)
     remote_addr = request.META.get("REMOTE_ADDR")
     bid_public = username = ""
-    if request.browser:
+    if hasattr(request, "browser") and request.browser:
         bid_public = request.browser.bid_public
         if request.browser.user:
             username = request.browser.user.username
-    method("%s - %s - %s - %s", remote_addr, username, bid_public, message)
+    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
+                            remote_addr, username, bid_public, message)
 
 @require_http_methods(["GET"])
 @protect_view("indexview", required_level=Browser.L_STRONG, admin_only=True)
