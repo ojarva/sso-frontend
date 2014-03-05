@@ -97,7 +97,7 @@
 {% if login.remote_service %}It was used to log in to "{{ login.remote_service }}".{% endif %}
 {% if login.expires_session %}When the browser is closed, the session is automatically destroyed.{% endif %}
 '>{{ login.sso_provider }} {% include "snippets/timestamp.html" with timestamp=login.auth_timestamp notooltip="true" %}</span>
-{% if login.expires_at %}- expires in {% include "snippets/timestamp.html" with timestamp=login.expires_at %}{% endif %}
+{% if login.expires_at %}- expires {% include "snippets/timestamp.html" with timestamp=login.expires_at %}{% endif %}
 </li>
 {% empty %}
 <li><span data-toggle="popover" 

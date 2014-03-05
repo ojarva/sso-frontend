@@ -27,7 +27,8 @@
 	<i class="fa fa-exclamation-triangle"></i> {{ invalid_otp }}
 	</div>
 
-	<p>You're authenticating with Authenticator password. It is a 6-digit code from Authenticator app.
+	<p>You're authenticating with Authenticator password. 
+	It is a {% if is_invalid_otp %}<b>6-digit code</b>{% else %}6-digit code{% endif %} from Authenticator app.
         The name of that code should be "{{ authenticator_id }}".
         If this does not match and/or the code is not working, you can <a href="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">sign in with SMS</a>.</p>
 {% endif %}

@@ -15,8 +15,8 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseNotFound, Http404
 from django.shortcuts import render_to_response
-from django.template.loader import render_to_string
 from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
@@ -37,11 +37,12 @@ import math
 import os
 import pyotp
 import qrcode
+import re
 import redis
+import statsd
 import sys
 import time
 import urllib
-import statsd
 
 sd = statsd.StatsClient()
 
@@ -346,6 +347,8 @@ def authenticate_with_password(request):
             else:
                 if auth_status == "invalid_credentials":
                     ret["authentication_failed"] = True
+                    if re.match("^[0-9]{5,6}$", password):
+                        ret["is_otp"] = True
                     custom_log(request, "1f: Authentication failed. Invalid credentials", level="warn")
                     add_user_log(request, "Authentication failed. Invalid credentials", "warning")
                 elif auth_status == "server_down":
@@ -594,6 +597,8 @@ def authenticate_with_authenticator(request):
             else:
                 custom_log(request, "2f-auth: Incorrect Authenticator OTP provided: %s" % message, level="warn")
                 add_user_log(request, "Incorrect Authenticator OTP provided: %s" % message, "warning")
+                if not re.match("^[0-9]{5,6}$", otp):
+                    ret["is_invalid_otp"] = True
                 ret["invalid_otp"] = message
     else:
         custom_log(request, "2f-auth: GET request", level="debug")
@@ -1153,6 +1158,8 @@ def configure_authenticator(request):
             custom_log(request, "cauth: Entered invalid OTP during Authenticator configuration", level="info")
             add_user_log(request, "Entered invalid OTP during Authenticator configuration", "warning")
             regen_secret = False
+            if not re.match("^[0-9]{5,6}$", otp):
+                ret["is_invalid_otp"] = True
             ret["invalid_otp"] = message
             messages.warning(request, "Invalid one-time password. Please scroll down to try again.")
 

@@ -10,20 +10,25 @@
 <div class="row">
 <div class="col-md-8 col-centered">
 <h3>SMS</h3>
+
 {% if return_readable %}
-<p><small>After signing in, you'll be redirected to <b>{{ return_readable }}</b>.</small></p>
+	<p><small>After signing in, you'll be redirected to <b>{{ return_readable }}</b>.</small></p>
 {% endif %}
 
 {% if authentication_failed %}
-<div class="alert alert-danger">
-Incorrect one-time code. Only code from message with id #{{ expected_sms_id }} is valid.
-</div>
+	<div class="alert alert-danger">
+	Incorrect one-time code. Only code from message with id #{{ expected_sms_id }} is valid.
+	</div>
+
+	{% if is_invalid_otp %}
+		<p>You have to enter 5-digit one-time code from SMS. This is not your password.</p>
+	{% endif %}
 {% endif %}
 
 {% if message %}
-<div class="alert alert-danger">
-{{ message }}
-</div>
+	<div class="alert alert-danger">
+		{{ message }}
+	</div>
 {% endif %}
 
 {% if primary_phone_changed %}
