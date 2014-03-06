@@ -426,6 +426,8 @@ TOKEN_MAP = {} # map of LDAP groups to pubtkt tokens. For example, {"Administrat
 
 FAKE_TESTING = False # This uses LDAP stub and static SMS codes. Useful for smoke testing, but never set in production.
 
+AUTHENTICATOR_NAME = "%s@hostname -%s-"
+
 
 P0F_SOCKET = None
 

@@ -77,7 +77,7 @@ def custom_log(request, message, **kwargs):
         bid_public = request.browser.bid_public
         if request.browser.user:
             username = request.browser.user.username
-    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name, 
+    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
                             remote_addr, username, bid_public, message)
 
 @sd.timer("login_frontend.views.protect_view")
@@ -101,7 +101,7 @@ def protect_view(current_step, **main_kwargs):
             get_params = request.GET.dict()
             if get_params.get("_sso") is None:
                 # Avoid redirect loops
-                if current_step not in ("firststepauth", "secondstepauth", 
+                if current_step not in ("firststepauth", "secondstepauth",
                      "authenticate_with_sms", "authenticate_with_password",
                      "authenticate_with_authenticator"):
                     get_params["_sso"] = "internal"
@@ -355,7 +355,7 @@ def authenticate_with_password(request):
                     messages.warning(request, "Unable to connect user directory (LDAP). Could not proceed with authentication. Please try again later, and/or contact IT team.")
                     custom_log(request, "1f: LDAP server is down.", level="error")
                 else:
-                    ret["message"] = auth_status 
+                    ret["message"] = auth_status
                     custom_log(request, "1f: Authentication failed: %s" % auth_status, level="warn")
                     add_user_log(request, "Authentication failed: %s" % auth_status, "warning")
         else:
@@ -614,7 +614,6 @@ def authenticate_with_authenticator(request):
 
     response = render_to_response("login_frontend/authenticate_with_authenticator.html", ret, context_instance=RequestContext(request))
     return response
-       
 
 
 @sd.timer("login_frontend.views.authenticate_with_sms")
@@ -624,7 +623,7 @@ def authenticate_with_authenticator(request):
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("authenticate_with_sms", required_level=Browser.L_BASIC)
 def authenticate_with_sms(request):
-    """ Authenticate user with SMS. 
+    """ Authenticate user with SMS.
     Accepts Authenticator codes too.
     """
     # If already authenticated with L_STRONG, redirect back to SSO / frontpage
@@ -777,7 +776,7 @@ def authenticate_with_sms(request):
 
 
 @sd.timer("login_frontend.views.automatic_ping")
-@require_http_methods(["GET"]) 
+@require_http_methods(["GET"])
 def automatic_ping(request, **kwargs):
     """ Handles browser queries, and updates browser status when required. """
     if request.GET.get("location"):
@@ -1218,11 +1217,11 @@ def authenticate_with_emergency(request):
 @sd.timer("login_frontend.views.logoutview")
 @require_http_methods(["GET", "POST"])
 def logoutview(request):
-    """ Handles logout as well as possible. 
+    """ Handles logout as well as possible.
 
     Only POST requests with valid CSRF token are accepted. In case of
     a GET request, page with logout button is shown.
-    """        
+    """
 
     if request.method == 'POST' and hasattr(request, "browser") and request.browser and request.browser.user:
         ret_dict = request.GET.dict()
@@ -1240,7 +1239,7 @@ def logoutview(request):
                 del request.session[keyname]
             except KeyError:
                 pass
- 
+
         request.browser.logout(request)
         django_auth.logout(request)
         request.session["active_sessions"] = active_sessions

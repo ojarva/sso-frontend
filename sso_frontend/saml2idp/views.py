@@ -25,9 +25,46 @@ from login_frontend.utils import redirect_with_get_params
 from login_frontend.models import BrowserLogin, add_user_log
 
 from django.utils import timezone
+import os
+import sys
+import statsd
+from utils import get_destination_service
 
 import logging
 log = logging.getLogger(__name__)
+
+sd = statsd.StatsClient()
+
+log = logging.getLogger(__name__)
+
+@sd.timer("saml2idp.views.custom_log")
+def custom_log(request, message, **kwargs):
+    """ Automatically logs username, remote IP and bid_public """
+    try:
+        raise Exception
+    except:
+        stack = sys.exc_info()[2].tb_frame.f_back
+    if stack is not None:
+        stack = stack.f_back
+    while hasattr(stack, "f_code"):
+        co = stack.f_code
+        filename = os.path.normcase(co.co_filename)
+        filename = co.co_filename
+        lineno = stack.f_lineno
+        co_name = co.co_name
+        break
+
+    level = kwargs.get("level", "info")
+    method = getattr(log, level)
+    remote_addr = request.META.get("REMOTE_ADDR")
+    bid_public = username = ""
+    if hasattr(request, "browser") and request.browser:
+        bid_public = request.browser.bid_public
+        if request.browser.user:
+            username = request.browser.user.username
+    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
+                            remote_addr, username, bid_public, message)
+
 
 def _generate_response(request, processor):
     """
@@ -37,17 +74,26 @@ def _generate_response(request, processor):
     try:
         tv = processor.generate_response()
     except exceptions.UserNotAuthorized:
+        custom_log(request, "Unauthorized to sign in", level="warn")
         return render_to_response('saml2idp/invalid_user.html',
                                   context_instance=RequestContext(request))
 
 
+    return_url = get_destination_service(tv["acs_url"])
+
     # Update/add BrowserLogin
-    (browser_login, _) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="saml2", signed_out=False, remote_service=str(tv["acs_url"]), defaults={"auth_timestamp": timezone.now()})
-    browser_login.auth_timestamp = timezone.now()
-    browser_login.save()
+    try:
+        (browser_login, created) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="saml2", signed_out=False, remote_service=str(tv["acs_url"]), defaults={"auth_timestamp": timezone.now()})
+        if not created:
+            browser_login.auth_timestamp = timezone.now()
+            browser_login.save()
+    except BrowserLogin.MultipleObjectsReturned:
+        custom_log(request, "Multiple BrowserLogin objects for user=%s, browser=%s, sso_provider=saml2, remote_service=%s" % (request.browser.user.username, request.browser.bid_public, tv["acs_url"]), level="error")
 
-    add_user_log(request, "Signed in with SAML to %s" % tv["acs_url"], "share-square-o")
+    custom_log(request, "Signed in with SAML to %s" % return_url, level="info")
+    add_user_log(request, "Signed in with SAML to %s" % return_url, "share-square-o")
 
+    custom_log(request, "Rendering login.html with tv=%s" % tv, level="debug")
     return render_to_response('saml2idp/login.html', tv,
                                 context_instance=RequestContext(request))
 
@@ -66,13 +112,19 @@ def login_begin(request, *args, **kwargs):
         source = request.GET
 
     if not ('SAMLRequest' in source and 'RelayState' in source):
+        custom_log(request, "Invalid request: missing SAMLRequest or RelayState", level="info")
         return render_to_response('saml2idp/error.html', {"missing_fields": True},
                                   context_instance=RequestContext(request))
 
     # Store these values now, because Django's login cycle won't preserve them.
+
+    saml_id = str(uuid.uuid4())
     request.session['SAMLRequest'] = source['SAMLRequest']
     request.session['RelayState'] = source['RelayState']
-    return redirect('login_process')
+    request.session['SAMLRequest-%s' % saml_id] = source['SAMLRequest']
+    request.session['RelayState-%s' % saml_id] = source['RelayState']
+    custom_log(request, "Storing SAMLRequest=%s and RelayState=%s with saml_id=%s" % (source['SAMLRequest'], source['RelayState'], saml_id), level="debug")
+    return redirect_with_get_params("saml2idp.views.login_process", {"saml_id": saml_id})
 
 @login_required
 def login_init(request, resource, **kwargs):
@@ -81,6 +133,7 @@ def login_init(request, resource, **kwargs):
     """
     sp_config = metadata.get_config_for_resource(resource)
     proc_path = sp_config['processor']
+    custom_log(request, "login_init: proc_path=%s" % proc_path, level="debug")
     proc = registry.get_processor(proc_path)
     try:
         linkdict = dict(metadata.get_links(sp_config))
@@ -103,17 +156,16 @@ def login_process(request):
     Presents a SAML 2.0 Assertion for POSTing back to the Service Provider.
     """
     #reg = registry.ProcessorRegistry()
-    log.debug("Request: %s" % request)
     proc = registry.find_processor(request)
+    custom_log(request, "login_process: %s" % proc, level="debug")
     return _generate_response(request, proc)
 
 @csrf_exempt
 def logout(request):
     """
-    Allows a non-SAML 2.0 URL to log out the user and
-    returns a standard logged-out page. (SalesForce and others use this method,
-    though it's technically not SAML 2.0).
+    Forwards SAML 2.0 logout URL to logout page.
     """
+    custom_log(request, "Redirecting to logout page from GET logout", level="debug")
     return redirect_with_get_params("login_frontend.views.logoutview", request.GET)
 
 @login_required
@@ -125,17 +177,12 @@ def slo_logout(request):
     """
 
     if "SAMLRequest" not in request.POST:
+        custom_log(request, "Invalid request to logout page: missing SAMLRequest", level="warn")
         return render_to_response('saml2idp/error.html', {"missing_fields": True},
                                   context_instance=RequestContext(request))
 
+    custom_log(request, "Redirecting to logout page from POST logout", level="debug")
     return redirect_with_get_params("login_frontend.views.logoutview", request.GET)
-    request.session['SAMLRequest'] = request.POST['SAMLRequest']
-    #TODO: Parse SAML LogoutRequest from POST data, similar to login_process().
-    #TODO: Add a URL dispatch for this view.
-    #TODO: Modify the base processor to handle logouts?
-    #TODO: Combine this with login_process(), since they are so very similar?
-    #TODO: Format a LogoutResponse and return it to the browser.
-    #XXX: For now, simply log out without validating the request.
 
 def descriptor(request):
     """
@@ -153,5 +200,6 @@ def descriptor(request):
         'sso_url': sso_url,
 
     }
+    custom_log(request, "XML metadata IDSSODescriptor: %s" % tv, level="debug")
     return xml_response(request, 'saml2idp/idpssodescriptor.xml', tv,
                                 context_instance=RequestContext(request))

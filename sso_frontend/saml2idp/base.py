@@ -132,8 +132,22 @@ class Processor(object):
         """
         Retrieves the _saml_request AuthnRequest from the _django_request.
         """
-        self._saml_request = self._django_request.session['SAMLRequest']
-        self._relay_state = self._django_request.session['RelayState']
+        initialized = False
+        saml_id = self._django_request.GET.get("saml_id")
+        if saml_id:
+            if "SAMLRequest-%s" % saml_id in self._django_request.session and "RelayState-%s" % saml_id in self._django_request.session:
+                initialized = True
+                self._saml_request = self._django_request.session['SAMLRequest-%s' % saml_id]
+                self._relay_state = self._django_request.session['RelayState-%s' % saml_id]
+            else:
+                self._logger.debug("No keys available in session: %s" % self._django_request.session)
+        else:
+            self._logger.debug("No saml_id available in GET: %s" % self._django_request.GET.dict())
+
+        if not initialized:
+            self._logger.debug("Fall back to default SAMLRequest and RelayState")
+            self._saml_request = self._django_request.session['SAMLRequest']
+            self._relay_state = self._django_request.session['RelayState']
 
     def _format_assertion(self):
         """
