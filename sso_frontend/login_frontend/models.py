@@ -132,8 +132,8 @@ def add_user_log(request, message, status="question", **kwargs):
     bid_public = kwargs.get("bid_public")
     if not bid_public:
         bid_public = request.browser.bid_public
-    obj = Log.objects.create(user=request.browser.user, bid_public=bid_public, message=message, remote_ip=request.META.get("REMOTE_ADDR"), status=status)
-    obj.save()
+    Log.objects.create(user=request.browser.user, bid_public=bid_public, message=message, remote_ip=request.META.get("REMOTE_ADDR"), status=status)
+
 
 class Log(models.Model):
     user = models.ForeignKey('User')
@@ -148,6 +148,7 @@ class Log(models.Model):
 
     def __unicode__(self):
         return u"%s %s@%s with %s: %s (%s)" % (self.timestamp, self.user, self.remote_ip, self.bid_public, self.message, self.status)
+
 
 class Browser(models.Model):
 

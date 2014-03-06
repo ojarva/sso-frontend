@@ -175,15 +175,17 @@ def save_timing_data(request, user, timing_data):
 
     BrowserDetails.objects.create(browser=browser, timestamp=timezone.now(), remote_clock_offset=str(remote_clock_offset), remote_clock_time=str(remote_clock_time), performance_performance=str(performance_performance), performance_memory=str(performance_memory), performance_timing=str(performance_timing), performance_navigation=str(performance_navigation), resolution=str(resolution), plugins=str(plugins))
 
+    create_items = []
+
     if "id_username" in data:
         fieldname = KeystrokeSequence.USERNAME
         timing = str(data.get("id_username"))
-        KeystrokeSequence.objects.create(user=user, browser=browser, fieldname=fieldname, timing=timing, timestamp=timezone.now(), resolution=resolution, was_correct=True)
+        create_items.append((fieldname, timing))
     
     if "id_password" in data:
         fieldname = KeystrokeSequence.PASSWORD
         timing = str(data.get("id_password"))
-        KeystrokeSequence.objects.create(user=user, browser=browser, fieldname=fieldname, timing=timing, timestamp=timezone.now(), resolution=resolution, was_correct=True)
+        create_items.append((fieldname, timing))
  
     if "id_otp" in data:
         if request.path.startswith("/second/sms"):
@@ -191,6 +193,9 @@ def save_timing_data(request, user, timing_data):
         else:
             fieldname = KeystrokeSequence.OTP_AUTHENTICATOR
         timing = str(data.get("id_otp"))
+        create_items.append((fieldname, timing))
+
+    for fieldname, timing in create_items:
         KeystrokeSequence.objects.create(user=user, browser=browser, fieldname=fieldname, timing=timing, timestamp=timezone.now(), resolution=resolution, was_correct=True)
 
 
