@@ -327,7 +327,6 @@ def authenticate_with_password(request):
                     # - all logins expire in 12 hours
                     browser.set_auth_level(Browser.L_STRONG_SKIPPED)
                     browser.set_auth_state(Browser.S_AUTHENTICATED)
-                    browser.save()
                     custom_log(request, "1f: Redirecting back to SSO service", level="info")
                     return redir_to_sso(request)
 
@@ -480,7 +479,6 @@ def authenticate_with_url(request, **kwargs):
     # TODO: determine these automatically
     request.browser.set_auth_level(Browser.L_STRONG)
     request.browser.set_auth_state(Browser.S_AUTHENTICATED)
-    request.browser.save()
     sid_cleanup(sid)
     request.browser.revoke_sms()
     custom_log(request, "2f-url: Successfully authenticated with URL. Redirecting to secondstepauth", level="info")
@@ -592,7 +590,6 @@ def authenticate_with_authenticator(request):
                 # TODO: determine the levels automatically.
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
-                request.browser.save()
                 request.browser.auth_state_changed()
                 custom_log(request, "2f-auth: Redirecting back to SSO provider", level="debug")
                 return redir_to_sso(request)
@@ -719,9 +716,9 @@ def authenticate_with_sms(request):
                 # TODO: determine the levels automatically.
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
-                request.browser.save()
-                user.primary_phone_changed = False
-                user.save()
+                if user.primary_phone_changed:
+                    user.primary_phone_changed = False
+                    user.save()
 
                 if request.POST.get("timing_data"):
                     custom_log(request, "2f-sms: Saved timing data", level="debug")
