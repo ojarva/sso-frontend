@@ -20,6 +20,7 @@ def get_processor(dottedpath):
     For example:
     >>> x = get_processor('saml2idp.demo.Processor')
     """
+    logger.debug("Trying get_processor with %s" % dottedpath)
     try:
         dot = dottedpath.rindex('.')
     except ValueError:
@@ -49,4 +50,5 @@ def find_processor(request):
         except exceptions.CannotHandleAssertion, e:
             # Log these, but keep looking.
             logger.debug('%s %s' % (proc, e))
+    logger.error("session=%s" % request.session)
     raise exceptions.CannotHandleAssertion('None of the processors in SAML2IDP_REMOTES could handle this request.')
