@@ -21,6 +21,8 @@ import urllib
 import uuid
 import statsd
 
+from signals import *
+
 sd = statsd.StatsClient()
 
 log = logging.getLogger(__name__)
