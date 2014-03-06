@@ -42,6 +42,7 @@ LOCAL_URLS = {
     "/sessions": "sessions page",
     "/configure": "settings page",
     "/index": "index page",
+    "/idp/login": "SAML login",
 }
 
 @sd.timer("login_frontend.utils.get_return_url")

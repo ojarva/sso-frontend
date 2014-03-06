@@ -114,7 +114,7 @@ class EmergencyCodes(models.Model):
             code.save()
         if self.codes_left() > 0:
             self.current_code = choice(EmergencyCode.objects.filter(codegroup=self))
-        
+
 
 class EmergencyCode(models.Model):
     codegroup = models.ForeignKey("EmergencyCodes")
@@ -198,7 +198,7 @@ class Browser(models.Model):
 
     auth_state = models.DecimalField(max_digits=2, decimal_places=0, choices=A_AUTH_STATE, default=S_REQUEST_BASIC)
     auth_state_valid_until = models.DateTimeField(null=True, blank=True)
-    
+
     sms_code = models.CharField(max_length=10, null=True, blank=True)
     sms_code_id = models.CharField(max_length=5, null=True, blank=True)
     sms_code_generated_at = models.DateTimeField(null=True, blank=True)
@@ -363,19 +363,23 @@ class Browser(models.Model):
 
     @sd.timer("login_frontend.models.Browser.validate_sms")
     def validate_sms(self, otp):
+        """ Returns tuple, (status, message). Message is optional. """
+        if not self.user:
+            # TODO: this is invalid state and should never happen. Handle this properly.
+            return (False, None)
         if self.sms_code is None:
             return (False, "No OTP code exists for this browser.")
         if otp != self.sms_code:
             return (False, None)
         if not self.valid_sms_exists():
             self.revoke_sms()
-            message = "Code was valid, but expired (older than 15 minutes). New code was automatically sent to your phone."
-            if self.user:
-                if self.user.primary_phone and self.user.secondary_phone:
-                    message = "Code was valid, but expired (older than 15 minutes). New code was automatically sent to your phones."
+            message = "Code was valid, but expired (older than 15 minutes). New code was automatically sent to your phone"
+            if self.user.primary_phone and self.user.secondary_phone:
+                message += "s"
+            message += "."
             return (False, message)
         self.revoke_sms()
-        return (True, None)        
+        return (True, None)
 
     @sd.timer("login_frontend.models.Browser.is_mobile_phone")
     def is_mobile_phone(self):
@@ -691,7 +695,7 @@ class KeystrokeSequence(models.Model):
     )
 
     browser = models.ForeignKey("Browser", null=True)
-    user = models.ForeignKey("User")    
+    user = models.ForeignKey("User")
 
     resolution = models.TextField(blank=True, null=True) # Screen resolution, used to determine whether external display was used.
     fieldname = models.CharField(max_length=1, choices=KEYSTROKE_FIELD)
@@ -781,8 +785,7 @@ class User(models.Model):
         timestamp = timezone.now()
         self.strong_authenticator_secret = pyotp.random_base32()
         current_authenticator_id = self.strong_authenticator_num
-        #TODO: futurice
-        self.strong_authenticator_id = "%s@futu -%s-" % (self.username, current_authenticator_id)
+        self.strong_authenticator_id = settings.AUTHENTICATOR_NAME % (self.username, current_authenticator_id)
         self.strong_authenticator_num += 1
         self.strong_authenticator_generated_at = timestamp
         self.save()
@@ -791,7 +794,7 @@ class User(models.Model):
 
     @sd.timer("login_frontend.models.User.validate_authenticator_code")
     def validate_authenticator_code(self, code, request):
-        """ Validates authenticator OTP. 
+        """ Validates authenticator OTP.
 
         Returns (status, message) tuple.
         - status is True if succeeded, False if failed.
