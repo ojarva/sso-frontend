@@ -748,7 +748,7 @@ def authenticate_with_sms(request):
         custom_log(request, "2f-sms: GET request", level="debug")
         form = OTPForm()
 
-    if request.method == "GET" or request.GET.get("regen_sms") or not request.browser.valid_sms_exists():
+    if not request.browser.valid_sms_exists(180) or request.POST.get("regen_sms"):
         custom_log(request, "2f-sms: Generating a new SMS code", level="info")
         sms_text = request.browser.generate_sms_text(request=request)
         for phone in (user.primary_phone, user.secondary_phone):
@@ -763,6 +763,9 @@ def authenticate_with_sms(request):
                     add_user_log(request, "Sent OTP code to %s" % phone, "info")
                     phone_redacted = "%s...%s" % (phone[0:6], phone[-4:])
                     messages.info(request, mark_safe("Sent SMS to <span class='tooltip-link' title='This is redacted to protect your privacy'>%s</span>" % phone_redacted))
+        if request.method == "POST":
+            # Redirect to avoid duplicate SMSes on reload.
+            return redirect_with_get_params("login_frontend.views.authenticate_with_sms", request.GET)
 
     ret["sms_valid_until"] = request.browser.sms_code_generated_at + datetime.timedelta(seconds=900)
     ret["expected_sms_id"] = request.browser.sms_code_id
@@ -1257,11 +1260,13 @@ def logoutview(request):
                 del request.session["active_sessions"]
             except KeyError:
                 pass
+
         get_params = request.GET.dict()
         try:
             del get_params["logout"]
         except KeyError:
             pass
+
         ret["get_params"] = urllib.urlencode(get_params)
         if request.browser is None:
             ret["not_logged_in"] = True

@@ -352,11 +352,11 @@ class Browser(models.Model):
         self.save()
 
     @sd.timer("login_frontend.models.Browser.valid_sms_exists")
-    def valid_sms_exists(self):
+    def valid_sms_exists(self, valid_in_sec=0):
         if not self.sms_code or not self.sms_code_generated_at:
             return False
         otp_age = timezone.now() - self.sms_code_generated_at
-        otp_age_s = otp_age.days * 86400 + otp_age.seconds # total_seconds is not available on older Python versions.
+        otp_age_s = otp_age.days * 86400 + otp_age.seconds + valid_in_sec # total_seconds is not available on older Python versions.
         if otp_age_s > 900:
             return False
         return True
