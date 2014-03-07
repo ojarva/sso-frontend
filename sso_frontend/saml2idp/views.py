@@ -3,6 +3,9 @@ import base64
 import logging
 import time
 import uuid
+import redis
+import urllib
+import urlparse
 
 # Django/other library imports:
 from django.contrib import auth
@@ -34,8 +37,7 @@ import logging
 log = logging.getLogger(__name__)
 
 sd = statsd.StatsClient()
-
-log = logging.getLogger(__name__)
+r = redis.Redis()
 
 @sd.timer("saml2idp.views.custom_log")
 def custom_log(request, message, **kwargs):
@@ -119,10 +121,29 @@ def login_begin(request, *args, **kwargs):
     # Store these values now, because Django's login cycle won't preserve them.
 
     saml_id = str(uuid.uuid4())
-    request.session['SAMLRequest'] = source['SAMLRequest']
-    request.session['RelayState'] = source['RelayState']
-    request.session['SAMLRequest-%s' % saml_id] = source['SAMLRequest']
-    request.session['RelayState-%s' % saml_id] = source['RelayState']
+
+    try:
+        parsed = urlparse.urlparse(source['RelayState'])
+        query = urlparse.parse_qs(parsed.query)
+        if "continue" in query:
+            parsed_continue = urlparse.urlparse(query["continue"][0])
+            return_url = None
+            if parsed_continue.hostname == "www.google.com" and parsed_continue.path.startswith("/calendar/"):
+                return_url = "Google Calendar"
+            elif parsed_continue.hostname:
+                host = parsed_continue.hostname
+                if host == "mail.google.com":
+                    return_url = "gmail"
+                elif host == "docs.google.com":
+                    return_url = "Drive"
+                elif host == "groups.google.com":
+                    return_url = "Google Groups"
+            if return_url:
+                r.setex("saml-return-%s" % saml_id, return_url, 3600 * 12)
+    except:
+        pass
+    r.setex("saml-SAMLRequest-%s" % saml_id, source['SAMLRequest'], 3600 * 12)
+    r.setex("saml-RelayState-%s" % saml_id, source['RelayState'], 3600 * 12)
     custom_log(request, "Storing SAMLRequest=%s and RelayState=%s with saml_id=%s" % (source['SAMLRequest'], source['RelayState'], saml_id), level="debug")
     return redirect_with_get_params("saml2idp.views.login_process", {"saml_id": saml_id})
 
@@ -156,7 +177,11 @@ def login_process(request):
     Presents a SAML 2.0 Assertion for POSTing back to the Service Provider.
     """
     #reg = registry.ProcessorRegistry()
-    proc = registry.find_processor(request)
+    try:
+        proc = registry.find_processor(request)
+    except exceptions.NoRequestAvailable:
+        return render_to_response("saml2idp/no_request_available.html", {}, context_instance=RequestContext(request))
+
     custom_log(request, "login_process: %s" % proc, level="debug")
     return _generate_response(request, proc)
 

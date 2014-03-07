@@ -11,6 +11,9 @@ import codex
 import exceptions
 import saml2idp_metadata
 import xml_render
+import redis
+
+r = redis.Redis()
 
 from login_frontend.models import User
 
@@ -132,22 +135,13 @@ class Processor(object):
         """
         Retrieves the _saml_request AuthnRequest from the _django_request.
         """
-        initialized = False
         saml_id = self._django_request.GET.get("saml_id")
-        if saml_id:
-            if "SAMLRequest-%s" % saml_id in self._django_request.session and "RelayState-%s" % saml_id in self._django_request.session:
-                initialized = True
-                self._saml_request = self._django_request.session['SAMLRequest-%s' % saml_id]
-                self._relay_state = self._django_request.session['RelayState-%s' % saml_id]
-            else:
-                self._logger.debug("No keys available in session: %s" % self._django_request.session)
-        else:
-            self._logger.debug("No saml_id available in GET: %s" % self._django_request.GET.dict())
 
-        if not initialized:
-            self._logger.debug("Fall back to default SAMLRequest and RelayState")
-            self._saml_request = self._django_request.session['SAMLRequest']
-            self._relay_state = self._django_request.session['RelayState']
+        self._saml_request = r.get("saml-SAMLRequest-%s" % saml_id)
+        self._relay_state = r.get("saml-RelayState-%s" % saml_id)
+        if self._saml_request == None or self._relay_state == None:
+            return False
+        return True
 
     def _format_assertion(self):
         """
@@ -245,13 +239,18 @@ class Processor(object):
         self._reset(request)
         # Read the request.
         try:
-            self._extract_saml_request()
-            self._decode_request()
-            self._parse_request()
+            request_available = self._extract_saml_request()
+            self._logger.debug("request_available=%s" % request_available)
+            if request_available:
+                self._decode_request()
+                self._parse_request()
         except Exception, e:
             msg = 'Exception while reading request: %s' % e
             self._logger.debug(msg)
             raise exceptions.CannotHandleAssertion(msg)
+        if not request_available:
+            raise exceptions.NoRequestAvailable()
+
 
         self._validate_request()
         return True

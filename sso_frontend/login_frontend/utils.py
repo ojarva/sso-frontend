@@ -25,7 +25,9 @@ import time
 import urllib
 import urlparse
 import statsd
+import redis
 
+r = redis.Redis()
 sd = statsd.StatsClient()
 
 
@@ -49,9 +51,18 @@ LOCAL_URLS = {
 def get_return_url(request):
     try:
         if request.GET.get("next"):
-            return_url = request.GET.get("next")
+            return_url = urllib.unquote(request.GET.get("next"))
             parsed = urlparse.urlparse(return_url)
-            if parsed.netloc == settings.FQDN:
+            if parsed.path.startswith("/idp/login"):
+                if parsed.query:
+                    query_params = urlparse.parse_qs(parsed.query)
+                    if "saml_id" in query_params:
+                        log.debug("redis key: saml-return-%s" % query_params["saml_id"][0])
+                        return_info = r.get("saml-return-%s" % query_params["saml_id"][0])
+                        if return_info:
+                            return return_info
+
+            if parsed.netloc == settings.FQDN or parsed.hostname is None: # absolute or relative URLs
                 # Local URL
                 for url in LOCAL_URLS:
                     if parsed.path.startswith(url):
