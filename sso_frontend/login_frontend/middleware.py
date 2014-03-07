@@ -252,6 +252,11 @@ class BrowserMiddleware(object):
     @sd.timer("BrowserMiddleware.process_response")
     def process_response(self, request, response):
         """ Automatically adds session cookie if old one is not available. """
+        response["Server"] = "https://github.com/ojarva/sso-frontend"
+        if request.path.startswith("/csp-report") or request.path.startswith("/timesync"):
+            log.debug("Browser from '%s' reporting CSP/timesync - skip process_response", request.META.get("REMOTE_ADDR"))
+            sd.incr("login_frontend.middleware.BrowserMiddleware.process_response.skip", 1)
+            return response
         
         # Browser from process_request is not available here.
         browser = get_browser_instance(request)
@@ -267,20 +272,19 @@ class BrowserMiddleware(object):
         if request.COOKIES.get(Browser.C_BID_SESSION) != browser.bid_session:
             # No valid session ID exists. Regen it first.
             browser.bid_session = create_browser_uuid()
-            log.info("Session bid does not exist. Regenerating. bid_public=%s" % browser.bid_public)
-            cookies = browser.get_cookie()
             browser.save()
+            log.info("Session bid does not exist. Regenerating. bid_public=%s, bid_session=%s" % (browser.bid_public, browser.bid_session))
+            cookies = browser.get_cookie()
 
         if request.COOKIES.get(Browser.C_BID_PUBLIC) != browser.bid_public:
             # Public bid does not match. Set it again.
             cookies = browser.get_cookie()
 
         for cookie_name, cookie in cookies:
+            log.debug("Setting cookie %s=%s for %s at %s" % (cookie_name, cookie, browser.bid_public, request.path))
             response.set_cookie(cookie_name, **cookie)
-
-        response["Server"] = "https://github.com/ojarva/sso-frontend"
-
         return response
+
 
 class TimesyncMiddleware(object):
     @sd.timer("TimesyncMiddleware.process_request")
