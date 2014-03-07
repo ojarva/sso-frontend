@@ -9,31 +9,41 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="browser_info_{{ detailed.browser.bid_public }}_label">{{ detailed.browser.get_readable_ua }}</h4>
+        <h4 class="modal-title" id="browser_info_{{ detailed.browser.bid_public }}_label">{{ detailed.browser.get_readable_ua }}
+{% for icon in detailed.icons %}
+<i class="fa fa-{{icon}}"></i>
+{% endfor %}
+</h4>
       </div>
       <div class="modal-body">
-
-{% if detailed.p0f %}
- Latest fingerprint:
-  {% include "login_frontend/snippets/p0f.html" with entry=detailed.p0f %}
-{% endif %}
-
 <dl class="dl-horizontal">
 {% if detailed.timesync %}
  <dt>Your clock</dt>
  <dd>{{ detailed.timesync.formatted_time_diff }} &plusmn; {{ detailed.timesync.measurement_error }}ms (measured {% include "snippets/timestamp.html" with timestamp=detailed.timesync.checked_at %})</dd>
 {% endif %}
- <dt>Browser</dt>
- <dd>{{ detailed.browser.ua }}</dd>
+{% if detailed.last_known_location %}
+ <dt>Last seen at</dt>
+ <dd>{{ detailed.last_known_location }}</dd>
+ <dt>Last seen from</dt>
+ <dd>{{ detailed.last_known_location_from }} ({% include "snippets/timestamp.html" with timestamp=detailed.last_known_location_timestamp %})</dd>
+{% else %}
  <dt>Last seen</dt>
  <dd>{% if detailed.this_session %}Right now (this session){% else %}<b>{% include "snippets/timestamp.html" with timestamp=detailed.session.last_seen %}</b>{% endif %}</dd>
  <dt>Last address</dt>
  <dd><b>{{ detailed.session.remote_ip }}</b> ({{ detailed.geo }})</dd>
+{% endif %}
  <dt>Remembered</dt>
  <dd>{% if detailed.browser.save_browser %}<span class="tooltip-link" title="You have marked this browser as 'remembered'">yes</span>{% else %}no{% endif %}</dd>
  <dt>First visited</dt>
  <dd>{% include "snippets/timestamp.html" with timestamp=detailed.browser.created %}</dd>
+ <dt>Browser</dt>
+ <dd>{{ detailed.browser.ua }}</dd>
 </dl>
+{% if detailed.p0f %}
+ Latest fingerprint:
+  {% include "login_frontend/snippets/p0f.html" with entry=detailed.p0f %}
+{% endif %}
+
 
       </div>
       <div class="modal-footer">

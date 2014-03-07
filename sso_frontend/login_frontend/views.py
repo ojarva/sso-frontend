@@ -782,8 +782,13 @@ def authenticate_with_sms(request):
 @require_http_methods(["GET"])
 def automatic_ping(request, **kwargs):
     """ Handles browser queries, and updates browser status when required. """
-    if request.GET.get("location"):
-        custom_log(request, "Ping from %s" % request.GET.get("location"))
+    location = request.GET.get("location")
+    if location:
+        if hasattr(request, "browser") and request.browser:
+            r.setex("last-known-location-%s" % request.browser.bid_public, location, 3600)
+            r.setex("last-known-location-timestamp-%s" % request.browser.bid_public, time.time(), 3600)
+            r.setex("last-known-location-from-%s" % request.browser.bid_public, request.META.get("REMOTE_ADDR"), 3600)
+        custom_log(request, "Ping from %s" % location)
     ret = {}
     sign_out = False
     if not request.browser:
@@ -981,6 +986,14 @@ def sessions(request):
 
         logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(Q(expires_at__gte=timezone.now()) | Q(expires_at=None))
         details["logins"] = logins
+        redis_keys = [("last_known_location", "last-known-location-%s"), ("last_known_location_from", "last-known-location-from-%s"), ("last_known_location_timestamp", "last-known-location-timestamp-%s")]
+        for tk, k in redis_keys:
+            r_k = k % browser.bid_public
+            val = r.get(r_k)
+            if val:
+                if tk == "last_known_location_timestamp":
+                    val = datetime.datetime.fromtimestamp(float(val))
+                details[tk] = val
 
         sessions.append(details)
     try:
