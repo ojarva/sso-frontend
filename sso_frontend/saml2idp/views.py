@@ -134,10 +134,12 @@ def login_begin(request, *args, **kwargs):
                 host = parsed_continue.hostname
                 if host == "mail.google.com":
                     return_url = "gmail"
-                elif host == "docs.google.com":
+                elif host == "docs.google.com" or host == "drive.google.com":
                     return_url = "Drive"
                 elif host == "groups.google.com":
                     return_url = "Google Groups"
+                elif host == "plus.google.com":
+                    return_url = "Google Plus"
             if return_url:
                 r.setex("saml-return-%s" % saml_id, return_url, 3600 * 12)
     except:
