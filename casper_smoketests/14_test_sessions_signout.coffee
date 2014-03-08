@@ -5,7 +5,7 @@ casper.userAgent('Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)')
 casper.start 'http://localhost:8000', ->
    @.then ->
     @.test.assertHttpStatus 200
-    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=http://localhost:8000/index', "Redirected to password authentication"
+    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/index', "Redirected to password authentication"
    @.viewport(1200, 1200)
    @.then ->
     @.fill("form[name='loginform']", {
@@ -13,14 +13,14 @@ casper.start 'http://localhost:8000', ->
      "password": "testpassword"
     }, true)
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=http://localhost:8000/index', "Redirected to SMS authentication"
+    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=/index', "Redirected to SMS authentication"
     @.test.assertHttpStatus 200
    @.then ->
     @.fill("form[name='loginform']", {
      "otp": "12345"
     }, true)
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=http://localhost:8000/index', "Redirected to configuration view"
+    @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=/index', "Redirected to configuration view"
     @.test.assertHttpStatus 200
    @.then ->
     @.echo "Saving cookies for signed in user"
@@ -29,7 +29,7 @@ casper.start 'http://localhost:8000', ->
     phantom.clearCookies()
    @.thenOpen("http://localhost:8000")
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=http://localhost:8000/index', "Redirected to password authentication"
+    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/index', "Redirected to password authentication"
     @.test.assertHttpStatus 200
    @.then ->
     @.fill("form[name='loginform']", {
@@ -37,14 +37,14 @@ casper.start 'http://localhost:8000', ->
      "password": "testpassword"
     }, true)
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=http://localhost:8000/index', "Redirected to SMS authentication"
+    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=/index', "Redirected to SMS authentication"
     @.test.assertHttpStatus 200
    @.then ->
     @.fill("form[name='loginform']", {
      "otp": "12345"
     }, true)
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=http://localhost:8000/index', "Redirected to configuration view"
+    @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=/index', "Redirected to configuration view"
     @.test.assertHttpStatus 200
    @.then ->
     @.echo "Clearing cookies"
@@ -52,7 +52,7 @@ casper.start 'http://localhost:8000', ->
    @.thenOpen("http://localhost:8000")
    @.then ->
     @.test.assertHttpStatus 200
-    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=http://localhost:8000/index'
+    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/index'
    @.then ->
     @.fill("form[name='loginform']", {
      "username": "test_valid",
@@ -60,7 +60,7 @@ casper.start 'http://localhost:8000', ->
     }, true)
    @.then ->
     @.test.assertHttpStatus 200
-    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=http://localhost:8000/index'
+    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=/index'
    @.then ->
     @.fill("form[name='loginform']", {
      "otp": "12345"
@@ -83,7 +83,7 @@ casper.start 'http://localhost:8000', ->
    @.thenOpen("http://localhost:8000")
    @.then ->
     @.test.assertHttpStatus 200
-    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=http://localhost:8000/index', "Redirected to password authentication"
+    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/index', "Redirected to password authentication"
     @.test.assertSelectorHasText('.alert-warning', 'You - or administrator - remotely signed out this browser. Please sign in again.', "Remote sign out notification")
 
 

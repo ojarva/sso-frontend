@@ -107,7 +107,7 @@ def protect_view(current_step, **main_kwargs):
                      "authenticate_with_sms", "authenticate_with_password",
                      "authenticate_with_authenticator"):
                     get_params["_sso"] = "internal"
-                    get_params["next"] = request.build_absolute_uri()
+                    get_params["next"] = request.path
                     custom_log(request, "Automatically adding internal SSO. next=%s" % get_params["next"], level="debug")
 
             browser = request.browser

@@ -7,7 +7,7 @@ check_cookie = (cookie_name) ->
 casper.userAgent('Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)')
 casper.start 'http://localhost:8000', ->
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=http://localhost:8000/index', "Redirected to password authentication"
+    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/index', "Redirected to password authentication"
     @.test.assertHttpStatus 200
     @.test.assertTrue(check_cookie "v2public-browserid", "Browser public ID cookie")
     @.test.assertTrue(check_cookie "v2browserid", "Browser ID cookie")
@@ -23,7 +23,7 @@ casper.start 'http://localhost:8000', ->
     })
    @.thenOpen("http://localhost:8000")
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=http://localhost:8000/index', "Properly redirected to password authentication"
+    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/index', "Properly redirected to password authentication"
     @.test.assertHttpStatus 200
     @.test.assertTrue(check_cookie "v2public-browserid", "Browser public ID cookie")
     @.test.assertTrue(check_cookie "v2browserid", "Browser ID cookie set again")

@@ -87,9 +87,7 @@ def internal_login(request):
         user.backend = 'django.contrib.auth.backends.ModelBackend' # Horrible hack.
         django_login(request, user)
 
-        ret["back_url"] = back_url
-        response = render_to_response("login_frontend/html_redirect.html", ret, context_instance=RequestContext(request))
-        return response
+        return HttpResponseRedirect(back_url)
 
     custom_log(request, "More authentication is required. Redirect to first step authentication", level="debug")
     return redirect_with_get_params("login_frontend.views.firststepauth", params)

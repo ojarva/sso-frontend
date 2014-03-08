@@ -13,7 +13,7 @@ casper.userAgent('Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)')
 casper.start 'http://localhost:8000', ->
    @.then ->
     @.test.assertHttpStatus 200
-    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=http://localhost:8000/index', "Redirected to password authentication"
+    @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/index', "Redirected to password authentication"
    @.viewport(1200, 1200)
    @.then ->
     @.fill("form[name='loginform']", {
@@ -22,7 +22,7 @@ casper.start 'http://localhost:8000', ->
     }, true)
    @.then ->
     @.test.assertHttpStatus 200
-    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=http://localhost:8000/index', "Redirected to SMS authentication"
+    @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=/index', "Redirected to SMS authentication"
    @.then ->
     @.fill("form[name='loginform']", {
      "otp": "1234"
@@ -34,13 +34,13 @@ casper.start 'http://localhost:8000', ->
      "otp": "12345"
     }, true)
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=http://localhost:8000/index', "Redirected to configuration view"
+    @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=/index', "Redirected to configuration view"
     @.test.assertSelectorHasText('.skip_for_now', 'Skip for now', "Skip for now is available")
     @.test.assertSelectorHasText('.configure_authenticator_btn', 'Configure Google Authenticator', "Configure google authenticator is available")
    @.then ->
     @.clickLabel("Configure Google Authenticator")
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/configure_authenticator?_sso=internal&next=http://localhost:8000/index', "Authenticator configuration view"
+    @.test.assertUrlMatch 'http://localhost:8000/configure_authenticator?_sso=internal&next=/index', "Authenticator configuration view"
     @.test.assertHttpStatus 200
    @.then ->
     @.clickLabel('continue to your originating service')
