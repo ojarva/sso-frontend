@@ -185,12 +185,18 @@ def openid_server(request):
 
     if (request.browser and request.browser.user and request.browser.is_authenticated() and request.user.is_authenticated()):
         # Add/update BrowserLogin object.
-        (browser_login, _) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="openid", signed_out=False, remote_service=str(orequest.trust_root), defaults={"auth_timestamp": timezone.now()})
+        msg = None
+        if orequest.trust_root.startswith("https://online.planmill.com/futurice/"):
+            msg = "Planmill (futurice)"
+        (browser_login, _) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="openid", signed_out=False, message=msg, remote_service=str(orequest.trust_root), defaults={"auth_timestamp": timezone.now()})
         browser_login.auth_timestamp = timezone.now()
         browser_login.save()
 
         # Add entry to user log
-        add_user_log(request, "Signed in with OpenID to %s" % orequest.trust_root, "share-square-o")
+        if msg:
+            add_user_log(request, "Signed in with OpenID to %s" % msg, "share-square-o")
+        else:
+            add_user_log(request, "Signed in with OpenID to %s" % orequest.trust_root, "share-square-o")
         custom_log(request, "Signed in with OpenID to %s" % orequest.trust_root, level="info")
 
     # Convert a webresponse from the OpenID library in to a Django HttpResponse
