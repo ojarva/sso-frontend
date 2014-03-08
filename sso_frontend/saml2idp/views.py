@@ -82,10 +82,17 @@ def _generate_response(request, processor):
 
 
     return_url = get_destination_service(tv["acs_url"])
+    saml_id = request.GET.get("saml_id")
+    if saml_id:
+        tmp = r.get("saml-return-%s" % saml_id)
+        if tmp:
+            return_url = "%s - %s" % (return_url, tmp)
+        r.delete("saml-return-%s" % saml_id, "saml-SAMLRequest-%s" % saml_id, "saml-RelayState-%s" % saml_id)
+
 
     # Update/add BrowserLogin
     try:
-        (browser_login, created) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="saml2", signed_out=False, remote_service=str(tv["acs_url"]), defaults={"auth_timestamp": timezone.now()})
+        (browser_login, created) = BrowserLogin.objects.get_or_create(user=request.browser.user, browser=request.browser, sso_provider="saml2", message=return_url, signed_out=False, remote_service=str(tv["acs_url"]), defaults={"auth_timestamp": timezone.now()})
         if not created:
             browser_login.auth_timestamp = timezone.now()
             browser_login.save()
@@ -96,6 +103,7 @@ def _generate_response(request, processor):
     add_user_log(request, "Signed in with SAML to %s" % return_url, "share-square-o")
 
     custom_log(request, "Rendering login.html with tv=%s" % tv, level="debug")
+
     return render_to_response('saml2idp/login.html', tv,
                                 context_instance=RequestContext(request))
 
@@ -125,10 +133,19 @@ def login_begin(request, *args, **kwargs):
     try:
         parsed = urlparse.urlparse(source['RelayState'])
         query = urlparse.parse_qs(parsed.query)
+        custom_log(request, "Parsed RelayState query: %s" % query, level="debug")
         if "continue" in query:
             parsed_continue = urlparse.urlparse(query["continue"][0])
+            query_continue = urlparse.parse_qs(parsed_continue.query)
+            custom_log(request, "Parsed 'continue' parameter from RelayState: %s" % query_continue, level="debug")
             return_url = None
-            if query["continue"][0].startswith("https://accounts.google.com/o/openid2"):
+            if 'xoauth_display_name' in query_continue:
+                return_url = query_continue['xoauth_display_name'][0]
+            elif parsed_continue.path == '/o/oauth/GetOAuthToken':
+                return_url = "Google OAuth"
+            elif "service" in query and query["service"][0] == "chromiumsync":
+                return_url = "Chrome Sync"
+            elif query["continue"][0].startswith("https://accounts.google.com/o/openid2"):
                 return_url = "Google OpenID"
             elif parsed_continue.hostname == "www.google.com" and parsed_continue.path.startswith("/calendar/"):
                 return_url = "Google Calendar"
@@ -144,8 +161,8 @@ def login_begin(request, *args, **kwargs):
                     return_url = "Google Plus"
             if return_url:
                 r.setex("saml-return-%s" % saml_id, return_url, 3600 * 12)
-    except:
-        pass
+    except Exception, e:
+        log.error("URL parsing exception %s" % e)
     r.setex("saml-SAMLRequest-%s" % saml_id, source['SAMLRequest'], 3600 * 12)
     r.setex("saml-RelayState-%s" % saml_id, source['RelayState'], 3600 * 12)
     custom_log(request, "Storing SAMLRequest=%s and RelayState=%s with saml_id=%s" % (source['SAMLRequest'], source['RelayState'], saml_id), level="debug")
