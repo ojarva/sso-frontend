@@ -461,6 +461,11 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
             # Remove cached value
             dcache.delete("num_sessions-%s" % self.user.username)
 
+            # Store browser name for this user for one month.
+            if self.name:
+                dcache.set("browser-name-for-%s-%s" % (self.bid_public, self.user.username), self.name, 86400 * 30)
+                self.name = None
+
         self.user = None
         self.save_browser = False
         self.auth_level = Browser.L_UNAUTH

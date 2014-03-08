@@ -4,6 +4,38 @@
 
 {% block body_snippets %}
 {% for detailed in sessions %}
+<div class="modal fade" id="browser_name_{{ detailed.browser.bid_public }}" tabindex="-1" role="dialog" aria-labelledby="browser_name_{{ detailed.browser.bid_public }}" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="browser_name_{{ detailed.browser.bid_public }}_label">Change name for {{ detailed.browser.get_readable_ua }}
+
+{% for icon in detailed.icons %}
+<i class="fa fa-{{icon}}"></i>
+{% endfor %}
+</h4>
+      </div>
+      <div class="modal-body">
+<p>This name is only visible for you. If you have multiple browsers, you can identify those with this. For example, you could use "Work laptop" and "Work desktop" as names.</p>
+
+<form role="form" method="post" action="?">
+{% csrf_token %}
+<input type="hidden" name="bid_public" value="{{ detailed.browser.bid_public }}">
+<input type="hidden" name="action" value="rename">
+
+  <div class="form-group">
+    <label for="exampleInputPassword1">Browser name</label>
+    <input type="text" class="form-control" id="id_name" name="name" placeholder="Work laptop" value="{% if detailed.browser.name %}{{ detailed.browser.name }}{% endif %}">
+  </div>
+  <button type="submit" class="btn btn-primary">Save</button> <button data-dismiss="modal" class="btn btn-default">Cancel</button>
+</form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="browser_info_{{ detailed.browser.bid_public }}" tabindex="-1" role="dialog" aria-labelledby="browser_info_{{ detailed.browser.bid_public }}" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -17,6 +49,10 @@
       </div>
       <div class="modal-body">
 <dl class="dl-horizontal">
+{% if detailed.browser.name %}<br/>
+ <dt>Description</dt>
+ <dd>{{ detailed.browser.name }}</dd>
+{% endif %}
 {% if detailed.timesync %}
  <dt>Your clock</dt>
  <dd>{{ detailed.timesync.formatted_time_diff }} &plusmn; {{ detailed.timesync.measurement_error }}ms (measured {% include "snippets/timestamp.html" with timestamp=detailed.timesync.checked_at %})</dd>
@@ -60,6 +96,8 @@
 </div>
 {% endfor %}
 {% endblock %}
+
+
 {% block content %}
 
 <h2>Your active sessions</h2>
@@ -93,9 +131,13 @@
 {% endfor %}
 
    {% if detailed.this_session %}Right now (this session){% else %}<b>{% include "snippets/timestamp.html" with timestamp=detailed.session.last_seen %}</b>{% endif %}<br/>
- from <b>{{ detailed.session.remote_ip }}</b> ({{ detailed.geo }})<br>
- with <b><span class="tooltip-link" title="{{ detailed.browser.ua }}">{{ detailed.browser.get_readable_ua }}</span></b> {% if detailed.browser.save_browser %}(<span class="tooltip-link" title="You have marked this browser as 'remembered'">remembered</span>){% endif %}
-
+ from <b>{{ detailed.session.remote_ip }}</b> ({{ detailed.geo }})<br/>
+ with <b><span class="tooltip-link" title="{{ detailed.browser.ua }}">{{ detailed.browser.get_readable_ua }}</span></b> {% if detailed.browser.save_browser %}(<span class="tooltip-link" title="You have marked this browser as 'remembered'">remembered</span>){% endif %}<br/>
+{% if detailed.browser.name %}
+<i><a href="#" data-toggle="modal" data-target="#browser_name_{{ detailed.browser.bid_public }}">{{ detailed.browser.name }}</a></i>
+{% else %}
+<button class="btn btn-link" data-toggle="modal" data-target="#browser_name_{{ detailed.browser.bid_public }}">Rename this browser</button>
+{% endif %}
 <ul>
 {% for login in detailed.logins %}
 <li><span data-toggle="popover" 
@@ -130,9 +172,7 @@
 <button type="submit" class="btn-block btn btn-danger">Sign out</button>
 </form>
 <a class="btn btn-block btn-primary" href="{% url 'login_frontend.views.view_log' detailed.browser.bid_public %}">View log</a>
-{% if detailed.p0f %}
 <button class ="btn btn-block btn-primary" data-toggle="modal" data-target="#browser_info_{{ detailed.browser.bid_public }}">View info</button>
-{% endif %}
 </div>
 </div>
 </li>

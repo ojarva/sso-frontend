@@ -297,6 +297,10 @@ def authenticate_with_password(request):
             if auth_status == True:
                 # User signed in, so there's no reason to keep forced_sign_out anymore.
                 browser.forced_sign_out = False
+                browser_name = dcache.get("browser-name-for-%s-%s" % (browser.bid_public, username))
+                if browser_name:
+                    # This user named this browser before signing out. Restore that name.
+                    browser.name = browser_name
 
                 if browser.user is None:
                     custom_log(request, "1f: browser.user is None: %s" % username, level="debug")
@@ -936,13 +940,22 @@ def sessions(request):
                         if browser_logout == request.browser:
                             custom_log(request, "sessions: signing out current browser", level="info")
                             self_logout = True
+                        browser_identification = browser_logout.get_readable_ua()
+                        if browser_logout.name:
+                            browser_identification = "%s (%s)" % (browser_logout.name, browser_identification)
+                        request_browser_identification = request.browser.get_readable_ua()
+                        if request.browser.name:
+                            request_browser_identification = "%s (%s)" % (request.browser.name, request_browser_identification)
+
                         browser_logout.logout()
                         browser_logout.forced_sign_out = True
                         browser_logout.save()
+
                         custom_log(request, "sessions: Signed out browser %s" % browser_logout.bid_public, level="info")
-                        add_user_log(request, "Signed out browser %s" % browser_logout.bid_public, "sign-out")
-                        add_user_log(request, "Signed out from browser %s" % request.browser.bid_public, "sign-out", bid_public=browser_logout.bid_public)
-                        messages.success(request, "Signed out browser %s" % browser_logout.get_readable_ua())
+                        add_user_log(request, "Signed out browser %s" % browser_identification, "sign-out")
+                        if not self_logout:
+                            add_user_log(request, "Signed out from browser %s" % request_browser_identification, "sign-out", bid_public=browser_logout.bid_public)
+                        messages.success(request, "Signed out browser %s" % browser_identification)
                 except Browser.DoesNotExist:
                     ret["message"] = "Invalid browser"
 
@@ -950,8 +963,24 @@ def sessions(request):
                 get_params = request.GET.dict()
                 get_params["logout"] = "on"
                 return redirect_with_get_params("login_frontend.views.logoutview", get_params)
-            return redirect_with_get_params("login_frontend.views.sessions", request.GET)
 
+        elif request.POST.get("action") == "rename":
+            try:
+                abrowser = Browser.objects.get(bid_public=request.POST.get("bid_public"))
+                if abrowser.user != request.browser.user:
+                    raise Browser.DoesNotExist
+
+            except Browser.DoesNotExist:
+                messages.warning(request, "Invalid browser. Your changes were not saved")
+                return redirect_with_get_params("login_frontend.views.sessions", request.GET)
+            val = request.POST.get("name")
+            abrowser.name = val
+            abrowser.save()
+            if val:
+                messages.success(request, "Browser was renamed as '%s'" % val)
+            else:
+                messages.success(request, "Browser name was removed")
+        return redirect_with_get_params("login_frontend.views.sessions", request.GET)
 
     browsers = Browser.objects.filter(user=user)
     sessions = []
