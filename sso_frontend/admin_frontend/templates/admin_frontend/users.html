@@ -3,6 +3,8 @@
 {% block title %}Admin - users - {% endblock %}
 {% block admin_content %}
 
+{% include "snippets/pagination.html" with prev_text="Previous" next_text="Next" %}
+
 <table class="table table-striped table-responsive">
 <thead>
 <tr>
@@ -15,7 +17,7 @@
 </tr>
 </thead>
 <tbody>
-{% for auser in users %}
+{% for auser in entries %}
 <tr>
 <td><a href="{% url 'admin_frontend.views.userdetails' auser.username %}">{{ auser.username }}</a></td>
 <td>{% if auser.strong_configured %}Yes{% else %}No{% endif %}</td>
@@ -27,5 +29,7 @@
 {% endfor %}
 </tbody>
 </table>
+
+{% include "snippets/pagination.html" with prev_text="Previous" next_text="Next" %}
 
 {% endblock %}

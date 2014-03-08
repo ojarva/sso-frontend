@@ -1,18 +1,18 @@
 {% if entries.pagerange %}
 <ul class="pagination">
  {% if entries.has_previous %}
- <li><a href="?page={{ entries.previous_page_number }}">&laquo; Newer</a></li>
+ <li><a href="?page={{ entries.previous_page_number }}">&laquo; {% if prev_text %}{{ prev_text }}{% else %}Newer{% endif %}</a></li>
  {% else %}
- <li class="disabled"><a href="#">&laquo; Newer</a></li>
+ <li class="disabled"><a href="#">&laquo; {% if prev_text %}{{ prev_text }}{% else %}Newer{% endif %}</a></li>
  {% endif %}
  {% for page in entries.pagerange %}
  <li{% if entries.number == page %} class="active"{% endif %}><a href="?page={{ page }}">{{ page }}</a></li>
  {% endfor %}
 
  {% if entries.has_next %}
- <li><a href="?page={{ entries.next_page_number }}">Older &raquo;</a></li>
+ <li><a href="?page={{ entries.next_page_number }}">{% if next_text %}{{ next_text }}{% else %}Older{% endif %} &raquo;</a></li>
  {% else %}
- <li class="disabled"><a href="#">Older &raquo;</a></li>
+ <li class="disabled"><a href="#">{% if next_text %}{{ next_text }}{% else %}Older{% endif %} &raquo;</a></li>
  {% endif %}
 </ul>
 {% endif %}

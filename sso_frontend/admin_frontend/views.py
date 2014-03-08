@@ -91,11 +91,11 @@ def indexview(request, **kwargs):
 @protect_view("users", required_level=Browser.L_STRONG, admin_only=True)
 def users(request):
     """ Returns list of users.
-    TODO: pagination
     """
     custom_log(request, "Admin: users")
     ret = {}
-    ret["users"] = User.objects.all().order_by('username')
+    entries = User.objects.all().order_by('username')
+    ret["entries"] = paginate(request, entries)
     return render_to_response("admin_frontend/users.html", ret, context_instance=RequestContext(request))
 
 @require_http_methods(["GET"])
