@@ -1,0 +1,11 @@
+{
+  "name": "login-websockets",
+  "description": "Websockets package for https://github.com/ojarva/sso-frontend",
+  "author": "Olli Jarva <olli@jarva.fi>",
+  "dependencies": {
+    "redis": ">= 0.10.1",
+    "socket.io": ">= 0.9.16",
+    "node-statsd": ">= 0.0.7"
+  },
+  "engine": "node 1.4.3"
+}

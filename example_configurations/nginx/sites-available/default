@@ -1,0 +1,59 @@
+server {
+	listen 80;
+	server_name login.futurice.com;
+        rewrite ^/(.*)$   https://$host/$1 permanent;
+	server_tokens off;
+}
+
+map $http_upgrade $connection_upgrade {
+	default upgrade;
+	''      close;
+}
+
+server {
+	location /socket.io/ {
+		proxy_pass http://localhost:3033;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection $connection_upgrade;
+	}
+
+	large_client_header_buffers 10 8k;
+	listen 443 ssl spdy;
+	server_name login.futurice.com;
+
+	root html;
+	index index.html index.htm;
+
+	server_tokens off;
+	proxy_pass_header Server;
+
+	ssl on;
+	ssl_certificate host.chained.crt;
+	ssl_certificate_key host.key;
+	ssl_prefer_server_ciphers on;
+	ssl_session_cache shared:SSL:50m;
+	ssl_session_timeout 5m;
+
+	ssl_protocols SSLv3 TLSv1;
+	ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv3:+EXP;
+
+	add_header Strict-Transport-Security max-age=15768000;
+        add_header x-content-type-options "nosniff";
+        add_header x-xss-protection "1; mode=block";
+        add_header x-frame-options "DENY";
+	add_header Content-Security-Policy "default-src 'none'; connect-src 'self' wss://login.futurice.com; script-src 'self'; img-src 'self'; style-src 'self'; report-uri /csp-report; font-src 'self'";
+        add_header X-Content-Security-Policy "default-src 'none'; connect-src 'self' wss://login.futurice.com; script-src 'self'; img-src 'self'; style-src 'self'; report-uri /csp-report; font-src 'self'";
+
+	location / {
+		include uwsgi_params;
+		proxy_set_header X-Forwarded-Proto https;
+		uwsgi_param UWSGI_SCHEME https;
+		uwsgi_pass_header X_FORWARDED_PROTO;
+                uwsgi_pass localhost:3031;
+	}
+	location /static {
+		expires 180d;
+		root /home/ssoservice/sso-frontend/sso_frontend/;
+	}
+}

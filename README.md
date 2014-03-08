@@ -19,8 +19,9 @@ Installation
 4. Implement your own SMS gateway: see ```login_frontend/send_sms.py.sample```.
 5. Find and replace branding: ```grep -i futurice * -R```
 6. Configure WSGI server to apache2
+7. Install npm and node.js. Run ```npm install .``` on node_socket directory. Run app.js. This provides websockets, used for simultaneous sign-ins and sign-outs.
 
-Using ```virtualenv``` is highly recommended.
+Using ```virtualenv``` is highly recommended. Example configuration files are available under ```example_configurations``` folder.
 
 p0f (optional)
 ------------------
