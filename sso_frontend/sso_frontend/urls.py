@@ -1,10 +1,6 @@
 from django.conf.urls import patterns, include, url
 from django_statsd.urls import urlpatterns as statsd_patterns
 
-# Uncomment the next two lines to enable the admin:
-from django.contrib import admin
-admin.autodiscover()
-
 urlpatterns = patterns('',
     # Examples:
     url(r'^', include('openid_provider.urls')),
@@ -14,7 +10,6 @@ urlpatterns = patterns('',
     url(r'^', include('saml2idp.urls')),
 
     url(r'^services/timing/', include(statsd_patterns)),
-    url(r'^admin/', include(admin.site.urls)),
 )
 
 handler400 = "login_frontend.error_views.error_400"

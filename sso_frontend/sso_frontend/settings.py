@@ -243,7 +243,6 @@ INSTALLED_APPS = (
     'south',
     'huey.djhuey',
     'saml2idp',
-    'django.contrib.admin',
     'admin_frontend',
     'cspreporting',
     'django_extensions',
