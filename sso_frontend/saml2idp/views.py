@@ -31,7 +31,7 @@ from django.utils import timezone
 import os
 import sys
 import statsd
-from utils import get_destination_service
+from utils import get_destination_service, parse_google_saml
 
 import logging
 log = logging.getLogger(__name__)
@@ -130,39 +130,13 @@ def login_begin(request, *args, **kwargs):
 
     saml_id = str(uuid.uuid4())
 
+    return_url = None
     try:
-        parsed = urlparse.urlparse(source['RelayState'])
-        query = urlparse.parse_qs(parsed.query)
-        custom_log(request, "Parsed RelayState query: %s" % query, level="debug")
-        if "continue" in query:
-            parsed_continue = urlparse.urlparse(query["continue"][0])
-            query_continue = urlparse.parse_qs(parsed_continue.query)
-            custom_log(request, "Parsed 'continue' parameter from RelayState: %s" % query_continue, level="debug")
-            return_url = None
-            if 'xoauth_display_name' in query_continue:
-                return_url = query_continue['xoauth_display_name'][0]
-            elif parsed_continue.path == '/o/oauth/GetOAuthToken':
-                return_url = "Google OAuth"
-            elif "service" in query and query["service"][0] == "chromiumsync":
-                return_url = "Chrome Sync"
-            elif query["continue"][0].startswith("https://accounts.google.com/o/openid2"):
-                return_url = "Google OpenID"
-            elif parsed_continue.hostname == "www.google.com" and parsed_continue.path.startswith("/calendar/"):
-                return_url = "Google Calendar"
-            elif parsed_continue.hostname:
-                host = parsed_continue.hostname
-                if host == "mail.google.com":
-                    return_url = "gmail"
-                elif host == "docs.google.com" or host == "drive.google.com":
-                    return_url = "Drive"
-                elif host == "groups.google.com":
-                    return_url = "Google Groups"
-                elif host == "plus.google.com":
-                    return_url = "Google Plus"
-            if return_url:
-                r.setex("saml-return-%s" % saml_id, return_url, 3600 * 12)
+        return_url = parse_google_saml(source["RelayState"])
     except Exception, e:
         log.error("URL parsing exception %s" % e)
+    if return_url:
+        r.setex("saml-return-%s" % saml_id, return_url, 3600 * 12)
     r.setex("saml-SAMLRequest-%s" % saml_id, source['SAMLRequest'], 3600 * 12)
     r.setex("saml-RelayState-%s" % saml_id, source['RelayState'], 3600 * 12)
     custom_log(request, "Storing SAMLRequest=%s and RelayState=%s with saml_id=%s" % (source['SAMLRequest'], source['RelayState'], saml_id), level="debug")
