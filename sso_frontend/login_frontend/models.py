@@ -137,9 +137,9 @@ def add_user_log(request, message, status="question", **kwargs):
 
 class Log(models.Model):
     user = models.ForeignKey('User')
-    timestamp = models.DateTimeField(auto_now_add=True)
-    bid_public = models.CharField(max_length=37, null=True, blank=True)
-    remote_ip = models.CharField(max_length=47, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    bid_public = models.CharField(max_length=37, null=True, blank=True, db_index=True)
+    remote_ip = models.CharField(max_length=47, null=True, blank=True, db_index=True)
     message = models.TextField()
     status = models.CharField(max_length=30, default="question")
 
@@ -182,21 +182,21 @@ class Browser(models.Model):
     C_BID_SESSION = "v2sessionbid"
 
     bid = models.CharField(max_length=37, primary_key=True) # UUID
-    bid_session = models.CharField(max_length=37) # UUID
-    bid_public = models.CharField(max_length=37) # UUID
+    bid_session = models.CharField(max_length=37, db_index=True) # UUID
+    bid_public = models.CharField(max_length=37, db_index=True) # UUID
 
     user = models.ForeignKey('User', null=True)
     ua = models.CharField(max_length=250) # browser user agent
 
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
+    modified = models.DateTimeField(auto_now=True, db_index=True)
 
     save_browser = models.BooleanField(default=False)
 
-    auth_level = models.DecimalField(max_digits=2, decimal_places=0, choices=A_AUTH_LEVEL, default=L_UNAUTH)
+    auth_level = models.DecimalField(max_digits=2, decimal_places=0, choices=A_AUTH_LEVEL, default=L_UNAUTH, db_index=True)
     auth_level_valid_until = models.DateTimeField(null=True, blank=True)
 
-    auth_state = models.DecimalField(max_digits=2, decimal_places=0, choices=A_AUTH_STATE, default=S_REQUEST_BASIC)
+    auth_state = models.DecimalField(max_digits=2, decimal_places=0, choices=A_AUTH_STATE, default=S_REQUEST_BASIC, db_index=True)
     auth_state_valid_until = models.DateTimeField(null=True, blank=True)
 
     sms_code = models.CharField(max_length=10, null=True, blank=True)
@@ -205,7 +205,7 @@ class Browser(models.Model):
 
     authenticator_qr_nonce = models.CharField(max_length=37, null=True, blank=True)
 
-    forced_sign_out = models.BooleanField(default=False)
+    forced_sign_out = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         ordering = ["-created"]
@@ -569,7 +569,7 @@ class BrowserTime(models.Model):
         return u"%s: %s ms +- %s ms" % (self.browser.bid_public, self.time_diff, self.measurement_error)
 
     browser = models.ForeignKey("Browser")
-    checked_at = models.DateTimeField(auto_now_add=True)
+    checked_at = models.DateTimeField(auto_now_add=True, db_index=True)
     timezone = models.IntegerField(default=0, null=True, blank=True)
     time_diff = models.IntegerField()
     measurement_error = models.DecimalField(max_digits=11, decimal_places=3)
@@ -606,11 +606,11 @@ class BrowserP0f(models.Model):
         return u"%s: %s" % (self.browser.bid_public, self.first_seen)
 
     browser = models.ForeignKey("Browser")
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
     wraparounds = models.IntegerField(default=0)
 
-    first_seen = models.DateTimeField()
-    last_seen = models.DateTimeField()
+    first_seen = models.DateTimeField(db_index=True)
+    last_seen = models.DateTimeField(db_index=True)
     total_conn = models.IntegerField()
     uptime_sec = models.IntegerField(null=True, blank=True)
     up_mod_days = models.IntegerField(null=True, blank=True)
@@ -628,7 +628,11 @@ class BrowserP0f(models.Model):
 class BrowserLogin(models.Model):
 
     class Meta:
-        ordering = ["-auth_timestamp", "sso_provider", "remote_service"]
+        ordering = ["-auth_timestamp", "sso_provider"]
+        index_together = [
+         ["signed_out", "expires_at"],
+         ["auth_timestamp", "sso_provider"],
+        ]
 
     def __unicode__(self):
         return u"%s with %s: %s to %s at %s" % (self.user.username, self.browser.get_readable_ua(), self.sso_provider, self.remote_service, self.auth_timestamp)
@@ -636,10 +640,10 @@ class BrowserLogin(models.Model):
     browser = models.ForeignKey("Browser")
     user = models.ForeignKey("User")
 
-    sso_provider = models.CharField(max_length=30, help_text="(Internal) name of SSO provider")
+    sso_provider = models.CharField(max_length=30, help_text="(Internal) name of SSO provider", db_index=True)
     remote_service = models.CharField(max_length=1000, null=True, blank=True, help_text="URL to remote service, if available")
     message = models.CharField(max_length=1000, null=True, blank=True, help_text="Optional user-readable information")
-    auth_timestamp = models.DateTimeField(help_text="Timestamp of authentication")
+    auth_timestamp = models.DateTimeField(help_text="Timestamp of authentication", db_index=True)
 
     can_logout = models.BooleanField(default=False, help_text="True if session can be closed remotely")
     expires_at = models.DateTimeField(null=True, help_text="Ticket expiration time, if available")
@@ -657,7 +661,7 @@ class BrowserUsers(models.Model):
 
     user = models.ForeignKey('User')
     browser = models.ForeignKey('Browser')
-    auth_timestamp = models.DateTimeField(null=True, help_text="Timestamp of the latest authentication")
+    auth_timestamp = models.DateTimeField(null=True, help_text="Timestamp of the latest authentication", db_index=True)
     max_auth_level = models.CharField(max_length=1, choices=Browser.A_AUTH_LEVEL, default=Browser.L_UNAUTH, help_text="Highest authentication level for this User/Browser combination")
 
     remote_ip = models.GenericIPAddressField(null=True, blank=True, help_text="Last remote IP address (active)")
