@@ -34,7 +34,6 @@ def test_csp(request, *args, **kwargs):
     """ Outputs page that violates CSP policy """
     return render_to_response("cspreporting/fail.html", {}, context_instance=RequestContext(request))
 
-@sd.timer("cspreporting.views.view_warnings")
 @require_http_methods(["GET"])
 @protect_view("indexview", required_level=Browser.L_STRONG, admin_only=True)
 def view_warnings(request):
@@ -74,7 +73,6 @@ def view_warnings(request):
     return render_to_response("cspreporting/view_warnings.html", ret, context_instance=RequestContext(request))
 
 
-@sd.timer("cspreporting.views.view_reports")
 @require_http_methods(["GET"])
 @protect_view("indexview", required_level=Browser.L_STRONG)
 def view_reports(request):
@@ -126,7 +124,6 @@ def view_reports(request):
     return render_to_response("cspreporting/view_reports.html", ret, context_instance=RequestContext(request))
 
 
-@sd.timer("cspreporting.views.log_report")
 @require_http_methods(["GET", "POST"])
 @csrf_exempt
 def log_report(request, *args, **kwargs):

@@ -76,7 +76,6 @@ def custom_log(request, message, **kwargs):
 
 
 
-@sd.timer("openid_provider.views.openid_server")
 @csrf_exempt
 def openid_server(request):
     """
@@ -217,7 +216,6 @@ def openid_server(request):
         custom_log(request, "rendering raw response", level="debug")
     return response
 
-@sd.timer("openid_provider.views.openid_xrds")
 def openid_xrds(request, identity=False, id=None):
     custom_log(request, "Requested openid_xrds")
     if identity:
@@ -235,7 +233,6 @@ def openid_xrds(request, identity=False, id=None):
     custom_log(request, "Options: %s" % ret, level="debug")
     return render_to_response('openid_provider/xrds.xml', ret, context_instance=RequestContext(request), content_type=YADIS_CONTENT_TYPE)
 
-@sd.timer("openid_provider.views.openid_decide")
 def openid_decide(request):
     """
     The page that asks the user if they really want to sign in to the site, and
@@ -291,7 +288,6 @@ def openid_decide(request):
         'sreg': get_default_sreg_data(request, orequest),
     }, context_instance=RequestContext(request))
 
-@sd.timer("openid_provider.views.error_page")
 def error_page(request, msg):
     custom_log(request, "Showing error page: %s" % msg, level="warn")
     return render_to_response('openid_provider/error.html', {
@@ -318,7 +314,6 @@ class SafeQueryDict(QueryDict):
                            for v in list_])
         return '&'.join(output)
 
-@sd.timer("openid_provider.views.landing_page")
 def landing_page(request, orequest, login_url=None,
                  redirect_field_name=REDIRECT_FIELD_NAME):
     """
@@ -338,7 +333,6 @@ def landing_page(request, orequest, login_url=None,
     custom_log(request, "Redirecting to %s" % (urlparse.urlunparse(login_url_parts)))
     return HttpResponseRedirect(urlparse.urlunparse(login_url_parts))
 
-@sd.timer("openid_provider.views.openid_is_authorized")
 def openid_is_authorized(request, identity_url, trust_root):
     """
     Check that they own the given identity URL, and that the trust_root is 
@@ -356,7 +350,6 @@ def openid_is_authorized(request, identity_url, trust_root):
 
     return openid
 
-@sd.timer("openid_provider.views.openid_get_identity")
 def openid_get_identity(request, identity_url):
     """
     Select openid based on claim (identity_url).
