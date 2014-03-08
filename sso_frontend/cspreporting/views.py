@@ -20,11 +20,10 @@ from login_frontend.views import protect_view
 import json
 import logging
 import re
-import redis
-import statsd
+from django_statsd.clients import statsd as sd
+from django.core.cache import get_cache
 
-sd = statsd.StatsClient()
-r = redis.Redis()
+dcache = get_cache("default")
 
 log = logging.getLogger(__name__)
 user_log = logging.getLogger(__name__)
@@ -34,7 +33,6 @@ def test_csp(request, *args, **kwargs):
     """ Outputs page that violates CSP policy """
     return render_to_response("cspreporting/fail.html", {}, context_instance=RequestContext(request))
 
-@sd.timer("cspreporting.views.view_warnings")
 @require_http_methods(["GET"])
 @protect_view("indexview", required_level=Browser.L_STRONG, admin_only=True)
 def view_warnings(request):
@@ -74,7 +72,6 @@ def view_warnings(request):
     return render_to_response("cspreporting/view_warnings.html", ret, context_instance=RequestContext(request))
 
 
-@sd.timer("cspreporting.views.view_reports")
 @require_http_methods(["GET"])
 @protect_view("indexview", required_level=Browser.L_STRONG)
 def view_reports(request):
@@ -126,7 +123,6 @@ def view_reports(request):
     return render_to_response("cspreporting/view_reports.html", ret, context_instance=RequestContext(request))
 
 
-@sd.timer("cspreporting.views.log_report")
 @require_http_methods(["GET", "POST"])
 @csrf_exempt
 def log_report(request, *args, **kwargs):
@@ -163,13 +159,13 @@ def log_report(request, *args, **kwargs):
 
     r_k = "csp-recorded-%s-%s-%s-%s-%s" % (username, bid_public, data.get("source-file"), data.get("line-number"), data.get("violated-directive"))
 
-    if r.get(r_k) or CSPReport.objects.filter(username=username, bid_public=bid_public).filter(source_file=data.get("source-file"), 
+    if dcache.get(r_k) or CSPReport.objects.filter(username=username, bid_public=bid_public).filter(source_file=data.get("source-file"), 
             line_number=data.get("line-number"), violated_directive=data.get("violated-directive")).count() > 0:
 
         sd.incr("cspreporting.views.log_report.duplicate", 1)
         return HttpResponse("Duplicate CSP report. Not stored.")
 
-    r.setex(r_k, True, 86400 * 7)
+    dcache.set(r_k, True, 86400 * 7)
 
     sd.incr("cspreporting.views.log_report.created", 1)
     a = CSPReport.objects.create(username=username, bid_public=bid_public, csp_raw=csp_data, document_uri=data.get("document-uri"),

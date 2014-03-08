@@ -3,7 +3,6 @@ import base64
 import logging
 import time
 import uuid
-import redis
 import urllib
 import urlparse
 
@@ -32,12 +31,14 @@ import os
 import sys
 import statsd
 from utils import get_destination_service, parse_google_saml
-
+from django.core.cache import get_cache
 import logging
+
+dcache = get_cache("default")
+
 log = logging.getLogger(__name__)
 
 sd = statsd.StatsClient()
-r = redis.Redis()
 
 @sd.timer("saml2idp.views.custom_log")
 def custom_log(request, message, **kwargs):
@@ -84,10 +85,10 @@ def _generate_response(request, processor):
     return_url = get_destination_service(tv["acs_url"])
     saml_id = request.GET.get("saml_id")
     if saml_id:
-        tmp = r.get("saml-return-%s" % saml_id)
+        tmp = dcache.get("saml-return-%s" % saml_id)
         if tmp:
             return_url = "%s - %s" % (return_url, tmp)
-        r.delete("saml-return-%s" % saml_id, "saml-SAMLRequest-%s" % saml_id, "saml-RelayState-%s" % saml_id)
+        dcache.delete("saml-return-%s" % saml_id, "saml-SAMLRequest-%s" % saml_id, "saml-RelayState-%s" % saml_id)
 
 
     # Update/add BrowserLogin
@@ -136,9 +137,9 @@ def login_begin(request, *args, **kwargs):
     except Exception, e:
         log.error("URL parsing exception %s" % e)
     if return_url:
-        r.setex("saml-return-%s" % saml_id, return_url, 3600 * 12)
-    r.setex("saml-SAMLRequest-%s" % saml_id, source['SAMLRequest'], 3600 * 12)
-    r.setex("saml-RelayState-%s" % saml_id, source['RelayState'], 3600 * 12)
+        dcache.set("saml-return-%s" % saml_id, return_url, 3600 * 12)
+    dcache.set("saml-SAMLRequest-%s" % saml_id, source['SAMLRequest'], 3600 * 12)
+    dcache.set("saml-RelayState-%s" % saml_id, source['RelayState'], 3600 * 12)
     custom_log(request, "Storing SAMLRequest=%s and RelayState=%s with saml_id=%s" % (source['SAMLRequest'], source['RelayState'], saml_id), level="debug")
     return redirect_with_get_params("saml2idp.views.login_process", {"saml_id": saml_id})
 

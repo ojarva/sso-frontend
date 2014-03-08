@@ -19,17 +19,17 @@ import os
 import time
 import urllib
 import uuid
-import statsd
-
+from django_statsd.clients import statsd as sd
+from django.core.cache import get_cache
 from signals import *
 
-sd = statsd.StatsClient()
+dcache = get_cache("default")
 
 log = logging.getLogger(__name__)
 
 __all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f", "BrowserTime", "UserService"]
 
-r = redis.Redis()
+redis_instance = redis.Redis()
 
 
 @sd.timer("login_frontend.models.custom_log")
@@ -220,12 +220,12 @@ class Browser(models.Model):
     def auth_state_changed(self):
         auth_state = self.get_auth_state()
         if auth_state != Browser.S_REQUEST_STRONG:
-            r.publish("to-browser-%s" % self.bid_public, json.dumps({"reload_state": str(auth_state)}))
+            redis_instance.publish("to-browser-%s" % self.bid_public, json.dumps({"reload_state": str(auth_state)}))
 
 
     @sd.timer("login_frontend.models.Browser.should_timesync")
     def should_timesync(self):
-        last_sync = r.get("timesync-at-%s" % self.bid_public)
+        last_sync = dcache.get("timesync-at-%s" % self.bid_public)
         if last_sync:
             return False
         try:
@@ -406,9 +406,9 @@ class Browser(models.Model):
             if self.is_mobile_phone():
                 link_id = create_browser_uuid().split("-")[0]
                 custom_log(request, "sms_text: Signing in from mobile device. Creating login link: %s" % link_id, level="info")
-                r.setex("urlauth-params-%s" % link_id, json.dumps(request.GET.dict()), 900)
-                r.setex("urlauth-bid-%s" % link_id, self.bid_public, 900)
-                r.setex("urlauth-user-%s" % link_id, self.user.username, 900)
+                dcache.set("urlauth-params-%s" % link_id, json.dumps(request.GET.dict()), 900)
+                dcache.set("urlauth-bid-%s" % link_id, self.bid_public, 900)
+                dcache.set("urlauth-user-%s" % link_id, self.user.username, 900)
                 mobile_phone_link = request.build_absolute_uri(reverse("login_frontend.views.authenticate_with_url", args=(link_id, )))
 
                 extra = """
@@ -459,7 +459,7 @@ Requested from %s""" % request.META.get("REMOTE_ADDR")
         self.revoke_sms()
         if self.user:
             # Remove cached value
-            r.delete("num_sessions-%s" % self.user.username)
+            dcache.delete("num_sessions-%s" % self.user.username)
 
         self.user = None
         self.save_browser = False
@@ -817,10 +817,10 @@ class User(models.Model):
             custom_log(request, "Comparing '%s' and '%s'" % (totp_code, code), level="debug")
             if str(code) == totp_code:
                 r_k = "used-otp-%s-%s" % (self.username, totp_code)
-                already_used = r.get(r_k)
+                already_used = dcache.get(r_k)
                 if already_used:
                     return (False, "OTP was already used. Please wait for 30 seconds and try again.")
-                r.setex(r_k, True, 900)
+                dcache.set(r_k, True, 900)
                 return (True, None)
 
         # Either timestamp is way off or user entered incorrect OTP.

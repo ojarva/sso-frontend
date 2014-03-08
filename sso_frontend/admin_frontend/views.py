@@ -18,15 +18,12 @@ from login_frontend.models import Browser, User, BrowserLogin, BrowserUsers, Log
 from login_frontend.utils import get_and_refresh_user, paginate
 from login_frontend.views import protect_view
 import logging
-import redis
 import sys
 import os
-import statsd
+from django_statsd.clients import statsd as sd
 
-sd = statsd.StatsClient()
 log = logging.getLogger(__name__)
 user_log = logging.getLogger(__name__)
-r = redis.Redis()
 
 @sd.timer("admin_frontend.views.custom_log")
 def custom_log(request, message, **kwargs):

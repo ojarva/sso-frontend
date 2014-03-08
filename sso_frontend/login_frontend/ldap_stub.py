@@ -10,22 +10,15 @@ log = logging.getLogger(__name__)
 class LdapLogin:
     """ LDAP authentication module """
 
-    def __init__(self, username, password, redis_instance):
-        self._redis = redis_instance
+    def __init__(self, username, password):
         self.username = self.map_username(username)
         self.password = password
         self._ldap = None
         self.user_dn = settings.LDAP_USER_BASE_DN % self.username
-        if self._redis is None:
-            raise Exception("No redis instance provided")
         self.authenticated = False
 
     def map_username(self, username):
         """ Maps user aliases to username """
-        r_k = "email-to-username-%s" % username
-        username_tmp = self._redis.get(r_k)
-        if username_tmp is not None:
-            return username_tmp
         return username
 
     @property

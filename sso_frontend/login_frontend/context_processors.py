@@ -13,11 +13,10 @@ These overwrite
 from django.contrib.auth.models import User as DjangoUser
 from login_frontend.models import Browser
 from django.utils.functional import SimpleLazyObject
-import statsd
-import redis
+from django_statsd.clients import statsd as sd
+from django.core.cache import get_cache
 
-sd = statsd.StatsClient()
-r = redis.Redis()
+dcache = get_cache("default")
 
 __all__ = ["add_static_timestamp", "add_browser", "add_user", "session_info"]
 
@@ -44,15 +43,15 @@ def add_user(request):
         if request.browser and request.browser.user:
             user = request.browser.user
             ret_dict = {"user": user, "username": user.username, "emulate_legacy": user.emulate_legacy}
-            ret_dict["first_name"] = r.get("first_name-for-%s" % user.username)
-            ret_dict["last_name"] = r.get("last_name-for-%s" % user.username)
+            ret_dict["first_name"] = dcache.get("first_name-for-%s" % user.username)
+            ret_dict["last_name"] = dcache.get("last_name-for-%s" % user.username)
             if ret_dict["first_name"] is None or ret_dict["last_name"] is None:
                 try:
                     django_user = DjangoUser.objects.get(username=user.username)
                     ret_dict["first_name"] = django_user.first_name
                     ret_dict["last_name"] = django_user.last_name
-                    r.setex("first_name-for-%s" % user.username, django_user.first_name, 7200)
-                    r.setex("last_name-for-%s" % user.username, django_user.last_name, 7200)
+                    dcache.set("first_name-for-%s" % user.username, django_user.first_name, 7200)
+                    dcache.set("last_name-for-%s" % user.username, django_user.last_name, 7200)
                 except DjangoUser.DoesNotExist:
                     pass
             return ret_dict
@@ -67,14 +66,14 @@ def session_info(request):
         return {}
 
     r_k = "num_sessions-%s" % request.browser.user.username
-    num_sessions = r.get(r_k)
+    num_sessions = dcache.get(r_k)
 
     def get_num_sessions():
         try:
             if request.browser and request.browser.user:
                 # TODO: filter out expired sessions
                 val = Browser.objects.filter(user=request.browser.user).count()
-                r.setex(r_k, val, 1800)
+                dcache.set(r_k, val, 1800)
                 return val
         except AttributeError:
             return None

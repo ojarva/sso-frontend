@@ -39,17 +39,18 @@ import pyotp
 import qrcode
 import re
 import redis
-import statsd
+from django_statsd.clients import statsd as sd
 import sys
 import time
 import urllib
 import urlparse
+from django.core.cache import get_cache
 
-sd = statsd.StatsClient()
+dcache = get_cache("default")
+ucache = get_cache("user_mapping")
 
 log = logging.getLogger(__name__)
 r = redis.Redis()
-r_usermap = redis.Redis(db=4)
 
 user_log = logging.getLogger("users.%s" % __name__)
 
@@ -148,7 +149,6 @@ def protect_view(current_step, **main_kwargs):
         return inner
     return wrap
 
-@sd.timer("login_frontend.views.main_redir")
 @require_http_methods(["GET", "POST"])
 def main_redir(request):
     """ Hack to enable backward compatibility with pubtkt.
@@ -159,7 +159,6 @@ def main_redir(request):
         return redirect_with_get_params("login_frontend.providers.pubtkt", request.GET)
     return redirect_with_get_params("login_frontend.views.indexview", request.GET)
 
-@sd.timer("login_frontend.views.indexview")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -211,7 +210,6 @@ def indexview(request):
     response = render_to_response("login_frontend/indexview.html", ret, context_instance=RequestContext(request))
     return response
 
-@sd.timer("login_frontend.views.firststepauth")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -222,7 +220,6 @@ def firststepauth(request):
     Currently only username/password query """
     return redirect_with_get_params("login_frontend.views.authenticate_with_password", request.GET)
 
-@sd.timer("login_frontend.views.authenticate_with_password")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -278,7 +275,7 @@ def authenticate_with_password(request):
 
         if username and password:
             custom_log(request, "1f: Both username and password exists. username=%s" % username, level="debug")
-            auth = LdapLogin(username, password, r_usermap)
+            auth = LdapLogin(username, password)
             auth_status = auth.login()
             if username != auth.username:
                 custom_log(request, "1f: mapped username %s to %s" % (username, auth.username), level="debug")
@@ -309,7 +306,7 @@ def authenticate_with_password(request):
                     user.save()
                     browser.user = user
                     # Delete cached counter
-                    r.delete("num_sessions-%s" % username)
+                    dcache.delete("num_sessions-%s" % username)
 
                 request.browser = browser
 
@@ -377,7 +374,6 @@ def authenticate_with_password(request):
     return response
 
 
-@sd.timer("login_frontend.views.secondstepauth")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -415,7 +411,6 @@ def secondstepauth(request):
     custom_log(request, "2f: No proper redirect configured.", level="error")
     return HttpResponse("Second step auth: no proper redirect configured.")
 
-@sd.timer("login_frontend.views.authenticate_with_url")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -424,9 +419,8 @@ def secondstepauth(request):
 def authenticate_with_url(request, **kwargs):
     """ Authenticates user with URL sent via SMS """
     def sid_cleanup(sid):
-        keys = ["params", "user", "bid"]
-        for k in keys:
-            r.delete("urlauth-%s-%s" % (k, sid))
+        keys = ["urlauth-%s-%s" % (k, sid) for k in ("params", "user", "bid")]
+        dcache.delete(keys)
 
     template_name = "login_frontend/authenticate_with_url.html"
     sid = kwargs.get("sid")
@@ -436,28 +430,28 @@ def authenticate_with_url(request, **kwargs):
         ret["invalid_request"] = True
         return render_to_response(template_name, ret, context_instance=RequestContext(request))
 
-    if not r.exists("urlauth-params-%s" % sid):
+    if not dcache.get("urlauth-params-%s" % sid):
         custom_log(request, "2f-url: sid does not exist, or it expired.", level="warn")
         ret["invalid_sid"] = True
         return render_to_response(template_name, ret, context_instance=RequestContext(request))
 
-    username = r.get("urlauth-user-%s" % sid)
+    username = dcache.get("urlauth-user-%s" % sid)
     if username != request.browser.user.username:
         custom_log(request, "2f-url: Tried to access SID that belongs to another user.", level="warn")
         ret["invalid_request"] = True
         return render_to_response(template_name, ret, context_instance=RequestContext(request))
 
-    bid_public = r.get("urlauth-bid-%s" % sid)
+    bid_public = dcache.get("urlauth-bid-%s" % sid)
     if bid_public != request.browser.bid_public:
         custom_log(request, "2f-url: Tried to access SID with wrong browser. Probably the phone opens SMS links to different browser, or it was actually another phone.", level="warn")
         ret["wrong_browser"] = True
         return render_to_response(template_name, ret, context_instance=RequestContext(request))
 
-    get_params = r.get("urlauth-params-%s" % sid)
+    get_params = dcache.get("urlauth-params-%s" % sid)
     try:
         get_params_dict = json.loads(get_params)
     except (ValueError, EOFError):
-        custom_log(request, "2f-url: Invalid get_params json from redis", level="warn")
+        custom_log(request, "2f-url: Invalid get_params json from cache", level="warn")
         ret["invalid_request"] = True
         return render_to_response(template_name, ret, context_instance=RequestContext(request))
 
@@ -487,7 +481,6 @@ def authenticate_with_url(request, **kwargs):
     return redirect_with_get_params("login_frontend.views.secondstepauth", get_params_dict)
 
 
-@sd.timer("login_frontend.views.authenticate_with_authenticator")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -617,7 +610,6 @@ def authenticate_with_authenticator(request):
     return response
 
 
-@sd.timer("login_frontend.views.authenticate_with_sms")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -779,16 +771,15 @@ def authenticate_with_sms(request):
     return response
 
 
-@sd.timer("login_frontend.views.automatic_ping")
 @require_http_methods(["GET"])
 def automatic_ping(request, **kwargs):
     """ Handles browser queries, and updates browser status when required. """
     location = request.GET.get("location")
     if location:
         if hasattr(request, "browser") and request.browser:
-            r.setex("last-known-location-%s" % request.browser.bid_public, location, 3600)
-            r.setex("last-known-location-timestamp-%s" % request.browser.bid_public, time.time(), 3600)
-            r.setex("last-known-location-from-%s" % request.browser.bid_public, request.META.get("REMOTE_ADDR"), 3600)
+            dcache.set("last-known-location-%s" % request.browser.bid_public, location, 3600)
+            dcache.set("last-known-location-timestamp-%s" % request.browser.bid_public, time.time(), 3600)
+            dcache.set("last-known-location-from-%s" % request.browser.bid_public, request.META.get("REMOTE_ADDR"), 3600)
         custom_log(request, "Ping from %s" % location)
     ret = {}
     sign_out = False
@@ -819,7 +810,6 @@ def automatic_ping(request, **kwargs):
         pubtkt_logout(request, response)
     return response
 
-@sd.timer("login_frontend.views.get_pubkey")
 @require_http_methods(["GET"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -836,7 +826,6 @@ def get_pubkey(request, **kwargs):
     return response
 
 
-@sd.timer("login_frontend.views.timesync")
 @require_http_methods(["GET"])
 def timesync(request, **kwargs):
     """ Calculates difference between server and client timestamps """
@@ -897,7 +886,7 @@ def timesync(request, **kwargs):
         ret["report"] = render_to_string("login_frontend/snippets/timesync_results.html", {"best_sync": round(best_sync, 2), "std": round(ret["errors_std"], 2), "meaningful": abs(best_sync) > ret["errors_std"]})
         if browser:
             BrowserTime.objects.create(browser=browser, timezone=browser_timezone, time_diff=best_sync, measurement_error=ret["errors_std"])
-            r.setex("timesync-at-%s" % browser.bid_public, int(time.time()*1000), 60*60*12)
+            dcache.set("timesync-at-%s" % browser.bid_public, int(time.time()*1000), 60*60*12)
         custom_log(request, "Browser timesync: %s ms with +-%s error. bt: %s; rt: %s" % (best_sync, ret["errors_std"], browser_times, recv_times), level="info")
 
     r_k = "timesync-%s-" % redis_id
@@ -915,7 +904,6 @@ def timesync(request, **kwargs):
     return response
 
 
-@sd.timer("login_frontend.views.sessions")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -987,10 +975,10 @@ def sessions(request):
 
         logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(Q(expires_at__gte=timezone.now()) | Q(expires_at=None))
         details["logins"] = logins
-        redis_keys = [("last_known_location", "last-known-location-%s"), ("last_known_location_from", "last-known-location-from-%s"), ("last_known_location_timestamp", "last-known-location-timestamp-%s")]
-        for tk, k in redis_keys:
+        cache_keys = [("last_known_location", "last-known-location-%s"), ("last_known_location_from", "last-known-location-from-%s"), ("last_known_location_timestamp", "last-known-location-timestamp-%s")]
+        for tk, k in cache_keys:
             r_k = k % browser.bid_public
-            val = r.get(r_k)
+            val = dcache.get(r_k)
             if val:
                 if tk == "last_known_location_timestamp":
                     val = datetime.datetime.fromtimestamp(float(val))
@@ -1011,7 +999,6 @@ def sessions(request):
     return response
 
 
-@sd.timer("login_frontend.views.view_log")
 @require_http_methods(["GET"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1060,7 +1047,6 @@ def view_log(request, **kwargs):
 
 
 
-@sd.timer("login_frontend.views.configure_strong")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1121,7 +1107,6 @@ def configure_strong(request):
     response = render_to_response("login_frontend/configure_strong.html", ret, context_instance=RequestContext(request))
     return response
 
-@sd.timer("login_frontend.views.get_authenticator_qr")
 @require_http_methods(["GET"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1150,7 +1135,6 @@ def get_authenticator_qr(request, **kwargs):
     custom_log(request, "qr: Downloaded Authenticator secret QR code", level="info")
     return HttpResponse(stringio.read(), content_type="image/png")
 
-@sd.timer("login_frontend.views.configure_authenticator")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1217,7 +1201,6 @@ def configure_authenticator(request):
     response = render_to_response("login_frontend/configure_authenticator.html", ret, context_instance=RequestContext(request))
     return response
 
-@sd.timer("login_frontend.views.authenticate_with_emergency")
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
@@ -1231,7 +1214,6 @@ def authenticate_with_emergency(request):
         # No emergency codes generated. Show error message.
         pass
 
-@sd.timer("login_frontend.views.logoutview")
 @require_http_methods(["GET", "POST"])
 def logoutview(request):
     """ Handles logout as well as possible.
