@@ -18,13 +18,14 @@ Installation
 3. Configure your local settings: ```mv sso_frontend/local_settings.py.sample sso_frontend/local_settings.py; vim sso_frontend/local_settings.py```
 4. Implement your own SMS gateway: see ```login_frontend/send_sms.py.sample```.
 5. Find and replace branding: ```grep -i futurice * -R```
-6. Configure WSGI server to apache2
-7. Install npm and node.js. Run ```npm install .``` on node_socket directory. Run app.js. This provides websockets, used for simultaneous sign-ins and sign-outs.
-
-Using ```virtualenv``` is highly recommended. Example configuration files are available under ```example_configurations``` folder.
+6. Implement your own user sync from user directory (see ```login_frontend/management/commands/refresh_users.py``` and ```login_frontend/utils.py```).
+7. Configure uWSGI and nginx. Example configuration files available under ```example_configurations``` folder. Modifying large_client_header_buffers is essential, as valid OpenID/SAML requests easily exceed the default limit.
+8. Install npm and node.js. Run ```npm install .``` on node_socket directory. Run app.js. This provides websockets, used for simultaneous sign-ins and sign-outs.
 
 p0f (optional)
 ------------------
+
+p0f is used for guessing additional information about the client, including OS, network distance, network type and uptime.
 
 ```
 sudo apt-get install libpcap-dev supervisor
@@ -79,16 +80,18 @@ And for ```/static```:
 cache-control: "public, max-age=86400"
 ```
 
+See ```example_configurations/nginx/sites-available/default``` for complete configuration file.
+
 Font Content-Type headers
 -------------------------
 
-With ```x-content-type-options: nosniff``` content-types are not automatically detected. For apache2, add
+With ```x-content-type-options: nosniff``` content-types are not automatically detected. For nginx, add
 
 ```
-AddType application/x-font-ttf           .ttf
-AddType application/font-woff            .woff
-AddType application/x-font-opentype      .otf
-AddType application/vnd.ms-fontobject    .eot
+application/x-font-ttf           ttf;
+application/font-woff            woff;
+application/x-font-opentype      otf;
+application/vnd.ms-fontobject    eot;
 ```
 
-to configuration file and reload apache.
+to ```/etc/nginx/mime.types``` and reload nginx.
