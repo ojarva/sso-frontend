@@ -128,7 +128,9 @@ def login_begin(request, *args, **kwargs):
         if "continue" in query:
             parsed_continue = urlparse.urlparse(query["continue"][0])
             return_url = None
-            if parsed_continue.hostname == "www.google.com" and parsed_continue.path.startswith("/calendar/"):
+            if query["continue"][0].startswith("https://accounts.google.com/o/openid2"):
+                return_url = "Google OpenID"
+            elif parsed_continue.hostname == "www.google.com" and parsed_continue.path.startswith("/calendar/"):
                 return_url = "Google Calendar"
             elif parsed_continue.hostname:
                 host = parsed_continue.hostname
