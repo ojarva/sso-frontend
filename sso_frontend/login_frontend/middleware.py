@@ -24,12 +24,13 @@ import logging
 import p0f
 import pytz
 import re
-import redis
 import socket
 import time
 from django_statsd.clients import statsd as sd
+from django.core.cache import get_cache
 
-r = redis.Redis()
+dcache = get_cache("default")
+
 log = logging.getLogger(__name__)
 
 timing_log = logging.getLogger("request_timing")
@@ -91,7 +92,7 @@ def get_browser(request):
 
     if browser.user:
         r_k = "browser-location-last-update-%s-%s" % (browser.user.username, browser.bid_public)
-        last_update = r.get(r_k)
+        last_update = dcache.get(r_k)
         remote_address = request.META.get("REMOTE_ADDR")
         if last_update != remote_address:
             user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)
@@ -104,7 +105,7 @@ def get_browser(request):
                 user_to_browser.remote_ip = remote_address
                 user_to_browser.last_seen = timezone.now()
             user_to_browser.save()
-            r.setex(r_k, remote_address, 30)
+            dcache.set(r_k, remote_address, 30)
     return browser
 
 
@@ -123,10 +124,10 @@ class P0fMiddleware(object):
         browser = request.browser
         remote_addr = request.META.get("REMOTE_ADDR")
         r_k = "p0f-last-update-%s" % (browser.bid_public)
-        last_update = r.get(r_k)
+        last_update = dcache.get(r_k)
         if last_update == remote_addr:
             return
-        r.setex(r_k, remote_addr, 30)
+        dcache.set(r_k, remote_addr, 30)
 
         def update_newest(newest, remote_info):
             if remote_info["uptime_sec"] == None and newest.uptime_sec == None:
@@ -291,7 +292,7 @@ class TimesyncMiddleware(object):
         bid_public = request.COOKIES.get(Browser.C_BID_PUBLIC)
         if not bid_public:
             return
-        last_timesync = r.get("timesync-at-%s" % bid_public)
+        last_timesync = dcache.get("timesync-at-%s" % bid_public)
         if not last_timesync:
             request.should_timesync
 

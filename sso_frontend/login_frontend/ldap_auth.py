@@ -3,6 +3,9 @@ import ldap
 import logging
 from django.conf import settings
 from django_statsd.clients import statsd as sd
+from django.core.cache import get_cache
+
+ucache = get_cache("user_mapping")
 
 __all__ = ["LdapLogin"]
 
@@ -11,21 +14,18 @@ log = logging.getLogger(__name__)
 class LdapLogin: # pragma: no cover
     """ LDAP authentication module """
 
-    def __init__(self, username, password, redis_instance):
-        self._redis = redis_instance
+    def __init__(self, username, password):
         self.username = self.map_username(username)
         self.password = password
         self._ldap = None
         self.user_dn = settings.LDAP_USER_BASE_DN % self.username
-        if self._redis is None:
-            raise Exception("No redis instance provided")
         self.authenticated = False
 
     @sd.timer("login_frontend.ldap_auth.map_username")
     def map_username(self, username):
         """ Maps user aliases to username """
         r_k = "email-to-username-%s" % username
-        username_tmp = self._redis.get(r_k)
+        username_tmp = ucache.get(r_k)
         if username_tmp is not None:
             return username_tmp
         return username

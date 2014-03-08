@@ -7,11 +7,8 @@ from django.template import RequestContext
 from django.views.decorators.http import require_http_methods
 from login_frontend.models import Browser
 import logging
-import redis
 
 log = logging.getLogger(__name__)
-r = redis.Redis()
-
 
 @require_http_methods(["GET", "POST"])
 def error_csrf(request, reason="", **kwargs):

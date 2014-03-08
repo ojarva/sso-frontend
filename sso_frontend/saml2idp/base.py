@@ -6,14 +6,14 @@ import uuid
 # Django and other library imports:
 from BeautifulSoup import BeautifulStoneSoup
 from django.core.exceptions import ImproperlyConfigured
+from django.core.cache import get_cache
 # local app imports:
 import codex
 import exceptions
 import saml2idp_metadata
 import xml_render
-import redis
 
-r = redis.Redis()
+dcache = get_cache("default")
 
 from login_frontend.models import User
 
@@ -137,8 +137,8 @@ class Processor(object):
         """
         saml_id = self._django_request.GET.get("saml_id")
 
-        self._saml_request = r.get("saml-SAMLRequest-%s" % saml_id)
-        self._relay_state = r.get("saml-RelayState-%s" % saml_id)
+        self._saml_request = dcache.get("saml-SAMLRequest-%s" % saml_id)
+        self._relay_state = dcache.get("saml-RelayState-%s" % saml_id)
         if self._saml_request == None or self._relay_state == None:
             return False
         return True

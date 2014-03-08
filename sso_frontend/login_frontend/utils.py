@@ -24,11 +24,11 @@ import slumber
 import time
 import urllib
 import urlparse
-import redis
 from django_statsd.clients import statsd as sd
 
-r = redis.Redis()
+from django.core.cache import get_cache
 
+dcache = get_cache("default")
 
 log = logging.getLogger(__name__)
 timing_log = logging.getLogger("timing_data")
@@ -56,8 +56,7 @@ def get_return_url(request):
                 if parsed.query:
                     query_params = urlparse.parse_qs(parsed.query)
                     if "saml_id" in query_params:
-                        log.debug("redis key: saml-return-%s" % query_params["saml_id"][0])
-                        return_info = r.get("saml-return-%s" % query_params["saml_id"][0])
+                        return_info = dcache.get("saml-return-%s" % query_params["saml_id"][0])
                         if return_info:
                             return return_info
 

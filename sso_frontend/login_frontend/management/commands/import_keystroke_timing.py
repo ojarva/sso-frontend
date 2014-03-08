@@ -4,7 +4,6 @@ from django.utils import timezone
 from django.conf import settings
 
 from login_frontend.models import *
-import redis
 import json
 from django.conf import settings
 import datetime
