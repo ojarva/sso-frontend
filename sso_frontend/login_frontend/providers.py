@@ -23,9 +23,7 @@ import time
 import urllib
 import os
 import sys
-import statsd
-
-sd = statsd.StatsClient()
+from django_statsd.clients import statsd as sd
 
 privkey = settings.PUBTKT_PRIVKEY
 

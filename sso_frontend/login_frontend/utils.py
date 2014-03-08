@@ -24,11 +24,10 @@ import slumber
 import time
 import urllib
 import urlparse
-import statsd
 import redis
+from django_statsd.clients import statsd as sd
 
 r = redis.Redis()
-sd = statsd.StatsClient()
 
 
 log = logging.getLogger(__name__)

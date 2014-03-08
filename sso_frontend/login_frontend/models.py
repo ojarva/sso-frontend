@@ -19,11 +19,9 @@ import os
 import time
 import urllib
 import uuid
-import statsd
+from django_statsd.clients import statsd as sd
 
 from signals import *
-
-sd = statsd.StatsClient()
 
 log = logging.getLogger(__name__)
 

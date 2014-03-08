@@ -39,13 +39,11 @@ import pyotp
 import qrcode
 import re
 import redis
-import statsd
+from django_statsd.clients import statsd as sd
 import sys
 import time
 import urllib
 import urlparse
-
-sd = statsd.StatsClient()
 
 log = logging.getLogger(__name__)
 r = redis.Redis()

@@ -2,9 +2,7 @@
 import ldap
 import logging
 from django.conf import settings
-import statsd
-
-sd = statsd.StatsClient()
+from django_statsd.clients import statsd as sd
 
 __all__ = ["LdapLogin"]
 

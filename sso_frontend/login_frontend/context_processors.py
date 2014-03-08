@@ -13,10 +13,9 @@ These overwrite
 from django.contrib.auth.models import User as DjangoUser
 from login_frontend.models import Browser
 from django.utils.functional import SimpleLazyObject
-import statsd
+from django_statsd.clients import statsd as sd
 import redis
 
-sd = statsd.StatsClient()
 r = redis.Redis()
 
 __all__ = ["add_static_timestamp", "add_browser", "add_user", "session_info"]

@@ -21,9 +21,8 @@ import logging
 import redis
 import sys
 import os
-import statsd
+from django_statsd.clients import statsd as sd
 
-sd = statsd.StatsClient()
 log = logging.getLogger(__name__)
 user_log = logging.getLogger(__name__)
 r = redis.Redis()

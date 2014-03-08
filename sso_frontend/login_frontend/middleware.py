@@ -27,9 +27,7 @@ import re
 import redis
 import socket
 import time
-import statsd
-
-sd = statsd.StatsClient()
+from django_statsd.clients import statsd as sd
 
 r = redis.Redis()
 log = logging.getLogger(__name__)
