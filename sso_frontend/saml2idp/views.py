@@ -88,7 +88,7 @@ def _generate_response(request, processor):
         tmp = dcache.get("saml-return-%s" % saml_id)
         if tmp:
             return_url = "%s - %s" % (return_url, tmp)
-        dcache.delete("saml-return-%s" % saml_id, "saml-SAMLRequest-%s" % saml_id, "saml-RelayState-%s" % saml_id)
+        dcache.delete(["saml-return-%s" % saml_id, "saml-SAMLRequest-%s" % saml_id, "saml-RelayState-%s" % saml_id])
 
 
     # Update/add BrowserLogin
