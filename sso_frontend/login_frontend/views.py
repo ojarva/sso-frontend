@@ -49,6 +49,7 @@ sd = statsd.StatsClient()
 
 log = logging.getLogger(__name__)
 r = redis.Redis()
+r_usermap = redis.Redis(db=4)
 
 user_log = logging.getLogger("users.%s" % __name__)
 
@@ -277,10 +278,10 @@ def authenticate_with_password(request):
 
         if username and password:
             custom_log(request, "1f: Both username and password exists. username=%s" % username, level="debug")
-            auth = LdapLogin(username, password, r)
+            auth = LdapLogin(username, password, r_usermap)
             auth_status = auth.login()
             if username != auth.username:
-                custom_log(request, "1f: mapped username %s to %s" % (username, auth_username), level="debug")
+                custom_log(request, "1f: mapped username %s to %s" % (username, auth.username), level="debug")
             username = auth.username # mapped from aliases (email address -> username)
 
             save_browser = False
