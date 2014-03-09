@@ -17,7 +17,8 @@
 </h4>
       </div>
       <div class="modal-body">
-<p>This name is only visible for you. If you have multiple browsers, you can identify those with this. For example, you could use "Work laptop" and "Work desktop" as names.</p>
+<p>This name is only visible for you. If you have multiple browsers, you can use these names to identify those. For example, you could use "Work laptop" and "Work desktop" as names,
+or "Work profile" and "Personal profile" for different browser user profiles.</p>
 
 <form role="form" method="post" action="?">
 {% csrf_token %}
@@ -136,7 +137,7 @@
 {% if detailed.browser.name %}
 <i><a href="#" data-toggle="modal" data-target="#browser_name_{{ detailed.browser.bid_public }}">{{ detailed.browser.name }}</a></i>
 {% else %}
-<button class="btn btn-link" data-toggle="modal" data-target="#browser_name_{{ detailed.browser.bid_public }}">Rename this browser</button>
+<button class="btn btn-link" data-toggle="modal" data-target="#browser_name_{{ detailed.browser.bid_public }}">Name this browser</button>
 {% endif %}
 <ul>
 {% for login in detailed.logins %}

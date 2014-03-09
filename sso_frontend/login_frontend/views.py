@@ -20,7 +20,6 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
-from login_frontend.forms import OTPForm
 if settings.FAKE_TESTING:
     from login_frontend.ldap_stub import LdapLogin
 else:
@@ -343,7 +342,6 @@ def authenticate_with_password(request):
                     custom_log(request, "1f: set L_BASIC and S_REQUEST_STRONG")
                     browser.set_auth_level(Browser.L_BASIC)
                     browser.set_auth_state(Browser.S_REQUEST_STRONG)
-                browser.save()
 
                 return redirect_with_get_params("login_frontend.views.secondstepauth", request.GET)
             else:
@@ -536,19 +534,22 @@ def authenticate_with_authenticator(request):
             messages.warning(request, "You can't skip strong authentication anymore.")
             custom_log(request, "2f-auth: Tried to skip strong authentication with no skips available", level="warn")
 
-    form = OTPForm()
+    if request.browser.name:
+        ret["browser_name"] = True
+
     if request.method == "POST" and not request.session.test_cookie_worked():
         custom_log(request, "2f-auth: cookies do not work properly", level="warn")
         ret["enable_cookies"] = True
 
     elif request.method == "POST":
+        browser_name = request.POST.get("name")
+        ret["browser_name_value"] = browser_name
         request.session.delete_test_cookie()
 
         custom_log(request, "2f-auth: POST request", level="debug")
-        form = OTPForm(request.POST)
-        if form.is_valid():
+        if request.POST.get("otp"):
             custom_log(request, "2f-auth: Form is valid", level="debug")
-            otp = form.cleaned_data["otp"]
+            otp = request.POST.get("otp")
             custom_log(request, "2f-auth: Testing OTP code %s at %s" % (otp, time.time()), level="debug")
             (status, message) = user.validate_authenticator_code(otp, request)
 
@@ -570,6 +571,8 @@ def authenticate_with_authenticator(request):
                 custom_log(request, "2f-auth: Authenticator code did not match. Testing SMS", level="info")
                 status, _ = request.browser.validate_sms(otp)
             if status:
+                if browser_name and browser_name != request.browser.name:
+                    request.browser.name = browser_name
 
                 custom_log(request, "2f-auth: Second-factor authentication with Authenticator succeeded")
                 add_user_log(request, "Second-factor authentication with Authenticator succeeded", "lock")
@@ -597,12 +600,12 @@ def authenticate_with_authenticator(request):
                 if not re.match("^[0-9]{5,6}$", otp):
                     ret["is_invalid_otp"] = True
                 ret["invalid_otp"] = message
+        else:
+            custom_log(request, "2f-auth: form was not valid", level="debug")
+            messages.warning(request, "One-time password field is mandatory.")
     else:
         custom_log(request, "2f-auth: GET request", level="debug")
-        form = OTPForm()
 
-
-    ret["form"] = form
     ret["user"] = user
     ret["authenticator_id"] = user.get_authenticator_id()
     ret["get_params"] = urllib.urlencode(request.GET)
@@ -679,12 +682,16 @@ def authenticate_with_sms(request):
         # Phone number changed. For security reasons...
         ret["primary_phone_changed"] = True
 
+    if request.browser.name:
+        ret["browser_name"] = True
+
     if request.method == "POST":
         custom_log(request, "2f-sms: POST request", level="debug")
-        form = OTPForm(request.POST)
-        if form.is_valid():
+        browser_name = request.POST.get("name")
+        ret["browser_name_value"] = browser_name
+        if request.POST.get("otp"):
             custom_log(request, "2f-sms: Form is valid", level="debug")
-            otp = form.cleaned_data["otp"]
+            otp = request.POST.get("otp")
             status, message = request.browser.validate_sms(otp)
 
             save_browser = False
@@ -706,6 +713,9 @@ def authenticate_with_sms(request):
                 (status, _) = request.browser.user.validate_authenticator_code(otp, request)
 
             if status:
+                if browser_name and browser_name != request.browser.name:
+                    request.browser.name = browser_name
+
                 # Authentication succeeded.
                 custom_log(request, "2f-sms: Second-factor authentication with SMS succeeded")
                 add_user_log(request, "Second-factor authentication with SMS succeeded", "lock")
@@ -743,7 +753,6 @@ def authenticate_with_sms(request):
             messages.warning(request, "Invalid input")
     else:
         custom_log(request, "2f-sms: GET request", level="debug")
-        form = OTPForm()
 
     if not request.browser.valid_sms_exists(180) or request.POST.get("regen_sms"):
         custom_log(request, "2f-sms: Generating a new SMS code", level="info")
@@ -766,7 +775,6 @@ def authenticate_with_sms(request):
 
     ret["sms_valid_until"] = request.browser.sms_code_generated_at + datetime.timedelta(seconds=900)
     ret["expected_sms_id"] = request.browser.sms_code_id
-    ret["form"] = form
     ret["get_params"] = urllib.urlencode(request.GET)
     ret["my_computer"] = request.browser.save_browser
     ret["should_timesync"] = request.browser.should_timesync()

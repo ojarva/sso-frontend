@@ -52,6 +52,7 @@
 <form class="form" role="form" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">
   {% csrf_token %}
   {% include 'login_frontend/snippets/otp_input.html' %}
+  {% include 'login_frontend/snippets/browser_name_input.html' %}
   <div class="form-group">
        <button class="btn btn-primary" type="submit">Sign in <span class="glyphicon glyphicon-remove-circle"></span></button>
   </div>
