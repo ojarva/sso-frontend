@@ -1,5 +1,6 @@
 var socket;
 $(document).ready(function (){
+ try {
  var rand_id = Math.random();
  socket = io.connect('https://login.futurice.com');
  socket.on("connect", function() {
@@ -27,4 +28,7 @@ $(document).ready(function (){
      alert(parsed.alert);
     }
  });
+ } catch (e) {
+  console.log(e);
+ }
 });
