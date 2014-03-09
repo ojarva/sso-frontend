@@ -191,7 +191,7 @@ def logout(request):
     Forwards SAML 2.0 logout URL to logout page.
     """
     custom_log(request, "Redirecting to logout page from GET logout", level="debug")
-    return redirect_with_get_params("login_frontend.views.logoutview", request.GET)
+    return redirect_with_get_params("login_frontend.authentication_views.logoutview", request.GET)
 
 @login_required
 @csrf_exempt
@@ -207,7 +207,7 @@ def slo_logout(request):
                                   context_instance=RequestContext(request))
 
     custom_log(request, "Redirecting to logout page from POST logout", level="debug")
-    return redirect_with_get_params("login_frontend.views.logoutview", request.GET)
+    return redirect_with_get_params("login_frontend.authentication_views.logoutview", request.GET)
 
 def descriptor(request):
     """
