@@ -42,19 +42,24 @@
 {% endif %}
 
 {% if not user.strong_authenticator_secret %}
+	{# authenticator is not generated #}
 	{% if user.strong_sms_always %}
 		<div class="alert alert-warning">
-			<i class="fa fa-exclamation"></i> You have opted for SMS authentication. Do note that it is less reliable, especially while traveling.
-			This system will ask for one-time passwords when you travel to new places.
+			<i class="fa fa-exclamation"></i> You have opted for SMS authentication. That is totally okay.
+			<b>However, you should configure Authenticator as a backup</b>. SMS is less reliably, especially
+			while traveling.
 		</div>
-	{% endif %}
 
-	<p>You don't have Google Authenticator configured, or your configuration was revoked.
-	{% if user.strong_sms_always %}
-		Even if you want to use SMS by default, you should configure Authenticator.
-	{% else %} 
-		You have two choices: either use Authenticator app on your mobile phone, or receive SMS every time one-time password is required.
-	{% endif %}</p>
+	{% else %}
+		<div class="well">
+			Recommended configuration: install and configure Authenticator and after that decide
+			whether you want to use Authenticator or SMS for authentication.
+		</div>
+
+		<p>This way, you can still use SMS if you want to, but if SMS delivery fails - for example, while
+		traveling, or when there's issues with cell network, or with our SMS gateway, you can still
+		sign in.</p>
+	{% endif %}
 
 	<ul>
 	<li>Authenticator is more reliable, because it works with no cell or internet connection.</li>
@@ -69,7 +74,9 @@
 	        <button class="btn btn-primary configure_authenticator_btn" type="submit">Configure Google Authenticator</button>
 	</form>
 
+
 	{% if not user.strong_sms_always %}
+		<hr/>
 		<p>If you want to live dangerously, you can opt for always receiving SMS messages. Before clicking this, do note the following:</p>
 		<ul>
 		<li>Installing and configuring Authenticator takes only a few minutes.</li>
@@ -85,18 +92,25 @@
 	{% endif %}
 
 {% else %}
-	{% if user.strong_authenticator_used and not user.strong_sms_always %}
-		<div class="alert alert-success">
-			<i class="fa fa-heart"></i> You are using Google Authenticator for one-time passwords. If you have it configured on your phone, no action is required. The name of
-			the code should be "{{ authenticator_id }}". If that does not match, you probably have to reconfigure it.
+	<div class="panel panel-primary">
+		<div class="panel-heading">
+			Strong authentication
 		</div>
-		<p>If you have lost the configuration, you can</p>
-	{% elif user.strong_authenticator_used %}
-		<p>You have Google Authenticator configured and according to our records you have successfully used it.
-		If you don't have Google Authenticator configured anymore - for example, after reinstalling or changing the phone - you can reconfigure it:</p>
+		<div class="panel-body">
+	{% if not user.strong_authenticator_used %}
+		<div class="alert alert-danger">
+			<i class="fa fa-exclamation-triangle"></i>
+			You haven't configured Authenticator. If SMS delivery fails, <b>you can't sign in</b>.
+		</div>
+		<p>If you already have Authenticator installed and configured, this is a false alarm. Please sign in once with it to get rid of this warning.</p>
+
+		<p>If you don't have Authenticator configured, please do so now:</p>
 	{% else %}
-		<p>It seems you have generated Google Authenticator configuration, but you have not used it. If you haven't actually
-		configured it to your phone, you can</p>
+		<div class="alert alert-success">
+			<i class="fa fa-heart"></i> You have configured Authenticator. The name of the code should be "{{ authenticator_id }}".
+			If that does not match to what your Authenticator app says, you have to reconfigure it.
+		</div>
+		<p>If you have lost the configuration, please configure Authenticator again:</p>
 	{% endif %}
 
 	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">
@@ -104,14 +118,14 @@
 	        <span class="tooltip-link" title="Clicking this will immediately revoke your previous configuration"><button class="btn btn-warning configure_authenticator_btn" type="submit">Reconfigure Google Authenticator</button></span>
 	</form>
 
-	<hr />
-
+	<hr/>
 	{% if not user.strong_sms_always %}
 		<p>If you don't want to use Authenticator, you can opt to always use SMS instead. Before doing this, please note following points:</p>
 
 		<ul>
+		{% if not user.strong_authenticator_used %}<li><b>You really should configure Authenticator as a backup</b>, even if you want to use SMS by default</li>{% endif %}
 		<li>Authenticator is faster to use</li>
-		<li>SMS delivery could be unreliable especially while traveling. You'll need one-time codes when traveling to new places.</li>
+		<li>SMS delivery could be unreliable especially while traveling. You'll need one-time codes when traveling to new places. You <b>can't</b> sign in if SMS delivery fails.</li>
 		<li>Even if you use Authenticator by default, you can always click "use SMS" link on the login page.</li>
 		</ul>
 
@@ -131,13 +145,20 @@
 		</form>
 
 	{% endif %}
+		</div>
+	</div>
 
 {% endif %}
 
 <div id="enable-notification" class="hidden">
 
-<h3>Notifications</h3>
+<div class="panel panel-info">
 
+<div class="panel-heading">
+	Notifications
+</div>
+
+<div class="panel-body">
 <p>If you want to, you can enable desktop notifications from this service. 
 Right now these are not in use, but in the future you'll receive notification 
 for sign-in from unknown devices and when your session is about to expire.</p>
@@ -145,20 +166,36 @@ for sign-in from unknown devices and when your session is about to expire.</p>
 <button id="enable-notification-btn" class="btn btn-primary inline-block">Enable notifications</button>
 
 </div>
+</div>
+</div>
 
 <div id="enable-notification-thanks" class="hidden">
-<h3>Notifications</h3>
 
-<p>Thanks! Notifications are now enabled. You can always disable this from
+<div class="panel panel-success">
+
+<div class="panel-heading">
+	Notifications enabled
+</div>
+<div class="panel-body">
+
+<p>Thanks! Notifications are now enabled. You can disable this from
 your browser settings, if it ever annoys you. You'll notice when these are in
 use. But you'll get notifications only for things that are important for you.</p>
+
+</div>
+</div>
 </div>
 
 {% if not user.location_authorized %}
 
 <div id="enable-location" class="hidden">
 
-<h3>Location sharing</h3>
+<div class="panel panel-info">
+<div class="panel-heading">
+	Location sharing
+</div>
+
+<div class="panel-body">
 
 <p>You can help improving this service by automatically sharing your location.
 Location information is only collected (or available) when you use this service.
@@ -175,13 +212,21 @@ That is totally okay. If you still want to enable this, you have to clear your p
 again.</div>
 
 <button class="btn btn-primary inline-block" id="enable-location-btn"><i class="fa fa-location-arrow"></i> Share your location</button>
+
+</div>
+</div>
 </div>
 
 {% else %}
 
 <div id="disable-location">
 
-<h3>Location sharing</h3>
+<div class="panel panel-default">
+<div class="panel-heading">
+	Location sharing
+</div>
+
+<div class="panel-body">
 
 <p>You've indicated you want to share your location to improve this service.
 The location is only recorded when you open this service. Additionally, 
@@ -197,21 +242,33 @@ ask for your location in the future.</p>
 <button class="btn btn-default" id="disable-location-btn" type="submit">Disable location sharing</button>
 </form>
 </div>
+</div>
+</div>
 
 {% endif %}
 
 <div id="enable-location-thanks" class="hidden">
 
-<h3>Location sharing enabled</h3>
+<div class="panel panel-success">
+<div class="panel-heading">
+	Location sharing enabled
+</div>
+<div class="panel-body">
 
 <p>Thanks! You'll be asked for authorization on each device you use to sign in. Feel free to
 deny this at any time on any browser - it won't break anything. However, sharing this information
 helps making this service better.</p>
 </div>
+</div>
+</div>
 
 
+<div class="panel panel-default">
 
-<h3>Properties</h3>
+<div class="panel-heading">
+	Properties
+</div>
+<div class="panel-body">
 <ul>
 <li><span class="tooltip-link" title="Want to change this? Please contact IT team"><b>Primary phone number:</b> {{ user.primary_phone }}</span> (last changed {% include "snippets/timestamp.html" with timestamp=user.primary_phone_refresh %})</li>
 {% if user.secondary_phone %}<li><b>Secondary phone number:</b> {{ user.secondary_phone }}</span> (last changed {% include "snippets/timestamp.html" with timestamp=user.secondary_phone_refresh %})</li>{% endif %}
@@ -229,12 +286,21 @@ helps making this service better.</p>
 </li>
 <li><b>Authenticate with SMS by default:</b> {% if user.strong_sms_always %}yes. You'll automatically receive SMS every time strong authentication is required. Do note that SMS does not work too well when traveling.{% else %}By default, you'll get to Authenticator page. However, you can always click "use SMS" link, if you want to.{% endif %}</li>
 </ul>
+</div>
+</div>
 
 {% if csp_violations %}
-<h3>CSP problems</h3>
+<div class="panel panel-default">
+<div class="panel-heading">
+	CSP problems
+</div>
+
+<div class="panel-body">
 
 <p>Your browsers have reported {{ csp_violations }} blocked action{{ csp_violations|pluralize }}. Usually these are caused by browser extensions that modify contents of the page.
 If you want to, you can <a href="{% url 'cspreporting.views.view_reports' %}">review these reports</a>.</p>
+</div>
+</div>
 
 {% endif %}
 

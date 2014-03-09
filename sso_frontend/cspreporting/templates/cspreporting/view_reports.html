@@ -1,14 +1,24 @@
 {% extends "base.html" %}
 
 {% block container %}
+<ol class="breadcrumb">
+<li><a href="{% url 'login_frontend.views.configure' %}">Configure</a></li>
+<li class="active">CSP reports</li>
+</ol>
 
 <h2>CSP reports for {{ ausername }}</h2>
 
+{% if entries %}
+<div class="well">You don't have to do anything about these. This listing is just for your information. No need to be worried.</div>
+{% endif %}
+
 <p>This page shows Content Security Policy violations your browser has reported. For more information, see <a href="http://en.wikipedia.org/wiki/Content_Security_Policy">wikipedia</a>, <a href="http://www.w3.org/TR/CSP/">W3C</a> and <a href="http://www.html5rocks.com/en/tutorials/security/content-security-policy/">html5rocks</a>.</p>
 
-<p>The CSP policy of this site forbids external resources and inline scripts and styles. Many browser extensions inject additional styles and scripts to the page, thus 
-causing policy violation. Usually this does not matter. If you use password manager that does not work on this site, please check whether they support disabling 
-customizing styles. With 1Password, go to "Preferences > Browser" and disable "Animate form filling".</p>
+<p>The CSP policy of this site forbids external resources, inline scripts and inline styles. Many browser extensions inject additional styles and scripts to the page,
+thus causing policy violation. The browser automatically sends report to the server. Usually this does not matter.</p>
+
+<p>If your password manager or similar extension does not work on this site, please check whether they support disabling customized styles or other content that
+is added to the page. With 1Password, go to "Preferences &gt; Browser" and disable "Animate form filling".</p>
 
 {% include "snippets/pagination.html" %}
 
