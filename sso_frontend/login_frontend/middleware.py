@@ -56,7 +56,7 @@ def get_browser_instance(request):
         sd.incr("get_browser_instance.success", 1)
     except Browser.DoesNotExist:
         sd.incr("get_browser_instance.invalid", 1)
-        log.info("Unknown browser id '%s' from '%s'", bid, request.META.get("REMOTE_ADDR"))
+        log.info("Unknown browser id '%s' from '%s'", bid, request.remote_ip)
         return None
 
     return browser
@@ -69,7 +69,7 @@ def get_browser(request):
     bid = browser.bid_public
 
     if request.path.startswith("/csp-report") or request.path.startswith("/timesync"):
-        log.debug("Browser '%s' from '%s' reporting CSP/timesync - skip sign-out processing", bid, request.META.get("REMOTE_ADDR"))
+        log.debug("Browser '%s' from '%s' reporting CSP/timesync - skip sign-out processing", bid, request.remote_ip)
         sd.incr("get_browser.skip", 1)
         return browser
 
@@ -93,7 +93,7 @@ def get_browser(request):
     if browser.user:
         r_k = "browser-location-last-update-%s-%s" % (browser.user.username, browser.bid_public)
         last_update = dcache.get(r_k)
-        remote_address = request.META.get("REMOTE_ADDR")
+        remote_address = request.remote_ip
         if last_update != remote_address:
             user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)
             if request.path.startswith("/ping"):
@@ -108,6 +108,26 @@ def get_browser(request):
             dcache.set(r_k, remote_address, 30)
     return browser
 
+def get_client_ip(request):
+    """ From http://stackoverflow.com/a/5976065 """
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[-1].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+class RealRemoteIP(object):
+    @sd.timer("RealRemoteIP.process_request")
+    def process_request(self, request):
+        request.remote_ip = get_client_ip(request)
+
+    @sd.timer("RealRemoteIP.process_response")
+    def process_response(self, request, response):
+        # This adds request.remote_ip for other process_response middlewares.
+        request.remote_ip = get_client_ip(request)
+        return response
 
 class P0fMiddleware(object):
     def __init__(self):
@@ -122,7 +142,7 @@ class P0fMiddleware(object):
         if not hasattr(request, "browser") or not request.browser:
             return
         browser = request.browser
-        remote_addr = request.META.get("REMOTE_ADDR")
+        remote_addr = request.remote_ip
         r_k = "p0f-last-update-%s" % (browser.bid_public)
         last_update = dcache.get(r_k)
         if last_update == remote_addr:
@@ -253,7 +273,7 @@ class BrowserMiddleware(object):
         """ Automatically adds session cookie if old one is not available. """
         response["Server"] = "https://github.com/ojarva/sso-frontend"
         if request.path.startswith("/csp-report") or request.path.startswith("/timesync"):
-            log.debug("Browser from '%s' reporting CSP/timesync - skip process_response", request.META.get("REMOTE_ADDR"))
+            log.debug("Browser from '%s' reporting CSP/timesync - skip process_response", request.remote_ip)
             sd.incr("login_frontend.middleware.BrowserMiddleware.process_response.skip", 1)
             return response
         
@@ -297,7 +317,7 @@ class TimesyncMiddleware(object):
             request.should_timesync
 
 def log_request_timing(phase, request):
-    timing_log.info("%s: %.5f - %s - %s - [%s] - [bid_public=%s]", phase, time.time(), request.META.get("REMOTE_ADDR"), request.get_full_path(), request.META.get("HTTP_USER_AGENT"), request.COOKIES.get(Browser.C_BID_PUBLIC))
+    timing_log.info("%s: %.5f - %s - %s - [%s] - [bid_public=%s]", phase, time.time(), request.remote_ip, request.get_full_path(), request.META.get("HTTP_USER_AGENT"), request.COOKIES.get(Browser.C_BID_PUBLIC))
 
 
 class InLoggingMiddleware(object):

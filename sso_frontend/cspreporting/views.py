@@ -133,7 +133,7 @@ def log_report(request, *args, **kwargs):
         sd.incr("cspreporting.views.log_report.invalid_report", 1)
         return HttpResponse("Invalid CSP report.")
 
-    remote_ip = request.META.get("REMOTE_ADDR")
+    remote_ip = request.remote_ip
     bid_public = request.COOKIES.get(Browser.C_BID_PUBLIC)
     log.info("%s - %s - %s - %s", remote_ip, request.META.get("HTTP_USER_AGENT"), bid_public, csp_data)
 

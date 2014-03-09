@@ -72,7 +72,7 @@ def custom_log(request, message, **kwargs):
 
     level = kwargs.get("level", "info")
     method = getattr(user_log, level)
-    remote_addr = request.META.get("REMOTE_ADDR")
+    remote_addr = request.remote_ip
     bid_public = username = ""
     if hasattr(request, "browser") and request.browser:
         bid_public = request.browser.bid_public

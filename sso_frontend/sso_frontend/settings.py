@@ -187,6 +187,7 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
+    'login_frontend.middleware.RealRemoteIP',
     'login_frontend.middleware.InLoggingMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -200,6 +201,7 @@ MIDDLEWARE_CLASSES = (
     'login_frontend.middleware.ViewLoggingMiddleware',
     'django_statsd.middleware.GraphiteRequestTimingMiddleware',
     'django_statsd.middleware.GraphiteMiddleware',
+    'login_frontend.middleware.RealRemoteIP',
 )
 
 DISABLE_TIMING_LOGGING=False

@@ -73,7 +73,7 @@ def custom_log(request, message, **kwargs):
 
     level = kwargs.get("level", "info")
     method = getattr(user_log, level)
-    remote_addr = request.META.get("REMOTE_ADDR")
+    remote_addr = request.remote_ip
     bid_public = username = ""
     if hasattr(request, "browser") and request.browser:
         bid_public = request.browser.bid_public
@@ -154,7 +154,7 @@ def automatic_ping(request, **kwargs):
         if hasattr(request, "browser") and request.browser:
             dcache.set("last-known-location-%s" % request.browser.bid_public, location, 3600)
             dcache.set("last-known-location-timestamp-%s" % request.browser.bid_public, time.time(), 3600)
-            dcache.set("last-known-location-from-%s" % request.browser.bid_public, request.META.get("REMOTE_ADDR"), 3600)
+            dcache.set("last-known-location-from-%s" % request.browser.bid_public, request.remote_ip, 3600)
         custom_log(request, "Ping from %s" % location)
     ret = {}
     sign_out = False

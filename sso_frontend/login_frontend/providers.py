@@ -48,7 +48,7 @@ def custom_log(request, message, **kwargs):
 
     level = kwargs.get("level", "info")
     method = getattr(log, level)
-    remote_addr = request.META.get("REMOTE_ADDR")
+    remote_addr = request.remote_ip
     bid_public = username = ""
     if hasattr(request, "browser") and request.browser:
         bid_public = request.browser.bid_public
@@ -101,10 +101,10 @@ def pubtkt_logout(request, response = None):
         response.set_cookie("auth_pubtkt", **{"value": "invalid", "secure": True, "httponly": True, "domain": ".futurice.com"})
     try:
         if request.browser is None:
-            custom_log(request, "pubtkt_logout: No browser set. No further actions. IP: %s" % request.META.get("REMOTE_ADDR"), level="debug")
+            custom_log(request, "pubtkt_logout: No browser set. No further actions. IP: %s" % request.remote_ip, level="debug")
             return response
     except AttributeError:
-        custom_log(request, "pubtkt_logout: No browser set. No further actions. IP: %s" % request.META.get("REMOTE_ADDR"), level="debug")
+        custom_log(request, "pubtkt_logout: No browser set. No further actions. IP: %s" % request.remote_ip, level="debug")
         return response
 
     if request.COOKIES.get("auth_pubtkt") and not response:

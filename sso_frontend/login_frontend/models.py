@@ -51,7 +51,7 @@ def custom_log(request, message, **kwargs):
 
     level = kwargs.get("level", "info")
     method = getattr(log, level)
-    remote_addr = request.META.get("REMOTE_ADDR")
+    remote_addr = request.remote_ip
     bid_public = username = ""
     if hasattr(request, "browser") and request.browser:
         bid_public = request.browser.bid_public
@@ -132,7 +132,7 @@ def add_user_log(request, message, status="question", **kwargs):
     bid_public = kwargs.get("bid_public")
     if not bid_public:
         bid_public = request.browser.bid_public
-    Log.objects.create(user=request.browser.user, bid_public=bid_public, message=message, remote_ip=request.META.get("REMOTE_ADDR"), status=status)
+    Log.objects.create(user=request.browser.user, bid_public=bid_public, message=message, remote_ip=request.remote_ip, status=status)
 
 
 class Log(models.Model):
@@ -418,7 +418,7 @@ If you're signing in from this mobile phone, open this: %s""" % mobile_phone_lin
                 custom_log(request, "sms_text: Not signing in from mobile device", level="debug")
                 extra = """
 
-Requested from %s""" % request.META.get("REMOTE_ADDR")
+Requested from %s""" % request.remote_ip
         return """Your one-time password #%s for %s is below:
 
 
@@ -768,7 +768,7 @@ class User(models.Model):
 
             bid_public = browser.bid_public
             if request:
-                remote_ip = request.META.get("REMOTE_ADDR")
+                remote_ip = request.remote_ip
             else:
                 remote_ip = None
 
