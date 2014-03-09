@@ -8,7 +8,7 @@ This single sign-on service offers
 - [OpenID](http://openid.net/) identity provider
 - Two-factor authentication with [Google Authenticator](https://code.google.com/p/google-authenticator/) and SMS (bring your own gateway).
 
-For licensing, see [separate file](LICENSE.md).
+For licensing, see [separate file](LICENSE.txt).
 
 Installation
 ------------
