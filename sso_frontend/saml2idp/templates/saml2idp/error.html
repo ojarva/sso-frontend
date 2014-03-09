@@ -5,7 +5,11 @@
 <div class="alert alert-danger">
 Incomplete request: missing SAMLRequest or RelayState argument. Aborting.
 </div>
-
-<p><a class="btn" href="{% url "login_frontend.views.indexview" %}">Onwards</a></p>
 {% endif %}
+{% if assertion_failed %}
+<div class="alert alert-danger">
+    No provider configured for requested service.
+</div>
+{% endif %}
+<p><a class="btn" href="{% url "login_frontend.views.indexview" %}">Onwards</a></p>
 {% endblock %}
