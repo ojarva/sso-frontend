@@ -255,10 +255,12 @@ class BrowserMiddleware(object):
     @sd.timer("BrowserMiddleware.process_request")
     def process_request(self, request):
         """ Adds request.browser. Filters out monitoring bots. """
-        ua = request.META.get("HTTP_USER_AGENT") 
+        ua = request.META.get("HTTP_USER_AGENT")
+        ret = {}
+        if ua is None:
+            return render_to_response("login_frontend/errors/you_are_a_bot.html", ret, context_instance=RequestContext(request))
         for ua_re in DISALLOWED_UA:
             if ua_re.match(ua):
-                ret = {}
                 try:
                     (_, ret["admin"]) = settings.ADMINS[0]
                 except (IndexError, ValueError):
