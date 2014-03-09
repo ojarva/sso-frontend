@@ -10,6 +10,7 @@ from cspreporting.models import CSPReport
 from django.conf import settings
 from django.contrib import auth as django_auth
 from django.contrib import messages
+from django.core.cache import get_cache
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -20,10 +21,8 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
-if settings.FAKE_TESTING:
-    from login_frontend.ldap_stub import LdapLogin
-else:
-    from login_frontend.ldap_auth import LdapLogin
+from django_statsd.clients import statsd as sd
+from login_frontend.emails import new_device_notify
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.send_sms import send_sms
@@ -38,12 +37,15 @@ import pyotp
 import qrcode
 import re
 import redis
-from django_statsd.clients import statsd as sd
 import sys
 import time
 import urllib
 import urlparse
-from django.core.cache import get_cache
+
+if settings.FAKE_TESTING:
+    from login_frontend.ldap_stub import LdapLogin
+else:
+    from login_frontend.ldap_auth import LdapLogin
 
 dcache = get_cache("default")
 ucache = get_cache("user_mapping")
@@ -514,6 +516,8 @@ def authenticate_with_authenticator(request):
                 if browser_name and browser_name != request.browser.name:
                     request.browser.name = browser_name
 
+                new_device_notify(request, "authenticator")
+
                 custom_log(request, "2f-auth: Second-factor authentication with Authenticator succeeded")
                 add_user_log(request, "Second-factor authentication with Authenticator succeeded", "lock")
                 # Mark authenticator configuration as valid. User might have configured
@@ -655,6 +659,8 @@ def authenticate_with_sms(request):
             if status:
                 if browser_name and browser_name != request.browser.name:
                     request.browser.name = browser_name
+
+                new_device_notify(request, "sms")
 
                 # Authentication succeeded.
                 custom_log(request, "2f-sms: Second-factor authentication with SMS succeeded")

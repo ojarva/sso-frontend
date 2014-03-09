@@ -1,0 +1,27 @@
+{% load ip_to_geoip %}
+{% load full_uri %}
+<p>Hi {% if first_name %}{{ first_name }}{% else %}{{ username }}{% endif %},</p>
+
+<p>It seems you or someone else with your credentials signed in from a new device. If you recently used a new device (or browser, or even incognito browser) to sign in, please review these details:</p>
+
+<ul>
+<li>Browser: {{ browser.get_readable_ua }}</li>
+<li>IP address: {{ remote_ip }} ({{ remote_ip|ip_to_geoip }})</li>
+{% if browser.name %}<li>Browser name set by you: {{ browser.name }}</li>{% endif %}
+{% if sms_used %}<li>Signed in with SMS</li>{% elif authenticator_used %}<li>Signed in with Authenticator</li>{% endif %}
+</ul>
+
+<p><b>If this wasn't you, please immediately do the following:</b></p>
+
+<ol>
+<li>open <a href="{% full_uri 'login_frontend.views.sessions' %}">sessions</a> page, and hit "Sign out all my sessions".</li>
+<li>Go to <a href="{% full_uri 'login_frontend.views.configure' %}">settings</a> and click "Reconfigure Google Authenticator" to revoke the configuration.</li>
+<li>Change your password with <a href="https://fum.futurice.com">FUM</a></li>
+<li>Notify IT team with as many details as you know: did you leave your session open somewhere? Did you lose your computer/mobile phone?</li>
+</ol>
+
+<hr>
+
+<p>Protip: check "Remember me on this computer" on your own devices to avoid entering your credentials daily.</p>
+
+<p><small>You can't reply to this email. You can't unsubscribe from these emails. If this came to wrong email address, please contact admin@futurice.com and we'll fix it.</small></p>

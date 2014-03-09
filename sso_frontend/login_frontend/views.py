@@ -10,6 +10,7 @@ from cspreporting.models import CSPReport
 from django.conf import settings
 from django.contrib import auth as django_auth
 from django.contrib import messages
+from django.core.cache import get_cache
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -20,15 +21,13 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
-if settings.FAKE_TESTING:
-    from login_frontend.ldap_stub import LdapLogin
-else:
-    from login_frontend.ldap_auth import LdapLogin
+from django_statsd.clients import statsd as sd
+from login_frontend.authentication_views import protect_view
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.send_sms import send_sms
+from login_frontend.emails import new_authenticator_notify
 from login_frontend.utils import save_timing_data, get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, get_return_url
-from login_frontend.authentication_views import protect_view
 from ratelimit.decorators import ratelimit
 import datetime
 import json
@@ -39,12 +38,16 @@ import pyotp
 import qrcode
 import re
 import redis
-from django_statsd.clients import statsd as sd
 import sys
 import time
 import urllib
 import urlparse
-from django.core.cache import get_cache
+
+
+if settings.FAKE_TESTING:
+    from login_frontend.ldap_stub import LdapLogin
+else:
+    from login_frontend.ldap_auth import LdapLogin
 
 dcache = get_cache("default")
 ucache = get_cache("user_mapping")
@@ -588,6 +591,7 @@ def configure_authenticator(request):
         user.save()
         add_user_log(request, "Regenerated Authenticator code", "gear")
         custom_log(request, "cauth: Regenerated Authenticator code. Set authenticator_used=False, strong_configured=False", level="info")
+        new_authenticator_notify(request)
 
     ret["authenticator_secret"] = user.strong_authenticator_secret
     ret["authenticator_id"] = user.strong_authenticator_id

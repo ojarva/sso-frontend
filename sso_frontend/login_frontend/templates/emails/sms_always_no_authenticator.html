@@ -1,0 +1,21 @@
+{% load full_uri %}
+<p>Hi {% if first_name %}{{ first_name }}{% else %}{{ username }}{% endif %},</p>
+
+<p>You have indicated you want to use SMS authentication, and you did not configure or finish configuring Authenticator. If you already have Authenticator configured, sign in with it once, and you're all set.</p>
+
+<p>If you don't configure Authenticator to your phone, <b>you will be unable to sign in if you can't receive SMS</b>. This often happens while traveling. Coincidentially, chances of needing one-time password
+are higher when you travel to a new place. If you can't contact IT team - for example, you're on the different timezone and it's night in Finland, or during weekends - you simply can't sign in.</p>
+
+<p>Please consider the following:</p>
+
+<ul>
+<li>Authenticator is faster to use - you don't need to wait for SMS to arrive.</li>
+<li>Even if you configure Authenticator, you can opt for SMS authentication by default.</li>
+<li>If you use Authenticator by default, you can always click "Use SMS instead" when signing in.</li>
+<li>Installing Authenticator app to your phone and configuring it takes no more than a few minutes.</li>
+</ul>
+
+<p>Ready to configure Authenticator? Go to <a href="{% full_uri 'login_frontend.views.configure' %}">settings</a> and click "Configure Google Authenticator". This takes only a few minutes.</p>
+
+<p><small>You can't reply to this email. You can't unsubscribe from these emails. You will not receive this email again, if you successfully configure and validate your Authenticator installation. If this came to wrong email 
+address, please contact admin@futurice.com and we'll fix it.</small></p>

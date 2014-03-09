@@ -446,7 +446,7 @@ TOKEN_MAP = {} # map of LDAP groups to pubtkt tokens. For example, {"Administrat
 FAKE_TESTING = False # This uses LDAP stub and static SMS codes. Useful for smoke testing, but never set in production.
 
 AUTHENTICATOR_NAME = "%s@hostname -%s-"
-
+NOTICES_FROM_EMAIL = None
 
 P0F_SOCKET = None
 
@@ -470,7 +470,7 @@ try:
 except ImportError:
     pass
 
-check_keys = ["FQDN", "PUBTKT_PRIVKEY", "PUBTKT_PUBKEY", "SAML_PUBKEY", "LDAP_SERVER", "LDAP_USER_BASE_DN", "LDAP_GROUPS_BASE_DN"]
+check_keys = ["FQDN", "PUBTKT_PRIVKEY", "PUBTKT_PUBKEY", "SAML_PUBKEY", "LDAP_SERVER", "LDAP_USER_BASE_DN", "LDAP_GROUPS_BASE_DN", "NOTICES_FROM_EMAIL"]
 for key_name in check_keys:
     if key_name not in locals():
         from django.core.exceptions import ImproperlyConfigured

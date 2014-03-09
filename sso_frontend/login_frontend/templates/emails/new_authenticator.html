@@ -1,0 +1,26 @@
+{% load ip_to_geoip %}
+{% load full_uri %}
+<p>Hi {% if first_name %}{{ first_name }}{% else %}{{ username }}{% endif %},</p>
+
+<p>According to our records you configured a new Authenticator for your account. Details for the browser used to do this:</p>
+
+<ul>
+<li>Browser: {{ browser.get_readable_ua }}</li>
+<li>IP address: {{ remote_ip }} ({{ remote_ip|ip_to_geoip }})</li>
+{% if browser.name %}<li>Browser name set by you: {{ browser.name }}</li>
+{% endif %}
+</ul>
+
+<p><b>If you did not do this, please do the following:</b></p>
+
+<ol>
+<li>open <a href="{% full_uri 'login_frontend.views.sessions' %}">sessions</a> page, and hit "Sign out all my sessions".</li>
+<li>Go to <a href="{% full_uri 'login_frontend.views.configure' %}">settings</a> and click "Reconfigure Google Authenticator" to revoke the configuration.</li>
+<li>Notify IT team with as many details as you know: did you leave your session open somewhere? Did you lose your computer/mobile phone?</li>
+</ol>
+
+<p>If you configured it, there's no need for any actions. The name of the new authenticator is "{{ authenticator_id }}". All previous configurations are now revoked.
+If you did this by mistake and did not scan the barcode to your phone, you can always sign in with SMS.</p>
+
+<p><small>You can't reply to this email. You can't unsubscribe from these emails. If this came to wrong email address, please contact admin@futurice.com and we'll fix it.</small></p>
+
