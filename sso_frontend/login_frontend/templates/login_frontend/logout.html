@@ -37,7 +37,7 @@ You are now signed out.
 
 {% else %}
 
-<form method="POST" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">
+<form method="POST" action="{% url 'login_frontend.authentication_views.logoutview' %}?{{ get_params }}">
         {% csrf_token %}
         <button class="btn btn-lg btn-primary" type="submit">Sign out</button>
 </form>

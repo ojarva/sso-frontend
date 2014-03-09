@@ -12,7 +12,7 @@
 <h3>General notes</h3>
 
 <ul>
-<li>There is no link for immediate logout. Link to <a href="{% full_uri 'login_frontend.views.logoutview' %}"><code>{% full_uri 'login_frontend.views.logoutview' %}</code></a>. Users have to click "Logout" to finish signing out.</li>
+<li>There is no link for immediate logout. Link to <a href="{% full_uri 'login_frontend.authentication_views.logoutview' %}"><code>{% full_uri 'login_frontend.authentication_views.logoutview' %}</code></a>. Users have to click "Logout" to finish signing out.</li>
 <li>No external incoming POST requests are allowed. A valid <a href="https://docs.djangoproject.com/en/dev/ref/contrib/csrf/">CSRF token</a> is required.</li>
 </ul>
 

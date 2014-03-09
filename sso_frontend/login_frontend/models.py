@@ -248,7 +248,7 @@ class Browser(models.Model):
             return True
 
 
-    def get_cookie(self):
+    def get_cookies(self):
         return [
            (Browser.C_BID, {"value": self.bid, "secure": settings.SECURE_COOKIES, "httponly": True, "max_age": int(86400 * 1000)}),
            (Browser.C_BID_PUBLIC, {"value": self.bid_public, "secure": settings.SECURE_COOKIES, "httponly": False, "max_age": int(86400 * 1000)}),

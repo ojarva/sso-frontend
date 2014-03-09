@@ -33,7 +33,7 @@
 
 	<p>Unfortunately, you don't have access to "{{ back_url }}". If you want to, you can logout and login again with different user. If you got access to new groups, do the same.</p>
 
-	<form method="post" action="{% url 'login_frontend.views.logoutview' %}?{{ get_params }}">
+	<form method="post" action="{% url 'login_frontend.authentication_views.logoutview' %}?{{ get_params }}">
 	{% csrf_token %}
 	<input type="submit" value="Logout and login again" class="btn btn-primary">
 	</form>

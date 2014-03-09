@@ -78,7 +78,7 @@
 		<li>Even if you use Authenticator by default, you can always click "use SMS" link on the login page.</li>
 		</ul>
 
-		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure' %}?{{ get_params }}">
 		        {% csrf_token %}
 			<input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Always use SMS</button>
 		</form>
@@ -115,7 +115,7 @@
 		<li>Even if you use Authenticator by default, you can always click "use SMS" link on the login page.</li>
 		</ul>
 
-		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure' %}?{{ get_params }}">
 		        {% csrf_token %}
 		        <input type="hidden" name="always_sms" value="on"><button class="btn btn-warning" type="submit">Always use SMS</button>
 		</form>
@@ -125,7 +125,7 @@
 		{% else %}
 			<p>You have generated configuration for Authenticator {% include "snippets/timestamp.html" with timestamp=user.strong_authenticator_configured_at %}, and successfully used it. If you want to, you can still switch to using Authenticator by default:</p>
 		{% endif %}
-		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_strong' %}?{{ get_params }}">
+		<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure' %}?{{ get_params }}">
 		        {% csrf_token %}
 		        <input type="hidden" name="always_sms" value="off"><button class="btn btn-primary" type="submit">Prompt for Authenticator</button>
 		</form>

@@ -41,7 +41,7 @@
 {% elif strong_not_configured %}
 	{% if authenticator_generated %}
 		<div class="alert alert-warning">
-			You generated Authenticator configuration, but have not used it. If it is configured on your phone, you can <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}" class="alert-link">proceed to Authenticator page</a>.
+			You generated Authenticator configuration, but have not used it. If it is configured on your phone, you can <a href="{% url 'login_frontend.authentication_views.authenticate_with_authenticator' %}?{{ get_params }}" class="alert-link">proceed to Authenticator page</a>.
 		</div>
 	{% endif %}
 
@@ -50,7 +50,7 @@
 	<p><a target="_window" href="{% url 'introduction' %}">What is strong authentication?</a></p>
 {% else %}
 	{% if authenticator_generated %}
-		<p>You have generated Authenticator configuration, but have not used it. If you have it on your phone, you can <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">proceed with it</a>.</p>
+		<p>You have generated Authenticator configuration, but have not used it. If you have it on your phone, you can <a href="{% url 'login_frontend.authentication_views.authenticate_with_authenticator' %}?{{ get_params }}">proceed with it</a>.</p>
 	{% endif %}
 
 	{% if authentication_failed %}
@@ -69,7 +69,7 @@
 	</form>
 {% endif %}
 
-<form role="form" name="loginform" method="POST" action="{% url 'login_frontend.views.authenticate_with_sms' %}?{{ get_params }}">
+<form role="form" name="loginform" method="POST" action="{% url 'login_frontend.authentication_views.authenticate_with_sms' %}?{{ get_params }}">
   {% csrf_token %}
   <div class="form-group control-group">
     <label for="id_otp" control-label">One-time password (<span class="onlybefore" data-timestamp="{{ sms_valid_until }}">Expires {% include "snippets/timestamp.html" with timestamp=sms_valid_until %}</span>
@@ -86,6 +86,6 @@
 </form>
 
 {% if can_use_authenticator %}
-	<p><small>Want to <a href="{% url 'login_frontend.views.authenticate_with_authenticator' %}?{{ get_params }}">use Authenticator</a> instead of SMS?</small></p>
+	<p><small>Want to <a href="{% url 'login_frontend.authentication_views.authenticate_with_authenticator' %}?{{ get_params }}">use Authenticator</a> instead of SMS?</small></p>
 {% endif %}
 {% endblock %}

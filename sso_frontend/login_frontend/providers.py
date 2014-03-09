@@ -70,7 +70,7 @@ def internal_login(request):
     browser = request.browser
     if browser is None:
         custom_log(request, "Browser is not set. Redirect to first step authentication")
-        return redirect_with_get_params("login_frontend.views.firststepauth", params)
+        return redirect_with_get_params("login_frontend.authentication_views.firststepauth", params)
 
     if request.GET.get("next") is None:
         # No back url is defined. Go to front page.
@@ -90,7 +90,7 @@ def internal_login(request):
         return HttpResponseRedirect(back_url)
 
     custom_log(request, "More authentication is required. Redirect to first step authentication", level="debug")
-    return redirect_with_get_params("login_frontend.views.firststepauth", params)
+    return redirect_with_get_params("login_frontend.authentication_views.firststepauth", params)
 
 
 @sd.timer("login_frontend.providers.pubtkt_logout")
@@ -153,7 +153,7 @@ def pubtkt(request):
     browser = request.browser
     if browser is None:
         custom_log(request, "pubtkt: Browser is not set. Redirect to first step authentication")
-        return redirect_with_get_params("login_frontend.views.firststepauth", params)
+        return redirect_with_get_params("login_frontend.authentication_views.firststepauth", params)
 
     show_error_page = False
 
@@ -220,4 +220,4 @@ def pubtkt(request):
         return response
 
     custom_log(request, "pubtkt: additional authentication is required. Redirect to first step authentication")
-    return redirect_with_get_params("login_frontend.views.firststepauth", params)
+    return redirect_with_get_params("login_frontend.authentication_views.firststepauth", params)

@@ -58,7 +58,7 @@
 {% if username %}
 <li><a id="sessions_link" href="{% url 'login_frontend.views.sessions' %}">Sessions <span class="badge">{{ num_sessions }}</span></a></li>
 {% if not user.emulate_legacy %}
-<li><a href="{% url 'login_frontend.views.configure_strong' %}">Settings</a></li>
+<li><a href="{% url 'login_frontend.views.configure' %}">Settings</a></li>
 {% endif %}
 {% if user.is_admin %}
 <li><a href="{% url "admin_frontend.views.indexview" %}">Admin</a></li>
@@ -68,7 +68,7 @@
 <li><a id="introduction_link" href="{% url 'introduction' %}">Help</a></li>
 <li>
 {% if username %}
-<form class="navbar-right navbar-form" method="post" action="{% url 'login_frontend.views.logoutview' %}">
+<form class="navbar-right navbar-form" method="post" action="{% url 'login_frontend.authentication_views.logoutview' %}">
 {% csrf_token %}
 <button type="submit" class="btn btn-default">Sign out</button>
 </form>

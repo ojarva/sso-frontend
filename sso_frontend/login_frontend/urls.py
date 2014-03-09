@@ -2,52 +2,55 @@ from django.conf.urls import patterns, url
 from django.views.generic import TemplateView
 from django.conf import settings
 
-from login_frontend import views
-from login_frontend import providers
-
-urlpatterns = patterns('',
-    url(r'^$', views.main_redir),
-    url(r'^index.php$', views.indexview),
-    url(r'^index$', views.indexview, name='index'),
-
-    # First factor authentication
-    url(r'^first$', views.firststepauth),
-    url(r'^first/password$', views.authenticate_with_password),
-
-    # Second factor authentication
-    url(r'^second$', views.secondstepauth),
-    url(r'^second/authenticator$', views.authenticate_with_authenticator),
-    url(r'^second/sms$', views.authenticate_with_sms),
-    url(r'^second/emergency$', views.authenticate_with_emergency),
-    url(r'^urlauth/(?P<sid>(.+))$', views.authenticate_with_url),
-
-    # SSO providers
-    url(r'^pubtkt$', providers.pubtkt),
-    url(r'^internal_login$', providers.internal_login),
+urlpatterns = patterns('login_frontend.views',
+    url(r'^$', 'main_redir'),
+    url(r'^index.php$', 'indexview'),
+    url(r'^index$', 'indexview', name='index'),
 
     # Other URLs
-    url(r'^sessions$', views.sessions),
-    url(r'^ping/internal/js$', views.automatic_ping, {"internal": True}),
-    url(r'^ping/external/js$', views.automatic_ping, {"external": True}),
-    url(r'^ping/internal/img$', views.automatic_ping, {"internal": True, "img": True}),
-    url(r'^ping/external/img$', views.automatic_ping, {"external": True, "img": True}),
-    url(r'^configure$', views.configure_strong),
-    url(r'^view_log$', views.view_log),
-    url(r'^view_log/(?P<bid_public>(.+))$', views.view_log),
-    url(r'^configure_authenticator$', views.configure_authenticator),
-    url(r'^configure_authenticator_qr/(?P<single_use_code>(.+))$', views.get_authenticator_qr),
-    url(r'^logout.php$', views.logoutview),
-    url(r'^logout$', views.logoutview, name='logout'),
+    url(r'^sessions$', 'sessions'),
+    url(r'^ping/internal/js$', 'automatic_ping', {"internal": True}),
+    url(r'^ping/external/js$', 'automatic_ping', {"external": True}),
+    url(r'^ping/internal/img$', 'automatic_ping', {"internal": True, "img": True}),
+    url(r'^ping/external/img$', 'automatic_ping', {"external": True, "img": True}),
+    url(r'^configure$', 'configure'),
+    url(r'^view_log$', 'view_log'),
+    url(r'^view_log/(?P<bid_public>(.+))$', 'view_log'),
+    url(r'^configure_authenticator$', 'configure_authenticator'),
+    url(r'^configure_authenticator_qr/(?P<single_use_code>(.+))$', 'get_authenticator_qr'),
     url(r'^introduction$', TemplateView.as_view(template_name="login_frontend/introduction.html"), name='introduction'),
     url(r'^developer_introduction$', TemplateView.as_view(template_name="login_frontend/developer_introduction.html"), name='developer_introduction'),
     url(r'^robots.txt$', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
-    url(r'^get_pubkey/(?P<service>(.+))$', views.get_pubkey),
+    url(r'^get_pubkey/(?P<service>(.+))$', 'get_pubkey'),
 
     # timesync
-    url(r'^timesync$', views.timesync),
-    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))$', views.timesync),
-    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))$', views.timesync),
-    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))/(?P<command>(.+))$', views.timesync),
+    url(r'^timesync$', 'timesync'),
+    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))$', 'timesync'),
+    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))$', 'timesync'),
+    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))/(?P<command>(.+))$', 'timesync'),
+)
+
+urlpatterns += patterns('login_frontend.authentication_views',
+    # First factor authentication
+    url(r'^first$', 'firststepauth'),
+    url(r'^first/password$', 'authenticate_with_password'),
+
+    # Second factor authentication
+    url(r'^second$', 'secondstepauth'),
+    url(r'^second/authenticator$', 'authenticate_with_authenticator'),
+    url(r'^second/sms$', 'authenticate_with_sms'),
+    url(r'^second/emergency$', 'authenticate_with_emergency'),
+    url(r'^urlauth/(?P<sid>(.+))$', 'authenticate_with_url'),
+
+    # logout
+    url(r'^logout.php$', 'logoutview'),
+    url(r'^logout$', 'logoutview', name='logout'),
+)
+
+urlpatterns += patterns('login_frontend.providers',
+    # SSO providers
+    url(r'^pubtkt$', 'pubtkt'),
+    url(r'^internal_login$', 'internal_login'),
 )
 
 if settings.FAKE_TESTING:

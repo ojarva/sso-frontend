@@ -84,7 +84,7 @@ or "Work profile" and "Personal profile" for different browser user profiles.</p
 
       </div>
       <div class="modal-footer">
-        <form role="form" class="inline-block" method="post" action="{% if detailed.this_session %}{% url 'login_frontend.views.logoutview' %}{% else %}{% url 'login_frontend.views.sessions' %}{% endif %}?{{ get_params }}">
+        <form role="form" class="inline-block" method="post" action="{% if detailed.this_session %}{% url 'login_frontend.authentication_views.logoutview' %}{% else %}{% url 'login_frontend.views.sessions' %}{% endif %}?{{ get_params }}">
         {% csrf_token %}
         <input type="hidden" name="logout" value="{{ detailed.browser.bid_public }}">
         <button type="submit" class="inline-block btn btn-danger">Sign out</button>
@@ -167,7 +167,7 @@ or "Work profile" and "Personal profile" for different browser user profiles.</p
 
 </div>
 <div class="col-md-3">
-<form role="form" class="" method="post" action="{% if detailed.this_session %}{% url 'login_frontend.views.logoutview' %}{% else %}{% url 'login_frontend.views.sessions' %}{% endif %}?{{ get_params }}">
+<form role="form" class="" method="post" action="{% if detailed.this_session %}{% url 'login_frontend.authentication_views.logoutview' %}{% else %}{% url 'login_frontend.views.sessions' %}{% endif %}?{{ get_params }}">
 {% csrf_token %}
 <input type="hidden" name="logout" value="{{ detailed.browser.bid_public }}">
 <button type="submit" class="btn-block btn btn-danger">Sign out</button>
