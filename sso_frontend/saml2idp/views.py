@@ -177,6 +177,10 @@ def login_process(request):
         proc = registry.find_processor(request)
     except exceptions.NoRequestAvailable:
         return render_to_response("saml2idp/no_request_available.html", {}, context_instance=RequestContext(request))
+    except exceptions.CannotHandleAssertion as ex:
+        return render_to_response("saml2idp/error.html",
+            { "assertion_failed": ex },
+            context_instance=RequestContext(request))
 
     custom_log(request, "login_process: %s" % proc, level="debug")
     return _generate_response(request, proc)
