@@ -391,7 +391,6 @@ def sessions(request):
         # In certain cases, session.last_seen is None.
         custom_log(request, "Unable to sort sessions: %s" % e, level="error")
     ret["sessions"] = sessions
-    ret["num_sessions"] = len(sessions)
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
     ret["should_timesync"] = request.browser.should_timesync()
@@ -497,7 +496,6 @@ def configure(request):
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
     back_url = redir_to_sso(request, no_default=True)
-    ret["num_sessions"] = Browser.objects.filter(user=user).count()
     ret["csp_violations"] = CSPReport.objects.filter(username=user.username).count()
     ret["authenticator_id"] = user.get_authenticator_id()
 
