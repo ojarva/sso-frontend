@@ -15,12 +15,13 @@ Installation
 
 1. Install packages: for Ubuntu/Debian: ```sudo apt-get install python-pip python-virtualenv swig python-ldap python-dev libssl-dev python-geoip libldap2-dev libsasl2-dev python-m2crypto python-mysqldb redis-server libmysqlclient-dev zlib1g libjpeg-dev```
 2. Install requirements: ```pip install -r requirements.txt```
-3. Configure your local settings: ```mv sso_frontend/local_settings.py.sample sso_frontend/local_settings.py; vim sso_frontend/local_settings.py```
-4. Implement your own SMS gateway: see ```login_frontend/send_sms.py.sample```.
-5. Find and replace branding: ```grep -i futurice * -R```
-6. Implement your own user sync from user directory (see ```login_frontend/management/commands/refresh_users.py``` and ```login_frontend/utils.py```).
-7. Configure uWSGI and nginx. Example configuration files available under ```example_configurations``` folder. Modifying large_client_header_buffers is essential, as valid OpenID/SAML requests easily exceed the default limit.
-8. Install npm and node.js. Run ```npm install .``` on node_socket directory. Run app.js. This provides websockets, used for simultaneous sign-ins and sign-outs.
+3. Download GeoIP-city database from http://dev.maxmind.com/geoip/geoip2/geolite2/ . Store GeoLite2-City.mmdb to ```sso_frontend/data``` directory.
+4. Configure your local settings: ```mv sso_frontend/local_settings.py.sample sso_frontend/local_settings.py; vim sso_frontend/local_settings.py```
+5. Implement your own SMS gateway: see ```login_frontend/send_sms.py.sample```.
+6. Find and replace branding: ```grep -i futurice * -R```
+7. Implement your own user sync from user directory (see ```login_frontend/management/commands/refresh_users.py``` and ```login_frontend/utils.py```).
+8. Configure uWSGI and nginx. Example configuration files available under ```example_configurations``` folder. Modifying large_client_header_buffers is essential, as valid OpenID/SAML requests easily exceed the default limit.
+9. Install npm and node.js. Run ```npm install .``` on node_socket directory. Run app.js. This provides websockets, used for simultaneous sign-ins and sign-outs.
 
 p0f (optional)
 ------------------
