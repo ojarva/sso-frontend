@@ -70,6 +70,7 @@ TKTAuthPublicKey /etc/apache2/tkt_pubkey.pem
 <li>For configuration, you need this <a href="{% url 'login_frontend.views.get_pubkey' 'saml' %}">public key</a></li>
 <li>Sign-in page URL: <code>{% full_uri 'saml2idp.views.login_begin' %}</code></li>
 <li>Sign-out page URL: <code>{% full_uri 'saml2idp.views.logout' %}</code></li>
+<li>SAML metadata: <code>{% full_uri 'saml2idp.views.descriptor' %}</code></li>
 <li>Google Apps works out-of-the-box</li>
 <li>Before you can authenticate against this service, additional configuration is required.</li>
 </ul>
