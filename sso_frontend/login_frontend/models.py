@@ -409,7 +409,7 @@ class Browser(models.Model):
                 dcache.set("urlauth-params-%s" % link_id, json.dumps(request.GET.dict()), 900)
                 dcache.set("urlauth-bid-%s" % link_id, self.bid_public, 900)
                 dcache.set("urlauth-user-%s" % link_id, self.user.username, 900)
-                mobile_phone_link = request.build_absolute_uri(reverse("login_frontend.views.authenticate_with_url", args=(link_id, )))
+                mobile_phone_link = request.build_absolute_uri(reverse("login_frontend.authentication_views.authenticate_with_url", args=(link_id, )))
 
                 extra = """
 
