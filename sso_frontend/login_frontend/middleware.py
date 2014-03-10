@@ -268,7 +268,8 @@ class BrowserMiddleware(object):
                 return render_to_response("login_frontend/errors/you_are_a_bot.html", ret, context_instance=RequestContext(request))
 
         request.browser = get_browser(request)
-
+        if hasattr(request, "browser") and request.browser and ua != request.browser.ua:
+            request.browser.change_ua(request, ua)
 
     @sd.timer("BrowserMiddleware.process_response")
     def process_response(self, request, response):

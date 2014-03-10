@@ -478,6 +478,12 @@ Requested from %s""" % request.remote_ip
         self.save()
         self.auth_state_changed()
 
+    @sd.timer("login_frontend.models.Browser.change_ua")
+    def change_ua(self, request, new_ua):
+        custom_log(request, "User-agent changed from '%s' to '%s'" % (self.ua, new_ua), level="info")
+        self.ua = new_ua
+        self.save()
+
     @sd.timer("login_frontend.models.Browser.get_readable_ua")
     def get_readable_ua(self):
         """ Returns user-agent in readable format """
