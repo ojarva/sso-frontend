@@ -187,21 +187,20 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
-    'login_frontend.middleware.RealRemoteIP',
-    'login_frontend.middleware.InLoggingMiddleware',
+    'login_frontend.middleware.real_remote_ip.RealRemoteIP',
+    'login_frontend.middleware.request_timing.InLoggingMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # Uncomment the next line for simple clickjacking protection:
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'login_frontend.middleware.OutLoggingMiddleware', # logging middleware should be before browsermiddleware, as browsermiddleware might abort on process_request.
-    'login_frontend.middleware.BrowserMiddleware',
-    'login_frontend.middleware.P0fMiddleware',
-    'login_frontend.middleware.ViewLoggingMiddleware',
+    'login_frontend.middleware.request_timing.OutLoggingMiddleware', # logging middleware should be before browsermiddleware, as browsermiddleware might abort on process_request.
+    'login_frontend.middleware.browser.BrowserMiddleware',
+    'login_frontend.middleware.p0f.P0fMiddleware',
+    'login_frontend.middleware.request_timing.ViewLoggingMiddleware',
     'django_statsd.middleware.GraphiteRequestTimingMiddleware',
     'django_statsd.middleware.GraphiteMiddleware',
-    'login_frontend.middleware.RealRemoteIP',
+    'login_frontend.middleware.real_remote_ip.RealRemoteIP', # this should be both first and last, as when processing responses, middlewares are executed in reverse order.
 )
 
 DISABLE_TIMING_LOGGING=False
