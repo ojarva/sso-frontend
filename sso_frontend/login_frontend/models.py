@@ -1,27 +1,29 @@
 #pylint: disable-msg=C0301
 from distutils.version import LooseVersion
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import logout as django_logout
+from django.core.cache import get_cache
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils import timezone
+from django_statsd.clients import statsd as sd
 from random import choice, randint
+from signals import *
+import browser_compare
 import datetime
 import httpagentparser
 import json
 import logging
+import os
 import pyotp
 import re
 import redis
 import subprocess
 import sys
-import os
 import time
 import urllib
 import uuid
-from django_statsd.clients import statsd as sd
-from django.core.cache import get_cache
-from signals import *
 
 dcache = get_cache("default")
 
@@ -481,6 +483,34 @@ Requested from %s""" % request.remote_ip
     @sd.timer("login_frontend.models.Browser.change_ua")
     def change_ua(self, request, new_ua):
         custom_log(request, "User-agent changed from '%s' to '%s'" % (self.ua, new_ua), level="info")
+        bc = browser_compare.BrowserCompare(self.ua, new_ua)
+        status = False
+        try:
+            status = bc.compare()
+        except browser_compare.UAChangedException, e:
+            custom_log(request, "Browser change: %s" % e, level="warn")
+            messages.warning(request, "Your browser was changed. You can not move cookies to another device. Please sign in again.")
+            add_user_log(request, "Your browser changed, and you were signed out automatically", status="code")
+        except browser_compare.UADowngradedException, e:
+            custom_log(request, "Browser change: %s" % e, level="warn")
+            messages.warning(request, "It seems your browser or OS was downgraded. Please sign in again.")
+            add_user_log(request, "Your browser or OS was downgraded, and you were signed out automatically", status="code")
+        except browser_compare.UAException, e:
+            custom_log(request, "Browser change general exception: %s" % e, level="error")
+            messages.warning(request, "It seems your browser or OS changed too much. Please sign in again.")
+            add_user_log(request, "Your browser or OS changed too much, and you were signed out automatically", status="code")
+
+        if not status:
+            # exception occured -> sign out.
+            self.logout(request)
+        else:
+            # Browser UA changed, but not too much. If authenticated with strong auth, downgrade to S_REQUEST_BASIC_ONLY
+            if self.get_auth_state() == Browser.S_AUTHENTICATED:
+                # Don't extend timeouts
+                custom_log(request, "Downgrading browser to S_REQUEST_BASIC_ONLY and L_BASIC", level="debug")
+                self.auth_state = Browser.S_REQUEST_BASIC_ONLY
+                self.auth_level = Browser.L_BASIC
+
         self.ua = new_ua
         self.save()
 
@@ -545,33 +575,6 @@ Requested from %s""" % request.remote_ip
             if re.match(regex, self.ua):
                 return icons
         return icon
-
-    @sd.timer("login_frontend.models.Browser.compare_ua")
-    def compare_ua(self, ua):
-        # TODO: Validate this code.
-        if ua == self.ua:
-            return True
-        old_ua = httpagentparser.detect(self.ua)
-        new_ua = httpagentparser.detect(ua)
-        keys = {"os": ["version", "name"], "browser": ["version", "name"]}
-        if "os" in old_ua and "os" in new_ua:
-            if old_ua["os"] != new_ua["os"]:
-                return False
-        if "browser" in old_ua and "browser" in new_ua:
-            ou = old_ua["browser"]
-            nu = new_ua["browser"]
-            if ou.get("name") != nu.get("name"):
-                return False
-            if ou.get("version") == nu.get("version"):
-                return True
-            try:
-                ou_v = LooseVersion(ou.get("version"))
-                nu_v = LooseVersion(nu.get("version"))
-            except AttributeError:
-                return False # Something fishy with version strings
-            if nu_v < ou_v:
-                return False # downgraded browser version
-        return True
 
 class BrowserTime(models.Model):
     class Meta:
