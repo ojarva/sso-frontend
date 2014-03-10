@@ -11,6 +11,8 @@
 <div class="row">
 <div class="col-md-8 col-centered">
 
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
 <h3>Authenticator</h3>
 {% if return_readable %}
 <p><small>After signing in, you'll be redirected to <b>{{ return_readable }}</b>.</small></p>

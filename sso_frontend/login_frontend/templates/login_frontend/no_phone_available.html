@@ -2,6 +2,9 @@
 
 {% block title %}No phone available - {% endblock %}
 {% block content %}
+
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
 <div class="alert alert-danger">
 No phone number available.
 </div>

@@ -20,7 +20,6 @@ dcache = get_cache("default")
 
 __all__ = ["add_static_timestamp", "add_browser", "add_user", "session_info"]
 
-@sd.timer("login_frontend.context_processors.add_static_timestamp")
 def add_static_timestamp(request):
     """ Adds unique number used for static files. """
     #TODO: determine automatically
@@ -35,6 +34,12 @@ def add_browser(request):
         ret["auth_status"] = browser.get_auth_state()
         ret["browser"] = browser
     return ret
+
+def add_vulnerability(request):
+    """ Adds "vulnerability" to context, if available """
+    if hasattr(request, "vulnerability"):
+        return {"vulnerability": request.vulnerability}
+    return {}
 
 @sd.timer("login_frontend.context_processors.add_user")
 def add_user(request):

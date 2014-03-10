@@ -2,6 +2,8 @@
 
 {% block title %}Index - {% endblock %}
 {% block content %}
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
 <div class="logout-alert ">
 		Signed in as <div class="username">{{ username }}</div>
 

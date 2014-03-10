@@ -1,0 +1,12 @@
+{% if vulnerability %}
+<div class="alert alert-danger">
+	<i class="fa fa-exclamation-triangle"></i> 
+	{% if vulnerability.browser %}
+		You are using insecure browser. You should update it immediately. All versions older than 
+		{{ vulnerability.version__smaller }} are vulnerable.
+	{% else %}
+		You are running insecure operating system. Please update it as soon as possible.
+		All versions older than {{ vulnerability.version__smaller }} are vulnerable.
+	{% endif %}
+</div>
+{% endif %}

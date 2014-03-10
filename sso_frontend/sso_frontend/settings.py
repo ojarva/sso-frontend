@@ -197,6 +197,7 @@ MIDDLEWARE_CLASSES = (
     'login_frontend.middleware.request_timing.OutLoggingMiddleware', # logging middleware should be before browsermiddleware, as browsermiddleware might abort on process_request.
     'login_frontend.middleware.browser.BrowserMiddleware',
     'login_frontend.middleware.p0f_middleware.P0fMiddleware',
+    'login_frontend.middleware.vulnerabilities.VulnerableBrowser',
     'login_frontend.middleware.request_timing.ViewLoggingMiddleware',
     'django_statsd.middleware.GraphiteRequestTimingMiddleware',
     'django_statsd.middleware.GraphiteMiddleware',
@@ -221,7 +222,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 "login_frontend.context_processors.add_browser",
 "login_frontend.context_processors.add_user",
 "login_frontend.context_processors.session_info",
-"login_frontend.context_processors.add_static_timestamp"
+"login_frontend.context_processors.add_static_timestamp",
+"login_frontend.context_processors.add_vulnerability",
 )
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

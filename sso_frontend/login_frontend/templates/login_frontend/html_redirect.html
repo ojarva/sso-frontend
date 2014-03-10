@@ -5,13 +5,30 @@
 {% endblock %}
 
 {% block header %}
+{% if vulnerability.priority != "mandatory" %}
 <meta http-equiv="refresh" content="0; url={{back_url}}">
+{% endif %}
 {% endblock %}
 
 {% block content %}
-<h2>Redirecting...</h2>
 
-<p>Please wait. Your browser was already redirected, but loading your destination service seems to take some time.</p>
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
 
-<p>If this takes more than a few seconds, you can <a href="{{ back_url}}">retry</a>.</p>
+{% if vulnerability.priority == "mandatory" %}
+	<p>You are not redirected automatically until you update your operating system/browser.</p>
+
+	<p>You're putting yourself in danger by using old, insecure version. Please update to the newest
+	version. If you're already using newest version, and you think this message is not correct,
+	please contact <a href="mailto:admin@futurice.com">admin@futurice.com</a>.
+
+	<p><a class="btn btn-primary" href="{{ back_url}}">Continue to your originating service</a>.</p>
+
+{% else %}
+
+	<h2>Redirecting...</h2>
+
+	<p>Please wait. Your browser was already redirected, but loading your destination service seems to take some time.</p>
+
+	<p>If this takes more than a few seconds, you can <a href="{{ back_url}}">retry</a>.</p>
+{% endif %}
 {% endblock %}
