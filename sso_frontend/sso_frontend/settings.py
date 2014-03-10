@@ -196,7 +196,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'login_frontend.middleware.request_timing.OutLoggingMiddleware', # logging middleware should be before browsermiddleware, as browsermiddleware might abort on process_request.
     'login_frontend.middleware.browser.BrowserMiddleware',
-    'login_frontend.middleware.p0f.P0fMiddleware',
+    'login_frontend.middleware.p0f_middleware.P0fMiddleware',
     'login_frontend.middleware.request_timing.ViewLoggingMiddleware',
     'django_statsd.middleware.GraphiteRequestTimingMiddleware',
     'django_statsd.middleware.GraphiteMiddleware',
