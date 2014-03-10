@@ -186,7 +186,7 @@ class Browser(models.Model):
     bid_public = models.CharField(max_length=37, db_index=True) # UUID
 
     user = models.ForeignKey('User', null=True)
-    ua = models.CharField(max_length=250) # browser user agent
+    ua = models.CharField(max_length=500) # browser user agent
 
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     modified = models.DateTimeField(auto_now=True, db_index=True)
