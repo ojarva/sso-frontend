@@ -13,6 +13,10 @@ def send_email(subject, html_content, to):
     from_email = settings.NOTICES_FROM_EMAIL
     msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
     msg.attach_alternative(html_content, "text/html")
+    if not settings.SEND_EMAILS:
+        if settings.DEBUG:
+            print "Sending notices is disabled. Did not send email to %s with subject '%s'" % (to, subject)
+        return
     return msg.send()
 
 def new_authenticator_notify(request):
