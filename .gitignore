@@ -1,14 +1,20 @@
 syntax: glob
-data.db
-*/build/*
-local_settings.py
-*.pyc
 *.log
 *.pid
+*.pyc
+*/build/*
+.coverage
+data.db
+dev
+htmlcov
+local_settings.py
+sso.db
+sso_frontend/data
 sso_frontend/login_frontend/ldap_local_settings.py
-sso_frontend/login_frontend/send_sms.py
 sso_frontend/login_frontend/local_settings.json
-sso_frontend/static/admin
-sso_frontend/static/CACHE
+sso_frontend/login_frontend/send_sms.py
 sso_frontend/logs
+sso_frontend/private
 sso_frontend/saml2idp/keys/*.pem
+sso_frontend/static/CACHE
+sso_frontend/static/admin
