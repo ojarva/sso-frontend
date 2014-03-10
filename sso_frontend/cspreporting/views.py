@@ -166,6 +166,8 @@ def log_report(request, *args, **kwargs):
         return HttpResponse("Duplicate CSP report. Not stored.")
 
     dcache.set(r_k, True, 86400 * 7)
+    if username:
+        dcache.set("csp-has-reports-for-%s" % username, True, 86400 * 30)
 
     sd.incr("cspreporting.views.log_report.created", 1)
     a = CSPReport.objects.create(username=username, bid_public=bid_public, csp_raw=csp_data, document_uri=data.get("document-uri"),

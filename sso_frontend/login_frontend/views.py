@@ -499,7 +499,7 @@ def configure(request):
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
     back_url = redir_to_sso(request, no_default=True)
-    ret["csp_violations"] = CSPReport.objects.filter(username=user.username).count()
+    ret["csp_violations"] = dcache.get("csp-has-reports-for-%s" % user.username)
     ret["authenticator_id"] = user.get_authenticator_id()
 
     if back_url:
