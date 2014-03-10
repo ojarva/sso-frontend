@@ -60,6 +60,9 @@ class LdapLogin: # pragma: no cover
         except ldap.SERVER_DOWN, e:
             log.error("LDAP server is down: %s", e)
             return "server_down"
+        except ldap.INAPPROPRIATE_AUTH:
+            log.debug("Inappropriate auth: %s - %s" % (self.user_dn, self.password))
+            return "Configuration error while authenticating. Please contact admin@futurice.com."
         except ValueError:
             log.debug("Unknown error while authenticating")
             return "Unknown error while authenticating. Please try again."
