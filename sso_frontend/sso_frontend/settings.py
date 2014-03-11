@@ -189,6 +189,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'login_frontend.middleware.real_remote_ip.RealRemoteIP',
     'login_frontend.middleware.request_timing.InLoggingMiddleware',
+    'login_frontend.middleware.urlcheck.UrlCheckMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

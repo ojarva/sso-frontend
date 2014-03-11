@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Invalid request - {% endblock %}
+
+{% block content %}
+<div class="alert alert-danger">
+The URL you tried to access contains invalid characters.
+</div>
+
+<p>Your request was interrupted, as it contains invalid characters. Sorry about this.</p>
+
+<p>If you followed a link and landed on this page, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> and tell what happened.</p>
+
+<p>You can <a href="{% url 'login_frontend.views.indexview' %}">continue</a> to front page, but you won't be redirected to anywhere.</p>
+
+{% endblock %}
