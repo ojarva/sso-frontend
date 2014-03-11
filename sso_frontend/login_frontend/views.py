@@ -569,7 +569,7 @@ def get_emergency_codes(request, **kwargs):
     draw = PIL.ImageDraw.Draw(img)
     draw.text((10, 20), str(codes.generated_at), "black", font=font)
     i = 1
-    for code in EmergencyCode.objects.all().order_by("code_id"):
+    for code in EmergencyCode.objects.all().filter(codegroup=codes).order_by("code_id"):
         draw.text((10, 20 + i * 35), "#%s: %s" % (code.code_id, code.code_val), "black", font=font)
         i += 1
     stringio = StringIO()
