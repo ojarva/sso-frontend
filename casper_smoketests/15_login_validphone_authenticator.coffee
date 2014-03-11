@@ -24,7 +24,7 @@ casper.start 'http://localhost:8000', ->
    @.then ->
     @.clickLabel("Configure Google Authenticator")
    @.then ->
-    @.test.assertUrlMatch 'http://localhost:8000/configure_authenticator?_sso=internal&next=/index', "Entered authenticator configuration"
+    @.test.assertUrlMatch 'http://localhost:8000/configure/authenticator?_sso=internal&next=/index', "Entered authenticator configuration"
     @.test.assertHttpStatus 200
    @.then ->
     @.clickLabel("Sign out")

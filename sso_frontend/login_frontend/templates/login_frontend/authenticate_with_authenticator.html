@@ -62,7 +62,9 @@
 <input type="hidden" name="timing_data" value="" id="timing_data">
 </form>
 
-<p><small>Problems with Authenticator app? <a href="{% url 'login_frontend.authentication_views.authenticate_with_sms' %}?{{ get_params }}">Authenticate with SMS</a>.</small></p>
+<p><small>Problems with Authenticator app? <a href="{% url 'login_frontend.authentication_views.authenticate_with_sms' %}?{{ get_params }}">Authenticate with SMS</a>.
+{% if can_use_emergency %}No phone available? <a href="{% url 'login_frontend.authentication_views.authenticate_with_emergency' %}?{{ get_params }}">Use emergency code</a>.{% endif %}
+</small></p>
 </div>
 </div>
 {% endblock %}

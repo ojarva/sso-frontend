@@ -10,6 +10,7 @@ These overwrite
 - last_name
 """
 
+from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
 from login_frontend.models import Browser
 from django.utils.functional import SimpleLazyObject
@@ -18,12 +19,10 @@ from django.core.cache import get_cache
 
 dcache = get_cache("default")
 
-__all__ = ["add_static_timestamp", "add_browser", "add_user", "session_info"]
+__all__ = ["add_admin_email", "add_browser", "add_user", "add_session_info"]
 
-def add_static_timestamp(request):
-    """ Adds unique number used for static files. """
-    #TODO: determine automatically
-    return {"static_timestamp": 1}
+def add_admin_email(request):
+    return {"admin_email": settings.ADMIN_CONTACT_EMAIL}
 
 @sd.timer("login_frontend.context_processors.add_browser")
 def add_browser(request):
@@ -65,7 +64,7 @@ def add_user(request):
     return {}
 
 @sd.timer("login_frontend.context_processors.session_info")
-def session_info(request):
+def add_session_info(request):
     """ Adds number of open sessions to the context. """
     if not (hasattr(request, "browser") and request.browser and request.browser.user):
         return {}

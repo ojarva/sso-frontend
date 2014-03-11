@@ -55,7 +55,7 @@ CACHES = {
             'PASSWORD': '',
             'PARSER_CLASS': 'redis.connection.HiredisParser'
         },
-    },	
+    },
     'user_hashes': {
         'BACKEND': 'redis_cache.RedisCache',
         'LOCATION': 'localhost:6379',
@@ -64,7 +64,7 @@ CACHES = {
             'PASSWORD': '',
             'PARSER_CLASS': 'redis.connection.HiredisParser'
         },
-    },	
+    },
     'user_mapping': {
         'BACKEND': 'redis_cache.RedisCache',
         'LOCATION': 'localhost:6379',
@@ -222,8 +222,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 "django.contrib.messages.context_processors.messages",
 "login_frontend.context_processors.add_browser",
 "login_frontend.context_processors.add_user",
-"login_frontend.context_processors.session_info",
-"login_frontend.context_processors.add_static_timestamp",
+"login_frontend.context_processors.add_session_info",
+"login_frontend.context_processors.add_admin_email",
 "login_frontend.context_processors.add_vulnerability",
 )
 
@@ -371,7 +371,7 @@ LOGGING = {
             'backupCount': 100,
             'formatter': 'plain',
         },
-            
+
 
         'logfile_request_timing': {
             'level':'INFO',
@@ -446,6 +446,7 @@ LDAP_IGNORE_SSL=False # skip LDAP SSL certificate checks
 TOKEN_MAP = {} # map of LDAP groups to pubtkt tokens. For example, {"Administrators": "admins", "ExternalContractors": "ext"}
 
 FAKE_TESTING = False # This uses LDAP stub and static SMS codes. Useful for smoke testing, but never set in production.
+ADMIN_CONTACT_EMAIL = None
 
 SEND_EMAILS = True # send "new device" and "new authenticator" emails
 NOTICES_FROM_EMAIL = None
@@ -463,6 +464,8 @@ SECURE_COOKIES = True
 
 FUM_API_ENDPOINT=None
 FUM_ACCESS_TOKEN=None
+
+EMERGENCY_FONT = PROJECT_ROOT+"data/Consolas.ttf"
 
 OPENID_PROVIDER_AX_EXTENSION=True
 OPENID_FAILED_DISCOVERY_AS_VALID=False

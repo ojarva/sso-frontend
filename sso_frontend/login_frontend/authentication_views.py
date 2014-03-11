@@ -450,6 +450,10 @@ def authenticate_with_authenticator(request):
         ret["authenticator_not_used"] = True
         ret["authenticator_generated"] = user.strong_authenticator_generated_at
 
+    emergency_codes = user.get_emergency_codes()
+    if emergency_codes and emergency_codes.valid():
+        ret["can_use_emergency"] = True
+
     if request.method == "POST" and request.POST.get("skip"):
         if skips_available > 0:
             user.strong_skips_available -= 1
@@ -598,6 +602,10 @@ def authenticate_with_sms(request):
             messages.warning(request, "You can't skip strong authentication anymore.")
             custom_log(request, "2f-sms: Tried to skip strong authentication with no skips available", level="warn")
 
+    emergency_codes = user.get_emergency_codes()
+    if emergency_codes and emergency_codes.valid():
+        ret["can_use_emergency"] = True
+
     if user.strong_configured:
         if user.strong_authenticator_secret:
             ret["can_use_authenticator"] = True
@@ -719,21 +727,6 @@ def authenticate_with_sms(request):
     response = render_to_response("login_frontend/authenticate_with_sms.html", ret, context_instance=RequestContext(request))
     return response
 
-
-@require_http_methods(["GET", "POST"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
-@protect_view("authenticate_with_emergency", required_level=Browser.L_BASIC)
-def authenticate_with_emergency(request):
-    """ TODO: emergency code authentication """
-    try:
-        codes = EmergencyCodes.objects.get(user=request.browser.user)
-    except EmergencyCodes.DoesNotExist:
-        # No emergency codes generated. Show error message.
-        pass
-
-
 @require_http_methods(["GET", "POST"])
 def logoutview(request):
     """ Handles logout as well as possible.
@@ -791,3 +784,43 @@ def logoutview(request):
         if request.browser:
             ret["should_timesync"] = request.browser.should_timesync()
         return render_to_response("login_frontend/logout.html", ret, context_instance=RequestContext(request))
+
+@require_http_methods(["GET", "POST"])
+@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
+@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@protect_view("authenticate_with_emergency", required_level=Browser.L_BASIC)
+def authenticate_with_emergency(request):
+    """ TODO: emergency code authentication """
+    ret = {}
+    get_params = request.GET.dict()
+    codes = request.browser.user.get_emergency_codes()
+    if not codes:
+        ret["no_codes_generated"] = True
+        custom_log(request, "No codes generated. Can't authenticate with emergency codes.", level="info")
+        return render_to_response("login_frontend/no_emergency_available.html", {}, context_instance=RequestContext(request))
+    if not codes.valid():
+        ret["no_codes_available"] = True
+        custom_log(request, "No codes available. Can't authenticate with emergency codes.", level="info")
+        return render_to_response("login_frontend/no_emergency_available.html", {}, context_instance=RequestContext(request))
+
+    if request.method == 'POST':
+        otp = request.POST.get("otp")
+        if codes.use_code(otp):
+            # Proper code was provided.
+            custom_log(request, "Authenticated with emergency code", level="info")
+            add_user_log(request, "Second-factor authentication with emergency code succeeded.", "lock")
+            request.browser.save_browser = False # emergency codes are only for temporary authentication
+            request.browser.set_auth_level(Browser.L_STRONG)
+            request.browser.set_auth_state(Browser.S_AUTHENTICATED)
+            return redir_to_sso(request)
+        else:
+            custom_log(request, "Incorrect emergency code", level="info")
+            ret["invalid_otp"] = True
+
+    ret["generated_at"] = str(codes.generated_at)
+    ret["return_readable"] = get_return_url(request)
+    ret["should_timesync"] = request.browser.should_timesync()
+    ret["get_params"] = urllib.urlencode(get_params)
+    ret["emergency_code_id"] = codes.current_code.code_id
+    return render_to_response("login_frontend/authenticate_with_emergency_code.html", ret, context_instance=RequestContext(request))

@@ -75,13 +75,18 @@ class EmergencyCodes(models.Model):
     user = models.ForeignKey("User", primary_key=True)
     generated_at = models.DateTimeField(null=True)
     current_code = models.ForeignKey("EmergencyCode", null=True)
+    downloaded_at = models.DateTimeField(null=True)
+    downloaded_with = models.ForeignKey("Browser", null=True)
 
     @sd.timer("login_frontend.models.EmergencyCodes.use_code")
     def use_code(self, code):
         if self.current_code is None:
             return False
         if self.current_code.code_val == code:
-            self.current_code.delete()
+            old_code = self.current_code
+            self.current_code = None
+            self.save()
+            old_code.delete()
             if self.codes_left() > 0:
                 self.current_code = choice(EmergencyCode.objects.filter(codegroup=self))
             else:
@@ -105,7 +110,7 @@ class EmergencyCodes(models.Model):
 
     @sd.timer("login_frontend.models.EmergencyCodes.generate_code")
     def generate_code(self):
-        p = subprocess.Popen(["pwgen", "15", "1"], stdout=subprocess.PIPE)
+        p = subprocess.Popen(["pwgen", "-nBs", "20", "1"], stdout=subprocess.PIPE)
         (code, _) = p.communicate()
         return code.strip()
 
@@ -119,6 +124,8 @@ class EmergencyCodes(models.Model):
             code.save()
         if self.codes_left() > 0:
             self.current_code = choice(EmergencyCode.objects.filter(codegroup=self))
+        self.generated_at = timezone.now()
+        self.save()
 
 
 class EmergencyCode(models.Model):
@@ -129,6 +136,8 @@ class EmergencyCode(models.Model):
     class Meta:
         unique_together = (("codegroup", "code_id"), ("codegroup", "code_val"))
 
+    def __unicode__(self):
+        return u"%s: %s - %s" % (self.codegroup.user.username, self.code_id, self.code_val)
 
 @sd.timer("login_frontend.models.add_user_log")
 def add_user_log(request, message, status="question", **kwargs):
@@ -763,6 +772,12 @@ class User(models.Model):
 
     user_tokens = models.CharField(max_length=255, null=True, blank=True, help_text="List of pubtkt tokens")
 
+    def get_emergency_codes(self):
+        try:
+            return EmergencyCodes.objects.get(user=self)
+        except EmergencyCodes.DoesNotExist:
+            return False
+
     def get_authenticator_id(self):
         if self.strong_authenticator_id:
             return self.strong_authenticator_id
@@ -800,6 +815,7 @@ class User(models.Model):
         self.strong_authenticator_secret = None
         self.strong_authenticator_generated_at = None
         self.strong_authenticator_used = False
+        EmergencyCodes.objects.get(user=self).delete()
         self.save()
 
     @sd.timer("login_frontend.models.User.gen_authenticator")

@@ -1,0 +1,20 @@
+{% extends "login_frontend/base.html" %}
+
+{% block title %}No emergency codes available - {% endblock %}
+{% block content %}
+
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
+<div class="alert alert-danger">
+No emergency codes available - unable to sign in
+</div>
+
+{% if no_codes_generated %}
+<p>It seems you haven't generated emergency codes. You can't sign in with this method.</p>
+{% elif no_codes_available %}
+<p>Unfortunately, you don't have emergency codes available. You can't sign in with this method.</p>
+{% endif %}
+
+<p>If you don't have your phone available, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> to solve this.</p>
+
+{% endblock %}

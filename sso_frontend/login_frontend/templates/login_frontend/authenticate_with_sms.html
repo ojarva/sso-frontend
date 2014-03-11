@@ -88,7 +88,11 @@
 <input type="hidden" name="timing_data" value="" id="timing_data">
 </form>
 
-{% if can_use_authenticator %}
-	<p><small>Want to <a href="{% url 'login_frontend.authentication_views.authenticate_with_authenticator' %}?{{ get_params }}">use Authenticator</a> instead of SMS?</small></p>
+{% if can_use_authenticator or can_use_emergency %}
+	<p><small>
+	{% if can_use_authenticator %}Want to <a href="{% url 'login_frontend.authentication_views.authenticate_with_authenticator' %}?{{ get_params }}">use Authenticator</a> instead of SMS?{% endif %}
+	{% if can_use_emergency %}No phone available? <a href="{% url 'login_frontend.authentication_views.authenticate_with_emergency' %}?{{ get_params }}">Use emergency code</a>.{% endif %}
+	</small></p>
 {% endif %}
+
 {% endblock %}

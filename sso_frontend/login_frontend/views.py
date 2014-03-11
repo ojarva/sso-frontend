@@ -16,6 +16,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
 from django_statsd.clients import statsd as sd
 from login_frontend.authentication_views import protect_view
@@ -37,7 +38,7 @@ import sys
 import time
 import urllib
 import urlparse
-
+import PIL, PIL.ImageFont, PIL.ImageDraw, PIL.Image
 
 dcache = get_cache("default")
 ucache = get_cache("user_mapping")
@@ -75,7 +76,7 @@ def custom_log(request, message, **kwargs):
     method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
                             remote_addr, username, bid_public, message)
 
-    
+
 @require_http_methods(["GET", "POST"])
 def main_redir(request):
     """ Hack to enable backward compatibility with pubtkt.
@@ -447,6 +448,7 @@ def configure(request):
     """ Configuration view for general options. """
     user = request.browser.user
     ret = {}
+    get_params = request.GET.dict()
 
     if request.method == "POST":
         if request.POST.get("always_sms") == "on":
@@ -483,7 +485,25 @@ def configure(request):
             elif action == "error":
                 custom_log(request, "Encountered error with location sharing settings: %s" % request.POST.get("location-error"), level="warn")
             user.save()
-        return redirect_with_get_params("login_frontend.views.configure", request.GET.dict())
+        elif request.POST.get("generate_emergency"):
+            (emergency_codes, _) = EmergencyCodes.objects.get_or_create(user=request.browser.user)
+            old_existed = False
+            if emergency_codes.valid():
+                # Old codes existed.
+                custom_log(request, "Overwrote old emergency codes", level="info")
+                old_existed = True
+                pass
+            emergency_codes.generate_codes(3)
+            custom_log(request, "Created new emergency codes", level="info")
+            add_user_log(request, "Generated new emergency codes", "fire-extinguisher")
+            dl_uuid = create_browser_uuid()
+            dcache.set("emergency-nonce-for-%s" % request.browser.bid_public, dl_uuid, 120)
+            dl_link = reverse("login_frontend.views.get_emergency_codes", args=(dl_uuid,))
+            msg = "Emergency codes created. <a class='alert-link' href='%s'>Download the codes</a>. You probably want to print this file and keep it safe." % dl_link
+            if old_existed:
+                msg += " All your old emergency codes are now revoked."
+            messages.success(request, mark_safe(msg))
+        return redirect_with_get_params("login_frontend.views.configure", get_params)
 
 
     ret["user"] = user
@@ -491,6 +511,8 @@ def configure(request):
     back_url = redir_to_sso(request, no_default=True)
     ret["csp_violations"] = dcache.get("csp-has-reports-for-%s" % user.username)
     ret["authenticator_id"] = user.get_authenticator_id()
+    emergency_codes = user.get_emergency_codes()
+    ret["emergency_codes"] = emergency_codes
 
     if back_url:
         ret["back_url"] = back_url.url
@@ -498,9 +520,9 @@ def configure(request):
     return response
 
 @require_http_methods(["GET"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])
+@ratelimit(rate='20/1m', ratekey="1m", block=True, method=["POST", "GET"])
+@ratelimit(rate='100/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("get_authenticator_qr", required_level=Browser.L_STRONG)
 def get_authenticator_qr(request, **kwargs):
     """ Outputs QR code for Authenticator. Uses single_use_code to prevent
@@ -525,10 +547,47 @@ def get_authenticator_qr(request, **kwargs):
     custom_log(request, "qr: Downloaded Authenticator secret QR code", level="info")
     return HttpResponse(stringio.read(), content_type="image/png")
 
+@require_http_methods(["GET"])
+@ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])
+@ratelimit(rate='20/1m', ratekey="1m", block=True, method=["POST", "GET"])
+@ratelimit(rate='100/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@protect_view("get_emergency_codes", required_level=Browser.L_STRONG)
+def get_emergency_codes(request, **kwargs):
+    r_k = "emergency-nonce-for-%s" % request.browser.bid_public
+    if dcache.get(r_k) != kwargs["single_use_code"]:
+        custom_log(request, "emergency codes: invalid one-time code for output. Referrer: %s" % request.META.get("HTTP_REFERRER"), level="warn")
+        return HttpResponseForbidden("You can use download link only once.")
+    dcache.delete(r_k)
+
+    codes = request.browser.user.get_emergency_codes()
+    if not codes or not codes.valid():
+        custom_log(request, "Tried to download emergency codes; none available.", level="error")
+        raise Http404
+
+    font = PIL.ImageFont.truetype(settings.EMERGENCY_FONT, 17)
+    img = PIL.Image.new("RGB", (350, 35 + 10 + 35 * codes.codes_left()), (255,255,255))
+    draw = PIL.ImageDraw.Draw(img)
+    draw.text((10, 20), str(codes.generated_at), "black", font=font)
+    i = 1
+    for code in EmergencyCode.objects.all().order_by("code_id"):
+        draw.text((10, 20 + i * 35), "#%s: %s" % (code.code_id, code.code_val), "black", font=font)
+        i += 1
+    stringio = StringIO()
+    img.save(stringio, "png")
+    stringio.seek(0)
+    codes.downloaded_at = timezone.now()
+    codes.downloaded_with = request.browser
+    codes.save()
+    response = HttpResponse(stringio.read(), content_type="image/png")
+    response['Content-Disposition'] = 'attachment; filename=emergency_codes.png'
+    add_user_log(request, "Downloaded emergency codes", "info")
+    custom_log(request, "Downloaded emergency codes", level="info")
+    return response
+
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='5/5s', ratekey="5s", block=True, method=["POST", "GET"])
+@ratelimit(rate='60/1m', ratekey="1m", block=True, method=["POST", "GET"])
+@ratelimit(rate='500/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("configure_authenticator", required_level=Browser.L_STRONG)
 def configure_authenticator(request):
     """ Google Authenticator configuration view. Only POST requests are allowed. """
@@ -591,17 +650,3 @@ def configure_authenticator(request):
     ret["get_params"] = urllib.urlencode(request.GET)
     response = render_to_response("login_frontend/configure_authenticator.html", ret, context_instance=RequestContext(request))
     return response
-
-@require_http_methods(["GET", "POST"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
-@protect_view("authenticate_with_emergency", required_level=Browser.L_BASIC)
-def authenticate_with_emergency(request):
-    """ TODO: emergency code authentication """
-    try:
-        codes = EmergencyCodes.objects.get(user=request.browser.user)
-    except EmergencyCodes.DoesNotExist:
-        # No emergency codes generated. Show error message.
-        pass
-

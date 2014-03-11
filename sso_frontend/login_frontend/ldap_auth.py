@@ -62,7 +62,7 @@ class LdapLogin: # pragma: no cover
             return "server_down"
         except ldap.INAPPROPRIATE_AUTH:
             log.debug("Inappropriate auth: %s - %s" % (self.user_dn, self.password))
-            return "Configuration error while authenticating. Please contact admin@futurice.com."
+            return "Configuration error while authenticating. Please contact %s" % settings.ADMIN_CONTACT_EMAIL
         except ValueError:
             log.debug("Unknown error while authenticating")
             return "Unknown error while authenticating. Please try again."
@@ -85,4 +85,3 @@ class LdapLogin: # pragma: no cover
             if attrs["cn"][0] in settings.TOKEN_MAP:
                 tokens.append(settings.TOKEN_MAP[attrs["cn"][0]])
         return tokens
-
