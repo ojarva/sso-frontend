@@ -805,7 +805,10 @@ def authenticate_with_emergency(request):
         return render_to_response("login_frontend/no_emergency_available.html", {}, context_instance=RequestContext(request))
 
     if request.method == 'POST':
-        otp = request.POST.get("otp")
+        otp = request.POST.get("otp", "")
+        if otp:
+            # whitespace is not important, but printed passwords include spaces for readability.
+            otp = otp.replace(" ", "")
         if codes.use_code(otp):
             # Proper code was provided.
             custom_log(request, "Authenticated with emergency code", level="info")

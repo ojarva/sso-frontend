@@ -40,6 +40,7 @@ import qrcode
 import re
 import redis
 import sys
+import textwrap
 import time
 import urllib
 import urlparse
@@ -615,7 +616,8 @@ def get_emergency_codes_pdf(request, **kwargs):
     p.drawString(100,100, str(codes.generated_at))
     i = 0
     for code in EmergencyCode.objects.all().filter(codegroup=codes).order_by("code_id"):
-        p.drawString(100, 150 + i * 35, "#%s: %s" % (code.code_id, code.code_val))
+        formatted_code = " ".join(textwrap.wrap(code.code_val, 5))
+        p.drawString(100, 150 + i * 35, "#%s: %s" % (code.code_id, formatted_code))
         i += 1
     codes.downloaded_at = timezone.now()
     codes.downloaded_with = request.browser
