@@ -105,6 +105,8 @@ class EmergencyCodes(models.Model):
     def revoke_codes(self):
         self.current_code = None
         self.generated_at = None
+        self.downloaded_at = None
+        self.downloaded_with = None
         self.save()
         EmergencyCode.objects.filter(codegroup=self).delete()
 
