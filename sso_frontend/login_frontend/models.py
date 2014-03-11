@@ -37,6 +37,9 @@ redis_instance = redis.Redis()
 @sd.timer("login_frontend.models.custom_log")
 def custom_log(request, message, **kwargs):
     """ Automatically logs username, remote IP and bid_public """
+    if request is None:
+        log.warn("Skipping custom_log as request is None: %s", message)
+        return
     try:
         raise Exception
     except:
@@ -129,7 +132,7 @@ class EmergencyCode(models.Model):
 
 @sd.timer("login_frontend.models.add_user_log")
 def add_user_log(request, message, status="question", **kwargs):
-    if request.browser is None or request.browser.user is None:
+    if request is None or request.browser is None or request.browser.user is None:
         return
     bid_public = kwargs.get("bid_public")
     if not bid_public:
@@ -828,7 +831,7 @@ class User(models.Model):
         totp = pyotp.TOTP(self.strong_authenticator_secret)
         for timestamp in [time.time() - 30, time.time(), time.time() + 30]:
             totp_code = ("000000"+str(totp.at(timestamp)))[-6:]
-            custom_log(request, "Comparing '%s' and '%s'" % (totp_code, code), level="debug")
+            custom_log(request, "Comparing '%s' and '%s' at %s" % (totp_code, code, timestamp), level="debug")
             if str(code) == totp_code:
                 r_k = "used-otp-%s-%s" % (self.username, totp_code)
                 already_used = dcache.get(r_k)
