@@ -1,0 +1,35 @@
+{% extends "login_frontend/base.html" %}
+
+{% block title %}Emergency codes - {% endblock %}
+
+{% block content %}
+
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
+<h1>Emergency codes</h1>
+
+<div class="alert alert-info">
+	You generated emergency codes. <b>You're not done yet.</b>
+</div>
+
+<p>You have now generated emergency codes. Now you have to store these codes securely. Please note following points:</p>
+
+<ul>
+	<li>You <b>must</b> store these codes securely. These effectively allow accessing your account. These are even more important than your password.</li>
+	<li>Printing and then deleting the file is recommended approach.</li>
+	<li>Don't write any identifiers - your name, username or email - to downloaded file or printed paper.</li>
+	<li>Don't store these codes (only) on your laptop/mobile phone/wallet. These should be available if you lose your purse/backpack/valuables.</li>
+</ul>
+
+<p><span class="onlybefore" data-timestamp="{{ code_valid_until }}">Download link expires {% include "snippets/timestamp.html" with timestamp=code_valid_until %} or after first use.</span><span class="onlyafter hidden" data-timestamp="{{ code_valid_until }}">Download link expired. <a href="?{{ get_params }}">Go back and request a new code</a>.</span></p>
+
+<a class="btn btn-primary" href="{% url 'login_frontend.views.get_emergency_codes_pdf' dl_uuid %}">Download codes</a>
+
+<hr/>
+
+{% if back_url %}
+<p>After downloading these codes, you can <a href="{{ back_url }}">continue to service you tried to access</a>.</p>
+{% else %}
+<p>After downloading these codes, you can <a href="{% url 'login_frontend.views.configure' %}">continue to configuration view</a>.</p>
+{% endif %}
+{% endblock %}

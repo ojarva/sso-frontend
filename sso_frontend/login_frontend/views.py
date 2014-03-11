@@ -6,6 +6,7 @@ This does not include error views (see error_views.py) or admin UI (see admin_fr
 """
 
 from StringIO import StringIO
+from io import BytesIO
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache import get_cache
@@ -25,6 +26,10 @@ from login_frontend.providers import pubtkt_logout
 from login_frontend.emails import new_authenticator_notify
 from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate
 from ratelimit.decorators import ratelimit
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
 import datetime
 import json
 import logging
@@ -450,6 +455,18 @@ def configure(request):
     ret = {}
     get_params = request.GET.dict()
 
+    ret["user"] = user
+    ret["get_params"] = urllib.urlencode(request.GET)
+    back_url = redir_to_sso(request, no_default=True)
+    ret["csp_violations"] = dcache.get("csp-has-reports-for-%s" % user.username)
+    ret["authenticator_id"] = user.get_authenticator_id()
+    emergency_codes = user.get_emergency_codes()
+    ret["emergency_codes"] = emergency_codes
+
+    if back_url:
+        ret["back_url"] = back_url.url
+
+
     if request.method == "POST":
         if request.POST.get("always_sms") == "on":
             add_user_log(request, "Switched to SMS authentication", "info")
@@ -497,25 +514,13 @@ def configure(request):
             custom_log(request, "Created new emergency codes", level="info")
             add_user_log(request, "Generated new emergency codes", "fire-extinguisher")
             dl_uuid = create_browser_uuid()
-            dcache.set("emergency-nonce-for-%s" % request.browser.bid_public, dl_uuid, 120)
-            dl_link = reverse("login_frontend.views.get_emergency_codes", args=(dl_uuid,))
-            msg = "Emergency codes created. <a class='alert-link' href='%s'>Download the codes</a>. You probably want to print this file and keep it safe." % dl_link
-            if old_existed:
-                msg += " All your old emergency codes are now revoked."
-            messages.success(request, mark_safe(msg))
+            dcache.set("emergency-nonce-for-%s" % request.browser.bid_public, dl_uuid, 300)
+            ret["dl_uuid"] = dl_uuid
+            ret["code_valid_until"] = timezone.now() + datetime.timedelta(seconds=300)
+            return render_to_response("login_frontend/emergency_codes_created.html", ret, context_instance=RequestContext(request))
         return redirect_with_get_params("login_frontend.views.configure", get_params)
 
 
-    ret["user"] = user
-    ret["get_params"] = urllib.urlencode(request.GET)
-    back_url = redir_to_sso(request, no_default=True)
-    ret["csp_violations"] = dcache.get("csp-has-reports-for-%s" % user.username)
-    ret["authenticator_id"] = user.get_authenticator_id()
-    emergency_codes = user.get_emergency_codes()
-    ret["emergency_codes"] = emergency_codes
-
-    if back_url:
-        ret["back_url"] = back_url.url
     response = render_to_response("login_frontend/configure.html", ret, context_instance=RequestContext(request))
     return response
 
@@ -551,8 +556,8 @@ def get_authenticator_qr(request, **kwargs):
 @ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])
 @ratelimit(rate='20/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='100/6h', ratekey="6h", block=True, method=["POST", "GET"])
-@protect_view("get_emergency_codes", required_level=Browser.L_STRONG)
-def get_emergency_codes(request, **kwargs):
+@protect_view("get_emergency_codes_image", required_level=Browser.L_STRONG)
+def get_emergency_codes_image(request, **kwargs):
     r_k = "emergency-nonce-for-%s" % request.browser.bid_public
     if dcache.get(r_k) != kwargs["single_use_code"]:
         custom_log(request, "emergency codes: invalid one-time code for output. Referrer: %s" % request.META.get("HTTP_REFERRER"), level="warn")
@@ -563,6 +568,8 @@ def get_emergency_codes(request, **kwargs):
     if not codes or not codes.valid():
         custom_log(request, "Tried to download emergency codes; none available.", level="error")
         raise Http404
+
+
 
     font = PIL.ImageFont.truetype(settings.EMERGENCY_FONT, 17)
     img = PIL.Image.new("RGB", (350, 35 + 10 + 35 * codes.codes_left()), (255,255,255))
@@ -580,6 +587,48 @@ def get_emergency_codes(request, **kwargs):
     codes.save()
     response = HttpResponse(stringio.read(), content_type="image/png")
     response['Content-Disposition'] = 'attachment; filename=emergency_codes.png'
+    add_user_log(request, "Downloaded emergency codes", "info")
+    custom_log(request, "Downloaded emergency codes", level="info")
+    return response
+
+@require_http_methods(["GET"])
+@ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])
+@ratelimit(rate='20/1m', ratekey="1m", block=True, method=["POST", "GET"])
+@ratelimit(rate='100/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@protect_view("get_emergency_codes_pdf", required_level=Browser.L_STRONG)
+def get_emergency_codes_pdf(request, **kwargs):
+    r_k = "emergency-nonce-for-%s" % request.browser.bid_public
+    if dcache.get(r_k) != kwargs["single_use_code"]:
+        custom_log(request, "emergency codes: invalid one-time code for output. Referrer: %s" % request.META.get("HTTP_REFERRER"), level="warn")
+        return HttpResponseForbidden("You can use download link only once.")
+    dcache.delete(r_k)
+
+    codes = request.browser.user.get_emergency_codes()
+    if not codes or not codes.valid():
+        custom_log(request, "Tried to download emergency codes; none available.", level="error")
+        raise Http404
+
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4, bottomup=0)
+    pdfmetrics.registerFont(TTFont('defaultfont', settings.EMERGENCY_FONT))
+    p.setFont('defaultfont', 20)
+    p.drawString(100,100, str(codes.generated_at))
+    i = 0
+    for code in EmergencyCode.objects.all().filter(codegroup=codes).order_by("code_id"):
+        p.drawString(100, 150 + i * 35, "#%s: %s" % (code.code_id, code.code_val))
+        i += 1
+    codes.downloaded_at = timezone.now()
+    codes.downloaded_with = request.browser
+    codes.save()
+
+    p.showPage()
+    p.save()
+    response = HttpResponse(content_type="application/pdf")
+    response['Content-Disposition'] = 'attachment; filename=emergency_codes.pdf'
+    pdf = buffer.getvalue()
+
+    buffer.close()
+    response.write(pdf)
     add_user_log(request, "Downloaded emergency codes", "info")
     custom_log(request, "Downloaded emergency codes", level="info")
     return response
