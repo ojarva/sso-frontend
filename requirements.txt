@@ -31,4 +31,4 @@ simplejson>=3.3.1
 slumber>=0.6.0
 wsgiref>=0.1.2
 browser_compare>=0.0.1
-browser_vulnerabilities>=0.0.2
+browser_vulnerabilities>=0.0.4

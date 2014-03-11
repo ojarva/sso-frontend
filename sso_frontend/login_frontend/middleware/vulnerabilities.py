@@ -12,9 +12,12 @@ class VulnerableBrowser(object):
         if ua is None:
             log.warn("Encountered HTTP request with no user agent string")
             return
-        vb = BrowserVulnerability(ua)
-        vulnerability = vb.vulnerabilities()
+        try:
+            vb = BrowserVulnerability(ua)
+            vulnerability = vb.vulnerabilities()
+        except Exception, e:
+            log.error("Vulnerability matching failed: %s - %s" % (e, ua))
         if vulnerability == False:
             return
-        log.info("Browser with vulnerability: %s", vulnerability)
+        log.info("Browser with vulnerability: %s - %s - %s", request.remote_ip, vulnerability, ua)
         request.vulnerability = vulnerability

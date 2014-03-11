@@ -15,13 +15,13 @@
 {% include "login_frontend/snippets/vulnerable_browser.html" %}
 
 {% if vulnerability.priority == "mandatory" %}
-	<p>You are not redirected automatically until you update your operating system/browser.</p>
+	<p>You are not redirected automatically until you update your {% if vulnerability.browser %}browser{% else %}operating system{% endif %}.</p>
 
 	<p>You're putting yourself in danger by using old, insecure version. Please update to the newest
 	version. If you're already using newest version, and you think this message is not correct,
 	please contact <a href="mailto:admin@futurice.com">admin@futurice.com</a>.
 
-	<p><a class="btn btn-primary" href="{{ back_url}}">Continue to your originating service</a>.</p>
+	<p><a class="btn btn-primary" href="{{ back_url}}">Continue to your originating service</a></p>
 
 {% else %}
 

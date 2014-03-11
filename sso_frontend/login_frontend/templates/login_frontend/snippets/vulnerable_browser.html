@@ -1,12 +1,11 @@
 {% if vulnerability %}
 <div class="alert alert-danger">
 	<i class="fa fa-exclamation-triangle"></i> 
-	{% if vulnerability.browser %}
-		You are using insecure browser. You should update it immediately. All versions older than 
-		{{ vulnerability.version__smaller }} are vulnerable.
+	{% if vulnerability.name %}
+		Your {{ vulnerability.readable_version }} contains vulnerabilities. You should update it immediately.
 	{% else %}
-		You are running insecure operating system. Please update it as soon as possible.
-		All versions older than {{ vulnerability.version__smaller }} are vulnerable.
+		Your {{ vulnerability.readable_version }} contains vulnerabilities. Please update it immediately to at least
+		{{ vulnerability.version__smaller }}. Take backups before updating the OS.
 	{% endif %}
 </div>
 {% endif %}
