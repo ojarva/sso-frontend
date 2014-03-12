@@ -8,7 +8,15 @@
 <li>Browser: {{ browser.get_readable_ua }}</li>
 <li>IP address: {{ remote_ip }} ({{ remote_ip|ip_to_geoip }})</li>
 {% if browser.name %}<li>Browser name set by you: {{ browser.name }}</li>{% endif %}
-{% if sms_used %}<li>Signed in with SMS</li>{% elif authenticator_used %}<li>Signed in with Authenticator</li>{% endif %}
+<li>
+    {% if auth_system == 'sms' %}
+        Signed in with SMS.
+    {% elif auth_system == "authenticator" %}
+        Signed in with Authenticator.
+    {% else %}
+        Signed in with unknown authentication system.
+    {% endif %}
+</li>
 </ul>
 
 <p><b>If this wasn't you, please immediately do the following:</b></p>

@@ -811,7 +811,8 @@ def authenticate_with_emergency(request):
             otp = otp.replace(" ", "")
         if codes.use_code(otp):
             # Proper code was provided.
-            emergency_used_notify(request, codes)
+            familiar_device = request.browser.user_is_familiar(request.browser.user, Browser.L_STRONG)
+            emergency_used_notify(request, codes, familiar_device=familiar_device)
             custom_log(request, "Authenticated with emergency code", level="info")
             add_user_log(request, "Second-factor authentication with emergency code succeeded.", "lock")
             request.browser.save_browser = False # emergency codes are only for temporary authentication

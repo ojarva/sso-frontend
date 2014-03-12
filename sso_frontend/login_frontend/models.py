@@ -231,6 +231,16 @@ class Browser(models.Model):
     def __unicode__(self):
         return u"%s: %s" % (self.bid_public, self.ua)
 
+    @sd.timer("login_frontend.models.Browser.user_is_familiar")
+    def user_is_familiar(self, user, auth_level):
+        try:
+            browser_user = BrowserUsers.objects.get(browser=self, user=user)
+            if int(browser_user.max_auth_level) >= int(auth_level):
+                return True
+        except BrowserUsers.DoesNotExist:
+            pass
+        return False
+
 
     @sd.timer("login_frontend.models.Browser.auth_state_changed")
     def auth_state_changed(self):

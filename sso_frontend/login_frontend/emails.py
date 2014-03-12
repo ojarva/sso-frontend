@@ -29,10 +29,11 @@ def new_emergency_generated_notify(request, codes):
     send_email("New emergency codes configured for your account", html_content, request.browser.user.email)
 
 
-def emergency_used_notify(request, codes):
+def emergency_used_notify(request, codes, **kwargs):
     ret = {}
     ret["remote_ip"] = request.remote_ip
     ret["codes"] = codes
+    ret["familiar_device"] = kwargs.get("familiar_device", False)
     html_content = render_to_string("emails/emergency_used.html", ret, context_instance=RequestContext(request))
     send_email("Emergency code was used to access your account", html_content, request.browser.user.email)
 
@@ -46,18 +47,12 @@ def new_authenticator_notify(request):
 
 
 def new_device_notify(request, auth_system):
-    try:
-        browser_user = BrowserUsers.objects.get(browser=request.browser, user=request.browser.user)
-        if int(browser_user.max_auth_level) >= int(Browser.L_STRONG):
-            return False
-    except BrowserUsers.DoesNotExist:
-        pass
+    if request.browser.user_is_familiar(request.browser.user, Browser.L_STRONG):
+        return False
 
     ret = {}
     ret["remote_ip"] = request.remote_ip
-    if auth_system == "sms":
-        ret["sms_used"] = True
-    elif auth_system == "authenticator":
-        ret["authenticator_used"] = True
+    ret["auth_system"] = auth_system
     html_content = render_to_string("emails/new_device.html", ret, context_instance=RequestContext(request))
     send_email("Login from unrecognized device/browser", html_content, request.browser.user.email)
+    return True
