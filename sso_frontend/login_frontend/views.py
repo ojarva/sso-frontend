@@ -23,7 +23,7 @@ from django_statsd.clients import statsd as sd
 from login_frontend.authentication_views import protect_view
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
-from login_frontend.emails import new_authenticator_notify
+from login_frontend.emails import new_authenticator_notify, new_emergency_generated_notify
 from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate
 from ratelimit.decorators import ratelimit
 from reportlab.lib.pagesizes import A4
@@ -590,6 +590,7 @@ def get_emergency_codes_image(request, **kwargs):
     response['Content-Disposition'] = 'attachment; filename=emergency_codes.png'
     add_user_log(request, "Downloaded emergency codes", "info")
     custom_log(request, "Downloaded emergency codes", level="info")
+    new_emergency_generated_notify(request, codes)
     return response
 
 @require_http_methods(["GET"])
@@ -633,6 +634,7 @@ def get_emergency_codes_pdf(request, **kwargs):
     response.write(pdf)
     add_user_log(request, "Downloaded emergency codes", "info")
     custom_log(request, "Downloaded emergency codes", level="info")
+    new_emergency_generated_notify(request, codes)
     return response
 
 @require_http_methods(["GET", "POST"])

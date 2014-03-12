@@ -1,0 +1,24 @@
+{% load ip_to_geoip %}
+{% load full_uri %}
+<p>Hi {% if first_name %}{{ first_name }}{% else %}{{ username }}{% endif %},</p>
+
+<p>You - or someone else - successfully generated emergency codes for your account. Please verify that following information matches:</p>
+
+<ul>
+<li>Browser: {{ browser.get_readable_ua }}</li>
+<li>IP address: {{ remote_ip }} ({{ remote_ip|ip_to_geoip }})</li>
+{% if browser.name %}<li>Browser name set by you: {{ browser.name }}</li>
+{% endif %}
+</ul>
+
+<p><b>If you did not do this, please do the following:</b></p>
+
+<ol>
+<li>Open <a href="{% full_uri 'login_frontend.views.sessions' %}">sessions</a> page, and hit "Sign out all my sessions".</li>
+<li>Go to <a href="{% full_uri 'login_frontend.views.configure' %}">settings</a> and revoke emergency codes by generating a new set of codes.</li>
+<li>Notify IT team ({{ admin_email }}) with as many details as you know: did you leave your session open somewhere? Did you lose your computer/mobile phone?</li>
+</ol>
+
+<p>If you generated and downloaded the codes, there's no need for any actions. Please store the codes securely, and keep them available. Remember that you need those if you lose your mobile phone and/or laptop (and probably wallet too). All your older emergency codes are now revoked.</p>
+
+<p><small>You can't reply to this email. You can't unsubscribe from these emails. If this came to wrong email address, please contact {{ admin_email }} and we'll fix it.</small></p>

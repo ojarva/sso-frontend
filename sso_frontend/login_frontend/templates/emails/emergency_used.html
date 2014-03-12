@@ -1,0 +1,29 @@
+{% load ip_to_geoip %}
+{% load full_uri %}
+<p>Hi {% if first_name %}{{ first_name }}{% else %}{{ username }}{% endif %},</p>
+
+<p>Emergency code was used on your account. What does this mean? If it was used by you, everything is fine. If you didn't do that, <b>you must take actions.</b></p>
+
+<p>Please check these details match:</p>
+
+<ul>
+<li>Browser: {{ browser.get_readable_ua }}</li>
+<li>IP address: {{ remote_ip }} ({{ remote_ip|ip_to_geoip }})</li>
+{% if browser.name %}<li>Browser name set by you: {{ browser.name }}</li>{% endif %}
+</ul>
+
+<p><b>If you did not do this or details above are not correct, please immediately do the following:</b></p>
+
+<ol>
+<li>open <a href="{% full_uri 'login_frontend.views.sessions' %}">sessions</a> page, and hit "Sign out all my sessions".</li>
+<li>Go to <a href="{% full_uri 'login_frontend.views.configure' %}">settings</a> and regenerate your emergency codes.</li>
+<li>Notify IT team ({{ admin_email }} with as many details as you know: did you leave your session open somewhere? Did you lose your computer/mobile phone? Do you have any idea how you lost your emergency codes?</li>
+</ol>
+
+<p>{% if codes.codes_left > 0 %}
+        You still have {{ codes.codes_left }} code{{ codes.codes_left|pluralize }} available.
+    {% else %}
+        You don't have any emergency codes left.
+    {% endif %}</p>
+
+<p><small>You can't reply to this email. You can't unsubscribe from these emails. If this came to wrong email address, please contact {{ admin_email }} and we'll fix it.</small></p>

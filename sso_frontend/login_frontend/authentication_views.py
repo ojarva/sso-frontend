@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
 from django_statsd.clients import statsd as sd
-from login_frontend.emails import new_device_notify
+from login_frontend.emails import new_device_notify, emergency_used_notify
 from login_frontend.models import *
 from login_frontend.send_sms import send_sms
 from login_frontend.utils import save_timing_data, redirect_with_get_params, redir_to_sso, get_return_url
@@ -811,6 +811,7 @@ def authenticate_with_emergency(request):
             otp = otp.replace(" ", "")
         if codes.use_code(otp):
             # Proper code was provided.
+            emergency_used_notify(request, codes)
             custom_log(request, "Authenticated with emergency code", level="info")
             add_user_log(request, "Second-factor authentication with emergency code succeeded.", "lock")
             request.browser.save_browser = False # emergency codes are only for temporary authentication

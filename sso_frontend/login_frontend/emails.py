@@ -7,17 +7,35 @@ import html2text
 import logging
 
 def send_email(subject, html_content, to):
-    
+
     html = html2text.HTML2Text()
     text_content = text_content = html.handle(html_content)
     from_email = settings.NOTICES_FROM_EMAIL
-    msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
+    msg = EmailMultiAlternatives(subject, text_content, from_email, [to], headers = {"Reply-To": settings.ADMIN_CONTACT_EMAIL})
     msg.attach_alternative(html_content, "text/html")
     if not settings.SEND_EMAILS:
         if settings.DEBUG:
             print "Sending notices is disabled. Did not send email to %s with subject '%s'" % (to, subject)
+            print msg
+            print
         return
     return msg.send()
+
+def new_emergency_generated_notify(request, codes):
+    ret = {}
+    ret["remote_ip"] = request.remote_ip
+    ret["codes"] = codes
+    html_content = render_to_string("emails/emergency_generated.html", ret, context_instance=RequestContext(request))
+    send_email("New emergency codes configured for your account", html_content, request.browser.user.email)
+
+
+def emergency_used_notify(request, codes):
+    ret = {}
+    ret["remote_ip"] = request.remote_ip
+    ret["codes"] = codes
+    html_content = render_to_string("emails/emergency_used.html", ret, context_instance=RequestContext(request))
+    send_email("Emergency code was used to access your account", html_content, request.browser.user.email)
+
 
 def new_authenticator_notify(request):
     ret = {}
@@ -25,6 +43,7 @@ def new_authenticator_notify(request):
     ret["remote_ip"] = request.remote_ip
     html_content = render_to_string("emails/new_authenticator.html", ret, context_instance=RequestContext(request))
     send_email("New Authenticator configured to your account", html_content, request.browser.user.email)
+
 
 def new_device_notify(request, auth_system):
     try:
