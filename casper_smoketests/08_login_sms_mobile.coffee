@@ -28,12 +28,14 @@ casper.start 'http://localhost:8000', ->
      "otp": "1234"
     }, true)
    @.then ->
+    @.capture("screenshots_sms_invalid.png")
     @.test.assertSelectorHasText '.alert', 'Incorrect one-time code. Only code from message with id', "Incorrect OTP warning"
    @.then ->
     @.fill("form[name='loginform']", {
      "otp": "12345"
     }, true)
    @.then ->
+    @.capture("screenshots_configuration.png")
     @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=/index', "Redirected to configuration view"
     @.test.assertSelectorHasText('.skip_for_now', 'Skip for now', "Skip for now is available")
     @.test.assertSelectorHasText('.configure_authenticator_btn', 'Configure Google Authenticator', "Configure google authenticator is available")

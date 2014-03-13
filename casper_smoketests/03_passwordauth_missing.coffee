@@ -20,6 +20,7 @@ casper.start 'http://localhost:8000', ->
      "password": "wrong_password"
     }, true);
    @.then ->
+    @.capture("screenshots_missing_user_or_password.png")
     @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/index', "No redirect after incorrect credentials"
     @.test.assertHttpStatus 200
     @.test.assertSelectorHasText '.alert-warning', 'Please enter both username and password.', "Prompt for username and password"

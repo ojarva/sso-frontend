@@ -40,6 +40,7 @@ casper.start 'http://localhost:8000', ->
    @.then ->
     @.clickLabel("Configure Google Authenticator")
    @.then ->
+    @.capture("screenshots_configure_authenticator.png")
     @.test.assertUrlMatch 'http://localhost:8000/configure/authenticator?_sso=internal&next=/index', "Authenticator configuration view"
     @.test.assertHttpStatus 200
    @.then ->
@@ -47,6 +48,7 @@ casper.start 'http://localhost:8000', ->
    @.then ->
     @.test.assertUrlMatch 'http://localhost:8000/index', "Continue to service redirected properly"
     @.test.assertHttpStatus 200
+    @.capture("screenshots_frontpage.png")
     @.test.assertSelectorHasText(".username", "test_valid", "Username set correctly")
    @.then ->
     @.click("#sessions_link")

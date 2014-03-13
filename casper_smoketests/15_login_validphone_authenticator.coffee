@@ -40,12 +40,14 @@ casper.start 'http://localhost:8000', ->
      "password": "testpassword"
     }, true)
    @.then ->
+    @.capture("screenshots_auth_sms-authenticator_available_not_used.png")
     @.test.assertHttpStatus 200
     @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=/index'
     @.test.assertSelectorHasText('.alert-warning', 'You generated Authenticator configuration, but have not used it.', "Authenticator generated but not used warning")
    @.then ->
     @.clickLabel("proceed to Authenticator page")
    @.then ->
+    @.capture("screenshots_auth_authenticator_not_used.png")
     @.test.assertUrlMatch 'http://localhost:8000/second/authenticator?_sso=internal&next=/index', "Entered Authenticator page"
     @.test.assertSelectorHasText('.alert-info', 'You have Authenticator generated', "Authenticator generated but not used warning")
    @.then ->
@@ -53,6 +55,7 @@ casper.start 'http://localhost:8000', ->
      "otp": "asdf"
     }, true)
    @.then ->
+    @.capture("screenshots_authenticator_invalid_otp.png")
     @.test.assertSelectorHasText(".alert-danger", "Incorrect OTP code.", "Incorrect OTP for authenticator")
    
 

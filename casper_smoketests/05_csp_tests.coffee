@@ -20,6 +20,7 @@ casper.start 'http://localhost:8000', ->
     }, true);
    @.then ->
     @.test.assertHttpStatus 200, "Authentication succeeded"
+
    @.thenOpen("http://localhost:8000/view-csp-warnings")
    @.then ->
     @.test.assertUrlMatch "http://localhost:8000/view-csp-warnings", "CSP warnings page opened"
@@ -52,11 +53,13 @@ casper.start 'http://localhost:8000', ->
     })
    @.thenOpen("http://localhost:8000/view-csp-warnings")
    @.then ->
+    @.capture("screenshots_csp_warnings.png")
     @.test.assertSelectorHasText "td", "http://localhost:8000/testsite", "CSP report was recorded personal report"
     @.test.assertHttpStatus 200
 
    @.thenOpen("http://localhost:8000/view-csp-reports")
    @.then ->
+    @.capture("screenshots_csp_reports.png")
     @.test.assertSelectorHasText "td", "http://localhost:8000/testsite", "CSP report was recorded to warnings"
     @.test.assertSelectorHasText "td", "None (browser extension)", "Browser extension was detected properly"
     @.test.assertHttpStatus 200

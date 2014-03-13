@@ -1,4 +1,5 @@
 syntax: glob
+
 *.log
 *.pid
 *.pyc
@@ -8,6 +9,7 @@ data.db
 dev
 htmlcov
 local_settings.py
+screenshots_*.png
 sso.db
 sso_frontend/data
 sso_frontend/login_frontend/ldap_local_settings.py

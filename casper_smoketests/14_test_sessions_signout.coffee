@@ -82,6 +82,7 @@ casper.start 'http://localhost:8000', ->
     phantom.cookies = JSON.parse(signed_in_cookies)
    @.thenOpen("http://localhost:8000")
    @.then ->
+    @.capture("screenshots_forced_logout.png")
     @.test.assertHttpStatus 200
     @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/index', "Redirected to password authentication"
     @.test.assertSelectorHasText('.alert-warning', 'You - or administrator - remotely signed out this browser. Please sign in again.', "Remote sign out notification")

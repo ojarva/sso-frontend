@@ -29,6 +29,7 @@ casper.start 'http://localhost:8000', ->
    @.then ->
     @.clickLabel("Admin")
    @.then ->
+    @.capture("screenshots_admin_front.png")
     @.test.assertHttpStatus 200, "Admin frontpage"
    @.then ->
     @.clickLabel("Main")
@@ -48,10 +49,12 @@ casper.start 'http://localhost:8000', ->
    @.then -> 
     @.clickLabel("Details")
    @.then ->
+    @.capture("screenshots_admin_browser_details.png")
     @.test.assertHttpStatus 200, "Browser details page"
    @.then ->
     @.clickLabel("View logs")
    @.then ->
+    @.capture("screenshots_admin_browser_logs.png")
     @.test.assertHttpStatus 200, "Browser logs (admin) page"
 
    @.then ->
@@ -59,6 +62,7 @@ casper.start 'http://localhost:8000', ->
       {"q": "test_admin"},
       true)
    @.then ->
+    @.capture("screenshots_admin_search.png")
     @.test.assertHttpStatus 200, "Search for valid user"
     @.test.assertUrlMatch 'http://localhost:8000/admin_/search?q=test_admin', "Redirected to search page"
    @.then ->

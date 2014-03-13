@@ -47,6 +47,7 @@ casper.start 'http://localhost:8000', ->
     phantom.deleteCookie("v2sessionbid")
    @.thenOpen("http://localhost:8000")
    @.then ->
+    @.capture("screenshots_browser_restarted.png")
     @.test.assertSelectorHasText(".alert-info", "According to our records", "Browser restart detected properly")
     @.test.assertHttpStatus 200
     @.test.assert(check_cookie "v2public-browserid", "Browser public ID cookie")

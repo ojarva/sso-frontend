@@ -12,12 +12,14 @@ casper.start 'http://localhost:8000', ->
      "password": "testpassword"
     }, true);
    @.then ->
+    @.capture("screenshots_nophone.png")
     @.test.assertUrlMatch 'http://localhost:8000/second/sms?_sso=internal&next=/index', "Redirected to SMS authentication page"
     @.test.assertHttpStatus 200
     @.test.assertSelectorHasText '.alert', 'No phone number available.', "No phone number available is shown"
    @.then ->
     @.clickLabel "Sign out"
    @.then ->
+    @.capture("screenshots_logout.png")
     @.test.assertUrlMatch 'http://localhost:8000/logout?logout=on', "Redirected to sign out page"
     @.test.assertHttpStatus 200
     @.test.assertSelectorHasText '.alert-success', 'You are now signed out.', "Successfully signed out"

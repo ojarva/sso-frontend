@@ -23,6 +23,7 @@ casper.start 'http://localhost:8000', ->
     @.test.assertUrlMatch 'http://localhost:8000/configure?_sso=internal&next=/index', "Redirected to configuration page"
    @.thenOpen("http://localhost:8000/openid/")
    @.then ->
+    @.capture("screenshots_openid_main.png")
     @.test.assertHttpStatus 200
     @.test.assertField('openid_identifier', 'https://localhost:8000/openid/test_valid', "Proper openid identifier generated")
    @.thenOpen("http://localhost:8000/openid/test_valid")
@@ -34,6 +35,7 @@ casper.start 'http://localhost:8000', ->
 
    @.thenOpen("http://localhost:8000/idp/login/")
    @.then ->
+    @.capture("screenshots_saml_main.png")
     @.test.assertHttpStatus 200, "SAML frontpage opened"
     @.test.assertSelectorHasText(".alert-danger", "Incomplete request: missing SAMLRequest or RelayState argument. Aborting.", "Error message for incorrect SAML request shown")
 
@@ -43,30 +45,35 @@ casper.start 'http://localhost:8000', ->
 
    @.thenOpen("http://localhost:8000/?back=asdf")
    @.then ->
+    @.capture("screenshots_pubtkt_invalid_return.png")
     @.test.assertHttpStatus 200, "pubtkt with invalid return url"
     @.test.assertUrlMatch 'http://localhost:8000/pubtkt?back=asdf', "Redirected to pubtkt provider"
     @.test.assertSelectorHasText("p", 'Requested service URL "asdf" is invalid', "Invalid return url error")
 
    @.thenOpen("http://localhost:8000/?back=https://asdf")
    @.then ->
+    @.capture("screenshots_pubtkt_invalid_return2.png")
     @.test.assertHttpStatus 200, "pubtkt with invalid return url but proper schema"
     @.test.assertUrlMatch 'http://localhost:8000/pubtkt?back=https://asdf', "Redirected to pubtkt provider"
     @.test.assertSelectorHasText("p", 'Requested service URL "https://asdf" is invalid', "Invalid return url error")
 
    @.thenOpen("http://localhost:8000/?back=https://asdf.example.com")
    @.then ->
+    @.capture("screenshots_pubtkt_invalid_return3.png")
     @.test.assertHttpStatus 200, "pubtkt with incorrect, but complete return url"
     @.test.assertUrlMatch 'http://localhost:8000/pubtkt?back=https://asdf.example.com', "Redirected to pubtkt provider"
     @.test.assertSelectorHasText("p", 'Requested service URL "https://asdf.example.com" is invalid', "Invalid return url error")
 
    @.thenOpen("http://localhost:8000/?back=https://")
    @.then ->
+    @.capture("screenshots_pubtkt_invalid_return4.png")
     @.test.assertHttpStatus 200, "pubtkt with only schema"
     @.test.assertUrlMatch 'http://localhost:8000/pubtkt?back=https://', "redirected to pubtkt provider"
     @.test.assertSelectorHasText("p", 'Requested service URL "https://" is invalid', "Invalid return url error")
 
    @.thenOpen("http://localhost:8000/pubtkt")
    @.then ->
+    @.capture("screenshots_pubtkt_invalid_return5.png")
     @.test.assertHttpStatus 200, "pubtkt without return url"
     @.test.assertUrlMatch 'http://localhost:8000/pubtkt', "No redirect"
     @.test.assertSelectorHasText("p", 'No return URL was defined on your request.', "Empty return url error")
@@ -74,6 +81,7 @@ casper.start 'http://localhost:8000', ->
 
    @.thenOpen("http://localhost:8000/pubtkt?back=asdf&unauth=1")
    @.then ->
+    @.capture("screenshots_pubtkt_unauth.png")
     @.test.assertHttpStatus 200, "pubtkt with unauth=1"
     @.test.assertUrlMatch 'http://localhost:8000/pubtkt?back=asdf', "Was not redirected"
     @.test.assertSelectorHasText(".alert-danger", "Your don't have access to requested resource.", "No access error")

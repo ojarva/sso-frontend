@@ -37,6 +37,7 @@ casper.start 'http://localhost:8000', ->
     casper.userAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:26.0) Gecko/20100101 Firefox/26.0')
    @.thenOpen("http://localhost:8000/sessions")
    @.then ->
+    @.capture("screenshots_additional_auth.png")
     @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/sessions', 'Redirected to password authentication'
     @.test.assertSelectorHasText('.alert-success', 'Additional authentication is required')
    @.then ->
@@ -44,6 +45,7 @@ casper.start 'http://localhost:8000', ->
      "password": "testpassword"
     }, true)
    @.then ->
+    @.capture("screenshots_sessions.png")
     @.test.assertHttpStatus 200
     @.test.assertUrlMatch 'http://localhost:8000/sessions', 'Redirected to sessions'
    @.then ->
@@ -73,6 +75,7 @@ casper.start 'http://localhost:8000', ->
     casper.userAgent('Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7A341 Safari/528.1')
    @.thenOpen("http://localhost:8000/sessions")
    @.then ->
+    @.capture("screenshots_browser_changed.png")
     @.test.assertUrlMatch 'http://localhost:8000/first/password?_sso=internal&next=/sessions', 'Redirected to password authentication'
     @.test.assertSelectorHasText('.alert-warning', 'Your browser was changed.')
 
