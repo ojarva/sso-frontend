@@ -8,7 +8,7 @@
 <h1>Your log entries</h1>
 
 {% if this_browser %}
-<p>This is log for your browser <span class="tooltip-link" title="{{ this_browser.ua }}">{{ this_browser.get_readable_ua }}</span>.</p>
+<p>This is log for your browser <span class="tooltip-link" title="{{ this_browser.ua }}">{{ this_browser.get_readable_ua }}</span>.{% if this_browser.name %} You have named this browser as "{{ this_browser.name }}".{% endif %}</p>
 
 <p><a class="btn btn-primary" href="{% url 'login_frontend.views.view_log' %}">View all log entries</a></p>
 {% endif %}
@@ -47,7 +47,7 @@
 <p>
 {% for your_browser in browsers %}
 {% if not your_browser == this_browser %}
-<a href="{% url 'login_frontend.views.view_log' your_browser.bid_public %}">{{ your_browser.get_readable_ua }}</a>
+<a href="{% url 'login_frontend.views.view_log' your_browser.bid_public %}">{{ your_browser.get_readable_ua }}{% if your_browser.name %}{{ your_browser.name }}{% endif %}</a>
 {% if not forloop.last %} - {% endif %}
 {% endif %}
 {% endfor %}

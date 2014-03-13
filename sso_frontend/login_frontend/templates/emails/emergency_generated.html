@@ -7,11 +7,12 @@
 <ul>
 <li>Browser: {{ browser.get_readable_ua }}</li>
 <li>IP address: {{ remote_ip }} ({{ remote_ip|ip_to_geoip }})</li>
-{% if browser.name %}<li>Browser name set by you: {{ browser.name }}</li>
-{% endif %}
+{% if browser.name %}<li>Browser name set by you: {{ browser.name }}</li>{% endif %}
+<li><a href="{% full_uri 'login_frontend.views.view_log' browser.bid_public %}">Review log entries</a></li>
+<li>Text at the top of emergency codes sheet should be {{ codes.generated_at }}.</li>
 </ul>
 
-<p><b>If you did not do this, please do the following:</b></p>
+<p><b>If you did not do this, please immediately do the following:</b></p>
 
 <ol>
 <li>Open <a href="{% full_uri 'login_frontend.views.sessions' %}">sessions</a> page, and hit "Sign out all my sessions".</li>

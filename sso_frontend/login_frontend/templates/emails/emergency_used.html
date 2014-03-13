@@ -11,6 +11,7 @@
 <li>IP address: {{ remote_ip }} ({{ remote_ip|ip_to_geoip }})</li>
 {% if browser.name %}<li>Browser name set by you: {{ browser.name }}</li>{% endif %}
 <li>{% if familiar_device %}You have used the same browser earlier.{% else %}You have <b>not</b> used this browser earlier.{% endif %}</li>
+<li><a href="{% full_uri 'login_frontend.views.view_log' browser.bid_public %}">Review log entries</a></li>
 </ul>
 
 <p><b>If you did not do this or details above are not correct, please immediately do the following:</b></p>
