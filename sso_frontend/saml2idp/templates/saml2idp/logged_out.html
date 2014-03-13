@@ -1,5 +1,8 @@
 {% extends "saml2idp/base.html" %}
-{% load i18n %}
 {% block content %}
-{% trans "You have successfully logged out of the Identity Provider." %}
+<div class="alert alert-success">
+    You have successfully signed out of the Identity Provider.
+</div>
+
+<p>You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
 {% endblock %}

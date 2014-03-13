@@ -8,5 +8,7 @@ No sign-in request available - unable to continue.
 
 <p>This might be caused by clicking browser back button at the wrong time. Unfortunately, sign-in process breaks if you go back after certain steps.</p>
 
+<p>If this happens repeatedly, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a>, and we'll try to figure it out.</p>
+
 <p><a class="btn btn-primary" href="{% url "login_frontend.views.indexview" %}">Onwards</a></p>
 {% endblock %}

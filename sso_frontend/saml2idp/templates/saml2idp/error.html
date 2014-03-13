@@ -1,15 +1,16 @@
 {% extends "saml2idp/base.html" %}
-{% load i18n %}
 {% block content %}
 {% if missing_fields %}
 <div class="alert alert-danger">
 Incomplete request: missing SAMLRequest or RelayState argument. Aborting.
 </div>
-{% endif %}
-{% if assertion_failed %}
+{% elif assertion_failed %}
 <div class="alert alert-danger">
     No provider configured for requested service.
 </div>
 {% endif %}
+
+<p>If you think this shouldn't happen, and trying again doesn't help, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> and we'll figure it out.</p>
+
 <p><a class="btn" href="{% url "login_frontend.views.indexview" %}">Onwards</a></p>
 {% endblock %}

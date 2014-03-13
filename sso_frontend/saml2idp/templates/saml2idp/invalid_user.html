@@ -1,5 +1,8 @@
 {% extends "saml2idp/base.html" %}
-{% load i18n %}
 {% block content %}
-{% trans "You have logged in, but your user account is not enabled for SAML 2.0." %}
+<div class="alert alert-danger">
+    You have logged in, but your user account is not enabled for SAML 2.0.
+</div>
+
+<p>Please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> and we'll figure it out.</p>
 {% endblock %}

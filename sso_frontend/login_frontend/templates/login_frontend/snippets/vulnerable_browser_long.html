@@ -1,0 +1,14 @@
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
+{% if vulnerability.priority == "mandatory" %}
+	<p>You are not redirected automatically until you update your {% if vulnerability.browser %}browser{% else %}operating system{% endif %}.</p>
+
+	<p>You're putting yourself in danger by using old, insecure version. Please update to the newest
+	version. If you're already using newest version, and you think this message is not correct,
+	please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a>.</p>
+
+	{% if back_url %}
+		<p><a class="btn btn-primary" href="{{ back_url}}">Continue to your originating service</a></p>
+	{% endif %}
+
+{% endif %}
