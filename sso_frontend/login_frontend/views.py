@@ -155,7 +155,12 @@ def automatic_ping(request, **kwargs):
             dcache.set("last-known-location-%s" % request.browser.bid_public, location, 3600)
             dcache.set("last-known-location-timestamp-%s" % request.browser.bid_public, time.time(), 3600)
             dcache.set("last-known-location-from-%s" % request.browser.bid_public, request.remote_ip, 3600)
-        custom_log(request, "Ping from %s" % location)
+        activity = request.GET.get("activity")
+        hidden = request.GET.get("hidden")
+        error = request.GET.get("error")
+        if error:
+            custom_log(request, "Ping: an error occured: %s - %s" % (location, error), level="error")
+        custom_log(request, "Ping from %s - %s - %s" % (location, activity, hidden))
     ret = {}
     sign_out = False
     if not request.browser:
