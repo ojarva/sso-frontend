@@ -305,7 +305,7 @@ LOGGING = {
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/main",
             'maxBytes': 50000000,
-            'backupCount': 10,
+            'backupCount': 100,
             'formatter': 'standard',
         },
 

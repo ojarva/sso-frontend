@@ -158,9 +158,13 @@ def automatic_ping(request, **kwargs):
         activity = request.GET.get("activity")
         hidden = request.GET.get("hidden")
         error = request.GET.get("error")
+        client_t = request.GET.get("t")
+        client_c = request.GET.get("c")
+        client_r = request.GET.get("r")
+        client_u = request.GET.get("u")
         if error:
             custom_log(request, "Ping: an error occured: %s - %s" % (location, error), level="error")
-        custom_log(request, "Ping from %s - %s - %s" % (location, activity, hidden))
+        custom_log(request, "Ping from %s - %s - %s - %s - %s - %s - %s" % (location, activity, hidden, client_t, client_c, client_r, client_u))
     ret = {}
     sign_out = False
     if not request.browser:
