@@ -566,7 +566,7 @@ def get_emergency_codes_image(request, **kwargs):
     dcache.delete(r_k)
 
     codes = request.browser.user.get_emergency_codes()
-    if not codes or not codes.valid():
+    if not codes or codes.codes_left() == 0:
         custom_log(request, "Tried to download emergency codes; none available.", level="error")
         raise Http404
 
@@ -606,7 +606,7 @@ def get_emergency_codes_pdf(request, **kwargs):
     dcache.delete(r_k)
 
     codes = request.browser.user.get_emergency_codes()
-    if not codes or not codes.valid():
+    if not codes or codes.codes_left() == 0:
         custom_log(request, "Tried to download emergency codes; none available.", level="error")
         raise Http404
 

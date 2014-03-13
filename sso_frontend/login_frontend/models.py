@@ -96,7 +96,7 @@ class EmergencyCodes(models.Model):
         return False
 
     def valid(self):
-        return self.codes_left() > 0
+        return self.codes_left() > 0 and self.downloaded_at
 
     def codes_left(self):
         return EmergencyCode.objects.filter(codegroup=self).count()

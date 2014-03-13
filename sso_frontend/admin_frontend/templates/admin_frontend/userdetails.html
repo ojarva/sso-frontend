@@ -9,7 +9,7 @@
 
 <form class="inline-block" role="form" method="post" action="?">{% csrf_token %}
 <button name="refresh" value="yes" type="submit" class="btn btn-primary">Refresh from FUM/LDAP</button>
-</form> 
+</form>
 
 <form role="form" class="inline-block" method="post" action="?">{% csrf_token %}
 <span class="tooltip-link" title="This will revoke Authenticator configuration and terminate all sessions for this user."><button name="revoke" value="yes" type="submit" class="btn btn-danger">Revoke Authenticator and sign out</button></span>
@@ -86,6 +86,15 @@
 <tr>
 <th><span class="tooltip-link" title="True if user's strong authentication configuration was automatically revoked after primary phone was changed">Primary phone changed</span></th>
 <td>{{ auser.primary_phone_changed }}</td>
+</tr>
+
+<tr>
+    <th>Emergency codes</th>
+    <td>{% if auser.get_emergency_codes.valid %}Generated and downloaded {% include "snippets/timestamp.html" with timestamp=auser.get_emergency_codes.downloaded_at %}
+        {% else %}
+        {% if not auser.get_emergency_codes %}Never generated.{% else %}
+        Generated but not downloaded ({% include "snippets/timestamp.html" with timestamp=auser.get_emergency_codes.generated_at %}).
+        {% endif %}{% endif %}</td>
 </tr>
 
 <tr>
