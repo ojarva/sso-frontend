@@ -250,6 +250,10 @@ def openid_decide(request):
         custom_log(request, "User is not authenticated. Redirect to sign-in page", level="debug")
         return landing_page(request, orequest)
 
+    if not orequest:
+        custom_log(request, "Entered decide page with no OpenID session in progress", level="warn")
+        return error_page(request, "You don't have OpenID login session in progress.")
+
     openid = openid_get_identity(request, orequest.identity)
     if openid is None:
         custom_log(request, "No OpenID exists for user %s" % request.browser.user, level="warn")
