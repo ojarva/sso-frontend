@@ -533,7 +533,6 @@ def authenticate_with_authenticator(request):
                 # TODO: determine the levels automatically.
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
-                request.browser.auth_state_changed()
 
                 if request.browser.name:
                     request.browser.auth_state_changed()
