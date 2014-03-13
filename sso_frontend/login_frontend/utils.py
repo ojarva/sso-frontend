@@ -23,6 +23,7 @@ import login_frontend._slumber_auth as _slumber_auth
 import slumber
 import time
 import urllib
+import re
 import urlparse
 from django_statsd.clients import statsd as sd
 
@@ -36,7 +37,7 @@ timing_log = logging.getLogger("timing_data")
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
 
-__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate", "get_return_url"]
+__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate", "get_return_url", "check_browser_name"]
 
 
 LOCAL_URLS = {
@@ -83,6 +84,29 @@ def get_return_url(request):
         log.error("get_return_url failed with %s" % e)
 
     return None
+
+INVALID_BROWSER_NAMES = (
+    "...",
+)
+
+INVALID_BROWSER_RE = (
+    re.compile(r"^(.)\1+$"), # disallow repeating single character
+    re.compile(r"^(..)\1+$"), # 2
+    re.compile(r".*asdf.*"),
+    re.compile(r".*qwerty.*"),
+    re.compile(r".*1234.*"),
+)
+
+@sd.timer("login_frontend.utils.check_browser_name")
+def check_browser_name(browser_name):
+    browser_name = browser_name.lower()
+    for pattern in INVALID_BROWSER_NAMES:
+        if browser_name == pattern:
+            return False
+    for pattern in INVALID_BROWSER_RE:
+        if pattern.match(browser_name):
+            return False
+    return True
 
 @sd.timer("login_frontend.utils.dedup_messages")
 def dedup_messages(request, level, message):
@@ -191,12 +215,12 @@ def save_timing_data(request, user, timing_data):
         fieldname = KeystrokeSequence.USERNAME
         timing = str(data.get("id_username"))
         create_items.append((fieldname, timing))
-    
+
     if "id_password" in data:
         fieldname = KeystrokeSequence.PASSWORD
         timing = str(data.get("id_password"))
         create_items.append((fieldname, timing))
- 
+
     if "id_otp" in data:
         if request.path.startswith("/second/sms"):
             fieldname = KeystrokeSequence.OTP_SMS
@@ -236,7 +260,7 @@ def refresh_user(user): # pragma: no cover
     if last_name is None:
         last_name = "Unknown"
 
-    (user, created1) = DjangoUser.objects.get_or_create(username=username, 
+    (user, created1) = DjangoUser.objects.get_or_create(username=username,
             defaults={"email": email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": timezone.now(), "date_joined": timezone.now()})
     user.email = email
     user.first_name = first_name
@@ -275,4 +299,3 @@ def redirect_with_get_params(url_name, get_params = None):
     full_url = url + "?%s" % params
     log.debug("Redirecting to %s" % full_url)
     return HttpResponseRedirect(full_url)
-

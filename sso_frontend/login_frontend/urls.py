@@ -7,7 +7,7 @@ urlpatterns = patterns('login_frontend.views',
     url(r'^index.php$', 'indexview'),
     url(r'^index$', 'indexview', name='index'),
 
-    # Other URLs
+    url(r'^name_your_browser$', 'name_your_browser'),
     url(r'^sessions$', 'sessions'),
     url(r'^ping/internal/js$', 'automatic_ping', {"internal": True}),
     url(r'^ping/external/js$', 'automatic_ping', {"external": True}),

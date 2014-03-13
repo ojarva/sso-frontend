@@ -26,6 +26,7 @@ import urllib
 import uuid
 
 dcache = get_cache("default")
+bcache = get_cache("browsers")
 
 log = logging.getLogger(__name__)
 
@@ -264,15 +265,25 @@ class Browser(models.Model):
 
     @sd.timer("login_frontend.models.Browser.has_any_activity")
     def has_any_activity(self):
-        if self.user != None:
-            return True
-        if BrowserUsers.objects.filter(browser=self).count() > 0:
-            return True
-        if BrowserLogin.objects.filter(browser=self).count() > 0:
-            return True
-        if Log.objects.filter(bid_public=self.bid_public).count() > 0:
+        """ Returns true if any activity has been recorded for the browser. """
+        def activity():
+            if self.user != None:
+                return True
+            if BrowserUsers.objects.filter(browser=self).count() > 0:
+                return True
+            if BrowserLogin.objects.filter(browser=self).count() > 0:
+                return True
+            if Log.objects.filter(bid_public=self.bid_public).count() > 0:
+                return True
+            return False
+
+        if bcache.get("activity-%s" % self.bid_public):
             return True
 
+        status = activity()
+        if status:
+            bcache.set("activity-%s" % self.bid_public, True, 86400 * randint(5,8))
+        return status
 
     def get_cookies(self):
         return [

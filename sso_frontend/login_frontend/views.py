@@ -24,7 +24,7 @@ from login_frontend.authentication_views import protect_view
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.emails import new_authenticator_notify, new_emergency_generated_notify
-from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate
+from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name
 from ratelimit.decorators import ratelimit
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
@@ -48,6 +48,7 @@ import PIL, PIL.ImageFont, PIL.ImageDraw, PIL.Image
 
 dcache = get_cache("default")
 ucache = get_cache("user_mapping")
+
 
 log = logging.getLogger(__name__)
 r = redis.Redis()
@@ -455,6 +456,30 @@ def view_log(request, **kwargs):
 
 
 @require_http_methods(["GET", "POST"])
+@ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])
+@ratelimit(rate='20/1m', ratekey="1m", block=True, method=["POST", "GET"])
+@ratelimit(rate='100/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@protect_view("name_your_browser", required_level=Browser.L_STRONG)
+def name_your_browser(request):
+    if request.method == 'POST':
+        browser_name = request.POST.get("name", "").strip()
+
+        if browser_name and browser_name != request.browser.name:
+            if check_browser_name(browser_name):
+                custom_log(request, "Set browser name to '%s'" % browser_name, level="info")
+                add_user_log(request, "Set browser name to '%s'" % browser_name, "info")
+                request.browser.name = browser_name
+                request.browser.save()
+            else:
+                custom_log(request, "Browser name '%s' was rejected." % browser_name, level="info")
+        custom_log(request, "Sending auth_state_changed", level="debug")
+        request.browser.auth_state_changed()
+        return redir_to_sso(request)
+    response = render_to_response("login_frontend/name_browser.html", {}, context_instance=RequestContext(request))
+    return response
+
+
+@require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
@@ -561,6 +586,7 @@ def get_authenticator_qr(request, **kwargs):
     stringio.seek(0)
     custom_log(request, "qr: Downloaded Authenticator secret QR code", level="info")
     return HttpResponse(stringio.read(), content_type="image/png")
+
 
 @require_http_methods(["GET"])
 @ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])

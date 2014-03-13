@@ -74,6 +74,15 @@ CACHES = {
             'PARSER_CLASS': 'redis.connection.HiredisParser'
         },
     },
+    'browsers': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': 'localhost:6379',
+        'OPTIONS': {
+            'DB': 5,
+            'PASSWORD': '',
+            'PARSER_CLASS': 'redis.connection.HiredisParser'
+        },
+    },
 }
 
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '../')

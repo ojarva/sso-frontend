@@ -40,6 +40,8 @@ else:
 
 dcache = get_cache("default")
 ucache = get_cache("user_mapping")
+bcache = get_cache("browsers")
+
 
 log = logging.getLogger(__name__)
 r = redis.Redis()
@@ -228,6 +230,7 @@ def authenticate_with_password(request):
 
             if auth_status == True:
                 # User signed in, so there's no reason to keep forced_sign_out anymore.
+                bcache.set("activity-%s" % browser.bid_public, True, 86400 * 9)
                 browser.forced_sign_out = False
                 browser_name = dcache.get("browser-name-for-%s-%s" % (browser.bid_public, username))
                 if browser_name:
@@ -531,8 +534,15 @@ def authenticate_with_authenticator(request):
                 request.browser.set_auth_level(Browser.L_STRONG)
                 request.browser.set_auth_state(Browser.S_AUTHENTICATED)
                 request.browser.auth_state_changed()
-                custom_log(request, "2f-auth: Redirecting back to SSO provider", level="debug")
-                return redir_to_sso(request)
+
+                if request.browser.name:
+                    request.browser.auth_state_changed()
+                    custom_log(request, "2f-auth: Redirecting back to SSO provider", level="debug")
+                    return redir_to_sso(request)
+                else:
+                    custom_log(request, "2f-auth: Browser name is not set. Redirect to naming view", level="debug")
+                    # Don't send auth_state_changed(), as it would redirect all browser windows to name form
+                    return redirect_with_get_params("login_frontend.views.name_your_browser", request.GET)
             else:
                 custom_log(request, "2f-auth: Incorrect Authenticator OTP provided: %s" % message, level="warn")
                 add_user_log(request, "Incorrect Authenticator OTP provided: %s" % message, "warning")
@@ -682,9 +692,14 @@ def authenticate_with_sms(request):
                     custom_log(request, "2f-sms: User has not configured strong authentication. Redirect to configuration view", level="info")
                     return redirect_with_get_params("login_frontend.views.configure", request.GET)
                 # Redirect back to SSO service
-                request.browser.auth_state_changed()
-                custom_log(request, "2f-sms: Redirecting back to SSO provider", level="debug")
-                return redir_to_sso(request)
+                if request.browser.name:
+                    request.browser.auth_state_changed()
+                    custom_log(request, "2f-sms: Redirecting back to SSO provider", level="debug")
+                    return redir_to_sso(request)
+                else:
+                    custom_log(request, "2f-sms: Browser name is not set. Redirect to naming view", level="debug")
+                    # Don't send auth_state_changed(), as it would redirect all browser windows to name form
+                    return redirect_with_get_params("login_frontend.views.name_your_browser", request.GET)
             else:
                 if message:
                     ret["message"] = message

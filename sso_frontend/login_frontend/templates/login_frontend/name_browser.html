@@ -1,0 +1,33 @@
+{% extends "login_frontend/base.html" %}
+
+{% block title %}Name - {% endblock %}
+
+{% block content %}
+
+<div class="row">
+<div class="col-md-8 col-centered">
+
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
+<h3>Name your browser</h3>
+
+{% if return_readable %}
+    <p><small>After finishing this step, you'll be redirected to <b>{{ return_readable }}</b>.</small></p>
+{% endif %}
+
+<p>Please name this browser to identify it in the future. This name is only visible for you. If someone else signs in to this browser, they don't see this name. This name is visible in sessions page, logs and in various warning emails sent to you.</p>
+
+<p>Using meaningful name - e.g "<i>Work laptop</i>", "<i>Temporary browser</i>", "<i>Personal iPad</i>" - is highly recommended.</p>
+
+<form role="form" name="loginform" method="POST" action="{% url 'login_frontend.views.name_your_browser' %}?{{ get_params }}">
+  {% csrf_token %}
+  <div class="form-group control-group">
+  {% include 'login_frontend/snippets/browser_name_input.html' %}
+  <div class="form-group">
+        <button name="save" class="btn btn-primary" type="submit">Save and continue</button>
+        <button name="skip" class="btn btn-default" type="submit">Skip this time</button>
+    </div>
+<input type="hidden" name="timing_data" value="" id="timing_data">
+</form>
+
+{% endblock %}
