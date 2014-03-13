@@ -456,9 +456,9 @@ def view_log(request, **kwargs):
 
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])
-@ratelimit(rate='20/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='100/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='80/5s', ratekey="5s", block=True, method=["POST", "GET"])
+@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
+@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("name_your_browser", required_level=Browser.L_STRONG)
 def name_your_browser(request):
     if request.method == 'POST':
@@ -475,7 +475,9 @@ def name_your_browser(request):
         custom_log(request, "Sending auth_state_changed", level="debug")
         request.browser.auth_state_changed()
         return redir_to_sso(request)
-    response = render_to_response("login_frontend/name_browser.html", {}, context_instance=RequestContext(request))
+    ret = {}
+    ret["get_params"] = urllib.urlencode(request.GET)
+    response = render_to_response("login_frontend/name_browser.html", ret, context_instance=RequestContext(request))
     return response
 
 
