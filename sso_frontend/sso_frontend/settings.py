@@ -44,7 +44,8 @@ CACHES = {
         'OPTIONS': {
             'DB': 1,
             'PASSWORD': '',
-            'PARSER_CLASS': 'redis.connection.HiredisParser'
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'MAX_ENTRIES': 500000,
         },
     },
     'ratelimit': {
@@ -53,7 +54,8 @@ CACHES = {
         'OPTIONS': {
             'DB': 2,
             'PASSWORD': '',
-            'PARSER_CLASS': 'redis.connection.HiredisParser'
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'MAX_ENTRIES': 500000,
         },
     },
     'user_hashes': {
@@ -62,7 +64,8 @@ CACHES = {
         'OPTIONS': {
             'DB': 3,
             'PASSWORD': '',
-            'PARSER_CLASS': 'redis.connection.HiredisParser'
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'MAX_ENTRIES': 500000,
         },
     },
     'user_mapping': {
@@ -71,7 +74,8 @@ CACHES = {
         'OPTIONS': {
             'DB': 4,
             'PASSWORD': '',
-            'PARSER_CLASS': 'redis.connection.HiredisParser'
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'MAX_ENTRIES': 500000,
         },
     },
     'browsers': {
@@ -80,7 +84,8 @@ CACHES = {
         'OPTIONS': {
             'DB': 5,
             'PASSWORD': '',
-            'PARSER_CLASS': 'redis.connection.HiredisParser'
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'MAX_ENTRIES': 500000,
         },
     },
 }
