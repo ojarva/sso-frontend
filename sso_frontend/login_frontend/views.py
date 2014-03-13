@@ -562,9 +562,9 @@ def configure(request):
     return response
 
 @require_http_methods(["GET"])
-@ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])
-@ratelimit(rate='20/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='100/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='3/5s', ratekey="5s_low", block=True, method=["POST", "GET"])
+@ratelimit(rate='20/1m', ratekey="1m_low", block=True, method=["POST", "GET"])
+@ratelimit(rate='100/6h', ratekey="6h_low", block=True, method=["POST", "GET"])
 @protect_view("get_authenticator_qr", required_level=Browser.L_STRONG)
 def get_authenticator_qr(request, **kwargs):
     """ Outputs QR code for Authenticator. Uses single_use_code to prevent
@@ -591,9 +591,9 @@ def get_authenticator_qr(request, **kwargs):
 
 
 @require_http_methods(["GET"])
-@ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])
-@ratelimit(rate='20/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='100/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='3/5s', ratekey="5s_low", block=True, method=["POST", "GET"])
+@ratelimit(rate='20/1m', ratekey="1m_low", block=True, method=["POST", "GET"])
+@ratelimit(rate='100/6h', ratekey="6h_low", block=True, method=["POST", "GET"])
 @protect_view("get_emergency_codes_image", required_level=Browser.L_STRONG)
 def get_emergency_codes_image(request, **kwargs):
     r_k = "emergency-nonce-for-%s" % request.browser.bid_public
@@ -631,9 +631,9 @@ def get_emergency_codes_image(request, **kwargs):
     return response
 
 @require_http_methods(["GET"])
-@ratelimit(rate='3/5s', ratekey="5s", block=True, method=["POST", "GET"])
-@ratelimit(rate='20/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='100/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='3/5s', ratekey="5s_low", block=True, method=["POST", "GET"])
+@ratelimit(rate='20/1m', ratekey="1m_low", block=True, method=["POST", "GET"])
+@ratelimit(rate='100/6h', ratekey="6h_low", block=True, method=["POST", "GET"])
 @protect_view("get_emergency_codes_pdf", required_level=Browser.L_STRONG)
 def get_emergency_codes_pdf(request, **kwargs):
     r_k = "emergency-nonce-for-%s" % request.browser.bid_public
