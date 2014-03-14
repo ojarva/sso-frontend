@@ -21,7 +21,7 @@ from django_statsd.clients import statsd as sd
 from login_frontend.emails import new_device_notify, emergency_used_notify
 from login_frontend.models import *
 from login_frontend.send_sms import send_sms
-from login_frontend.utils import save_timing_data, redirect_with_get_params, redir_to_sso, get_return_url
+from login_frontend.utils import save_timing_data, redirect_with_get_params, redir_to_sso, get_return_url, map_username
 from ratelimit.decorators import ratelimit
 import datetime
 import json
@@ -41,6 +41,7 @@ else:
 dcache = get_cache("default")
 ucache = get_cache("user_mapping")
 bcache = get_cache("browsers")
+user_cache = get_cache("users")
 
 
 log = logging.getLogger(__name__)
@@ -201,20 +202,25 @@ def authenticate_with_password(request):
 
     if request.method == 'POST':
         custom_log(request, "1f: POST request", level="debug")
-        username = request.POST.get("username")
+        username_orig = request.POST.get("username")
         if browser.get_auth_state() == Browser.S_REQUEST_BASIC_ONLY:
             # Only basic authentication was requested. Take username from session.
-            username = browser.user.username
+            username_orig = browser.user.username
         password = request.POST.get("password")
+
+        if username_orig:
+            username_new = map_username(username_orig)
+            if username_new != username_orig:
+                ret["username_mapped"] = True
+                custom_log(request, "1f: mapped username %s to %s" % (username_orig, username_new), level="info")
+            username = username_new
+        else:
+            username = None
 
         if username and password:
             custom_log(request, "1f: Both username and password exists. username=%s" % username, level="debug")
             auth = LdapLogin(username, password)
             auth_status = auth.login()
-            if username != auth.username:
-                custom_log(request, "1f: mapped username %s to %s" % (username, auth.username), level="debug")
-                ret["username_mapped"] = True
-            username = auth.username # mapped from aliases (email address -> username)
 
             save_browser = False
             if request.POST.get("my_computer"):
@@ -289,6 +295,13 @@ def authenticate_with_password(request):
                         ret["is_otp"] = True
                     custom_log(request, "1f: Authentication failed. Invalid password", level="warn")
                     add_user_log(request, "Authentication failed. Invalid password", "warning")
+                    password_expires = user_cache.get("%s-password_expires" % username)
+                    if password_expires and password_expires < timezone.now():
+                        ret["password_expired"] = True
+                        custom_log(request, "1f: tried to sign in with expired password: %s" % username, level="warning")
+                    else:
+                        password_changed = user_cache.get("%s-password_changed" % username)
+                        ret["password_changed"] = password_changed
                 elif auth_status == "invalid_username":
                     ret["invalid_username"] = True
                     custom_log(request, "1f: Authentication failed. Invalid username", level="warn")
@@ -301,9 +314,12 @@ def authenticate_with_password(request):
                     add_user_log(request, "Authentication failed: %s" % auth_status, "warning")
         else:
             custom_log(request, "1f: Either username or password is missing.", level="warn")
-            messages.warning(request, "Please enter both username and password.")
-            if username:
+            msg = "Please enter both username and password."
+            if username and not user_cache.get(username):
+                msg += " Also, username is invalid."
+            elif username:
                 ret["try_username"] = username
+            messages.warning(request, msg)
 
     else:
         custom_log(request, "1f: GET request", level="debug")

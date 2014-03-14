@@ -27,6 +27,7 @@ import uuid
 
 dcache = get_cache("default")
 bcache = get_cache("browsers")
+ucache = get_cache("users")
 
 log = logging.getLogger(__name__)
 

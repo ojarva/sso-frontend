@@ -31,6 +31,8 @@ from django_statsd.clients import statsd as sd
 from django.core.cache import get_cache
 
 dcache = get_cache("default")
+user_cache = get_cache("users")
+ucache = get_cache("user_mapping")
 
 log = logging.getLogger(__name__)
 timing_log = logging.getLogger("timing_data")
@@ -38,7 +40,7 @@ timing_log = logging.getLogger("timing_data")
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
 
-__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate", "get_return_url", "check_browser_name"]
+__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate", "get_return_url", "check_browser_name", "map_username"]
 
 
 LOCAL_URLS = {
@@ -47,6 +49,15 @@ LOCAL_URLS = {
     "/index": "index page",
     "/idp/login": "SAML login",
 }
+
+@sd.timer("login_frontend.utils.map_username")
+def map_username(username):
+    """ Maps user aliases to username """
+    r_k = "email-to-username-%s" % username
+    username_tmp = ucache.get(r_k)
+    if username_tmp is not None:
+        return username_tmp
+    return username
 
 @sd.timer("login_frontend.utils.get_return_url")
 def get_return_url(request):
@@ -264,14 +275,24 @@ def refresh_user(user): # pragma: no cover
     password_changed = parse_datetime(user.get("password_changed_date"))
     password_expires = parse_datetime(user.get("password_expiration_date"))
 
+
     if username is None or email is None:
         log.debug("%s - %s - Username or email is none - skip" % (username, email))
         return
-
     if first_name is None:
         first_name = "Unknown"
     if last_name is None:
         last_name = "Unknown"
+
+    for (k, v) in  (("first_name", first_name),
+                    ("last_name", last_name),
+                    ("email", email),
+                    ("phone1", phone1),
+                    ("phone2", phone2),
+                    ("password_changed", password_changed),
+                    ("password_expires", password_expires)):
+        user_cache.set("%s-%s" % (username, k), v, 86400*14)
+    user_cache.set(username, True, 86400*14)
 
     (user, created1) = DjangoUser.objects.get_or_create(username=username,
             defaults={"email": email, "is_staff": False, "is_active": True, "is_superuser": False, "last_login": timezone.now(), "date_joined": timezone.now()})

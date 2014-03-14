@@ -15,20 +15,11 @@ class LdapLogin: # pragma: no cover
     """ LDAP authentication module """
 
     def __init__(self, username, password):
-        self.username = self.map_username(username)
+        self.username = username
         self.password = password
         self._ldap = None
         self.user_dn = settings.LDAP_USER_BASE_DN % self.username
         self.authenticated = False
-
-    @sd.timer("login_frontend.ldap_auth.map_username")
-    def map_username(self, username):
-        """ Maps user aliases to username """
-        r_k = "email-to-username-%s" % username
-        username_tmp = ucache.get(r_k)
-        if username_tmp is not None:
-            return username_tmp
-        return username
 
     @property
     @sd.timer("login_frontend.ldap_auth.ldap")

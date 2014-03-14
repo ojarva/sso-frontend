@@ -11,19 +11,6 @@
 
 <h1>Settings</h1>
 
-{% if enable_cookies %}
-	<div class="alert alert-danger">
-		<i class="fa fa-exclamation-circle"></i> Please enable cookies. You're not able to sign in without properly working cookies.
-	</div>
-{% endif %}
-
-
-{% if message %}
-<div class="alert alert-warning">
-	{{ message }}
-</div>
-{% endif %}
-
 {% if not user.strong_configured %}
 	<h2>Configure Strong Authentication</h2>
 
@@ -313,6 +300,12 @@ helps making this service better.</p>
    {% else %}<i class="fa fa-thumbs-o-down"></i>
    {% endif %}
 </li>
+{% if user.password_changed %}
+<li><b>Password changed</b> {% include "snippets/timestamp.html" with timestamp=user.password_changed %}</li>
+{% endif %}
+{% if user.password_expires %}
+<li><b>Password expires</b> {% include "snippets/timestamp.html" with timestamp=user.password_expires %}</li>
+{% endif %}
 <li><b>Authenticate with SMS by default:</b> {% if user.strong_sms_always %}yes. You'll automatically receive SMS every time strong authentication is required. Do note that SMS does not work too well when traveling.{% else %}By default, you'll get to Authenticator page. However, you can always click "use SMS" link, if you want to.{% endif %}</li>
 </ul>
 </div>

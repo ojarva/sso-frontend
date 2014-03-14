@@ -88,6 +88,16 @@ CACHES = {
             'MAX_ENTRIES': 500000,
         },
     },
+    'users': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': 'localhost:6379',
+        'OPTIONS': {
+            'DB': 6,
+            'PASSWORD': '',
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'MAX_ENTRIES': 500000,
+        },
+    }
 }
 
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '../')
