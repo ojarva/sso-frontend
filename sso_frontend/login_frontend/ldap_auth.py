@@ -53,10 +53,10 @@ class LdapLogin: # pragma: no cover
             self.ldap.simple_bind_s(self.user_dn, self.password)
         except ldap.INVALID_CREDENTIALS, e:
             log.debug("Invalid password for %s" % self.user_dn)
-            return "invalid_credentials"
+            return "invalid_password"
         except ldap.NO_SUCH_OBJECT, e:
             log.debug("No such username: %s" % self.user_dn)
-            return "invalid_credentials"
+            return "invalid_username"
         except ldap.SERVER_DOWN, e:
             log.error("LDAP server is down: %s", e)
             return "server_down"

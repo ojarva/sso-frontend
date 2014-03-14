@@ -213,6 +213,7 @@ def authenticate_with_password(request):
             auth_status = auth.login()
             if username != auth.username:
                 custom_log(request, "1f: mapped username %s to %s" % (username, auth.username), level="debug")
+                ret["username_mapped"] = True
             username = auth.username # mapped from aliases (email address -> username)
 
             save_browser = False
@@ -281,12 +282,16 @@ def authenticate_with_password(request):
 
                 return redirect_with_get_params("login_frontend.authentication_views.secondstepauth", request.GET)
             else:
-                if auth_status == "invalid_credentials":
-                    ret["authentication_failed"] = True
+                ret["try_username"] = username
+                if auth_status == "invalid_password":
+                    ret["invalid_password"] = True
                     if re.match("^[0-9]{5,6}$", password):
                         ret["is_otp"] = True
-                    custom_log(request, "1f: Authentication failed. Invalid credentials", level="warn")
-                    add_user_log(request, "Authentication failed. Invalid credentials", "warning")
+                    custom_log(request, "1f: Authentication failed. Invalid password", level="warn")
+                    add_user_log(request, "Authentication failed. Invalid password", "warning")
+                elif auth_status == "invalid_username":
+                    ret["invalid_username"] = True
+                    custom_log(request, "1f: Authentication failed. Invalid username", level="warn")
                 elif auth_status == "server_down":
                     messages.warning(request, "Unable to connect user directory (LDAP). Could not proceed with authentication. Please try again later, and/or contact IT team.")
                     custom_log(request, "1f: LDAP server is down.", level="error")
@@ -297,6 +302,9 @@ def authenticate_with_password(request):
         else:
             custom_log(request, "1f: Either username or password is missing.", level="warn")
             messages.warning(request, "Please enter both username and password.")
+            if username:
+                ret["try_username"] = username
+
     else:
         custom_log(request, "1f: GET request", level="debug")
     if browser:
