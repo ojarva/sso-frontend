@@ -23,6 +23,7 @@ import login_frontend._slumber_auth as _slumber_auth
 import slumber
 import time
 import urllib
+import pytz
 import re
 import urlparse
 from django_statsd.clients import statsd as sd
@@ -244,6 +245,14 @@ def get_and_refresh_user(username): # pragma: no cover
 @sd.timer("login_frontend.utils.refresh_user")
 def refresh_user(user): # pragma: no cover
     """ Refreshes user details, if necessary. """
+    def parse_datetime(date_string):
+        try:
+            d = datetime.datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S")
+        except (ValueError, TypeError):
+            return None
+        utc = pytz.timezone("UTC")
+        return utc.localize(d)
+
     username = user.get("username")
     log.info("Updating %s" % username)
     first_name = user.get("first_name", "Unknown")
@@ -251,6 +260,10 @@ def refresh_user(user): # pragma: no cover
     email = user.get("email", "")
     phone1 = user.get("phone1")
     phone2 = user.get("phone2")
+
+    password_changed = parse_datetime(user.get("password_changed_date"))
+    password_expires = parse_datetime(user.get("password_expiration_date"))
+
     if username is None or email is None:
         log.debug("%s - %s - Username or email is none - skip" % (username, email))
         return
@@ -268,6 +281,13 @@ def refresh_user(user): # pragma: no cover
     user.save()
 
     (obj, created2) = User.objects.get_or_create(username=username)
+
+    obj.first_name = first_name
+    obj.last_name = last_name
+
+    obj.password_changed = password_changed
+    obj.password_expires = password_expires
+
     changed = obj.refresh_strong(email, phone1, phone2, created=created2)
     if changed or created1 or created2:
         log.info("Changed or created new objects")

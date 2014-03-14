@@ -791,6 +791,12 @@ class User(models.Model):
     primary_phone_refresh = models.DateTimeField(null=True)
     secondary_phone_refresh = models.DateTimeField(null=True)
 
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
+
+    password_changed = models.DateTimeField(null=True)
+    password_expires = models.DateTimeField(null=True)
+
     location_authorized = models.BooleanField(default=False)
 
     user_tokens = models.CharField(max_length=255, null=True, blank=True, help_text="List of pubtkt tokens")
