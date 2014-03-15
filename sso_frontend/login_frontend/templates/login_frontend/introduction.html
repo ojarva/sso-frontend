@@ -3,15 +3,15 @@
 {% block title %}Introduction - {% endblock %}
 {% block content %}
 
-<h2>Encountered a bug?</h2>
+<h2 class="page-header" id="bug">Encountered a bug?</h2>
 
 <p>Please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> or head to <a href="{% url 'login_frontend.views.report_problem' %}">separate reporting page</a>.</p>
 
-<h2>What has changed?</h2>
+<h2 class="page-header" id="changes">What has changed?</h2>
 
 <p>This version provides strong authentication, and only asks your credentials when there's reason to do so. Old version required authentication every single day, even if you worked from same place using same device.</p>
 
-<h2>What are all these codes?</h2>
+<h2 class="page-header" id="what_codes">What are all these codes?</h2>
 
 <dl>
     <dt>Username and password {% if username %}<span class="label label-success">ok</span>{% endif %}</dt>
@@ -19,7 +19,7 @@
     <dt>Authenticator {% if user.strong_authenticator_used %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
     <dd>Authenticator generates 6-digit one-time passwords. It's a small app for your mobile phone. {% if user.strong_authenticator_used %}You have already configured and used Authenticator.{% else %}To configure it, go to <a href="{% url 'login_frontend.views.configure' %}">settings</a> and follow instructions.{% endif %} <a href="/static/img/instructions/authenticator.png">Screenshot of Authenticator</a> with multiple codes. If you are not sure which code you should enter, after entering incorrect one, sign-in view tells you.</dd>
     <dt>Emergency codes {% if user.emergency_codes_done %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
-    <dd>These are long random strings, that can be used to sign in, if you can't access your mobile phone. For example, if someone steals your purse / backpack / phone, you'll need these. {% if user.emergency_codes_done %}You have already generated and downloaded these. {% else %}To get these, go to <a href="{% url 'login_frontend.views.configure' %}">settings</a>.{% endif %} <a href="/static/img/instructions/emergency_codes.png">Example codes</a> (these are not valid for your account).</dd>
+    <dd>These are long random strings, that can be used to sign in, if you can't access your mobile phone. For example, if someone steals your purse / backpack / phone, you'll need these. {% if user.emergency_codes_valid %}You have already generated and downloaded these. {% else %}To get these, go to <a href="{% url 'login_frontend.views.configure' %}">settings</a>.{% endif %} <a href="/static/img/instructions/emergency_codes.png">Example codes</a> (these are not valid for your account).</dd>
 </dl>
 
 <p>Additionally, there's two Google specific terms:</p>
@@ -31,16 +31,16 @@
 </dl>
 
 
-<h2>What is strong authentication?</h2>
+<h2 class="page-header" id="strong_auth">What is strong authentication?</h2>
 
 <p>In strong authentication, in addition to your username and password, you must have something. In this service, it's one-time password (OTP). With OTPs, even if someone obtains your password, they are not able to sign in.</p>
 
-<h2>What is one-time password (OTP)?</h2>
+<h2 class="page-header" id="otp">What is one-time password (OTP)?</h2>
 
 <p>In this service, one-time passwords are short - 5 or 6 digits - strings of numbers. You can use each number only once. You can get these numbers as SMS to your mobile phone (if your phone number is not up-to-date, please
 contact IT team).</p>
 
-<h2>What is Authenticator?</h2>
+<h2 class="page-header" id="authenticator">What is Authenticator?</h2>
 
 <p>You can get one-time passwords as SMS or by using Authenticator application on your mobile phone. Why? Authenticator works even if your phone is offline. Especially when traveling, there might be issues with SMS delivery.</p>
 
@@ -59,7 +59,7 @@ contact IT team).</p>
 
 <p>This one-time password generation is based on <a href="http://tools.ietf.org/html/rfc6238">open standards</a>. Server and your mobile phone share secret string used to generate and validate OTPs.</p>
 
-<h2>What single sign-on providers are supported?</h2>
+<h2 class="page-header" id="supported_sso">What single sign-on providers are supported?</h2>
 
 <p>This service supports <a href="https://neon1.net/mod_auth_pubtkt/index.html">pubtkt</a>, <a href="http://openid.net/">OpenID</a> and <a href="http://en.wikipedia.org/wiki/SAML_2.0">SAML 2.0</a>.</p>
 

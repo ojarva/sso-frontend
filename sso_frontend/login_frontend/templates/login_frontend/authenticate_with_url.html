@@ -13,7 +13,9 @@
 
 <h3>URL</h3>
 
-{% if invalid_request %}
+{% if ratelimited %}
+{% include "login_frontend/snippets/ratelimited.html" %}
+{% elif invalid_request %}
 	<div class="alert alert-danger">
 		<i class="fa fa-exclamation-triangle"></i>
 		Invalid request. Did you open this page on the same browser you started the authentication process?

@@ -14,6 +14,10 @@
 
 <h3>SMS</h3>
 
+{% if ratelimited %}
+{% include "login_frontend/snippets/ratelimited.html" %}
+{% endif %}
+
 {% if return_readable %}
 	<p><small>After signing in, you'll be redirected to <b>{{ return_readable }}</b>.</small></p>
 {% endif %}
@@ -24,7 +28,7 @@
 	</div>
 
 	{% if is_invalid_otp %}
-		<p>You have to enter 5-digit one-time code from SMS. This is not your password.</p>
+		<p>You have to enter 7-digit one-time code from SMS. This is not your password.</p>
 	{% endif %}
 {% endif %}
 
@@ -57,7 +61,7 @@
 	{% endif %}
 
 	{% if authentication_failed %}
-		<p>You're authenticating with SMS code. You should enter 5-digit code #{{ expected_sms_id }}. Any other codes are not valid anymore.</p>
+		<p>You're authenticating with SMS code. You should enter 7-digit code #{{ expected_sms_id }}. Any other codes are not valid anymore.</p>
 	{% else %}
 		<p>You should receive SMS containing one-time password shortly. Please enter it below. It should be #{{ expected_sms_id }}.</p>
 	{% endif %}
@@ -72,12 +76,18 @@
 	</form>
 {% endif %}
 
+{% if ratelimited %}
+<span class="onlybefore" data-timestamp="{{ ratelimit_wait_until }}"><i class="fa fa-spinner"></i> Please wait. Sign-in form will appear {% include "snippets/timestamp.html" with timestamp=ratelimit_wait_until %}.</span>
+<span class="onlyafter hidden" data-timestamp="{{ ratelimit_wait_until }}">
+{% endif %}
+
+
 <form role="form" name="loginform" method="POST" action="{% url 'login_frontend.authentication_views.authenticate_with_sms' %}?{{ get_params }}">
   {% csrf_token %}
   <div class="form-group control-group">
-    <label for="id_otp" control-label">One-time password (<span class="onlybefore" data-timestamp="{{ sms_valid_until }}">Expires {% include "snippets/timestamp.html" with timestamp=sms_valid_until %}</span>
+    <label for="id_otp" class="control-label">One-time password (<span class="onlybefore" data-timestamp="{{ sms_valid_until }}">Expires {% include "snippets/timestamp.html" with timestamp=sms_valid_until %}</span>
 <span class="onlyafter hidden" data-timestamp="{{ sms_valid_until }}">expired. <a href="?{{ get_params }}">Request a new code</a></span>)</label>
-    <input class="form-control autofocus track_content" id="id_otp" placeholder="123456" title="You should enter 6-digit one-time password here." name="otp" type="tel" data-len="5-6" pattern="[0-9 ]*" autocomplete='off' />
+    <input class="form-control autofocus track_content" id="id_otp" placeholder="1234567" title="You should enter 7-digit one-time password from SMS." name="otp" type="tel" data-len="6-7" pattern="[0-9 ]*" autocomplete='off' />
     <span class="glyphicon form-control-feedback"></span>
   </div>
   <div class="form-group">
@@ -86,6 +96,10 @@
 {% include 'login_frontend/snippets/remember_me.html' %}
 <input type="hidden" name="timing_data" value="" id="timing_data">
 </form>
+
+{% if ratelimited %}
+</span>
+{% endif %}
 
 {% if can_use_authenticator or can_use_emergency %}
 	<p><small>

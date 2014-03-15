@@ -36,7 +36,7 @@
 {% endif %}
 
 {% if not user.strong_authenticator_secret %}
-<div class="panel panel-primary">
+<div class="panel panel-danger">
 	<div class="panel-heading">
 		<span class="label label-danger">Needs action</span> Strong authentication
 	</div>
@@ -94,7 +94,7 @@
 </div>
 
 {% else %} {# strong_authenticator_secret #}
-	<div class="panel panel-{% if user.strong_authenticator_used %}default{% else %}primary{% endif %}">
+	<div class="panel panel-{% if user.strong_authenticator_used %}success{% else %}danger{% endif %}">
 		<div class="panel-heading">
 			{% if not user.strong_authenticator_used %}<span class="label label-danger">Needs action</span> {% endif %}Strong authentication
 		</div>
@@ -104,14 +104,12 @@
 			<i class="fa fa-exclamation-triangle"></i>
 			You have generated Authenticater configuration, but haven't ever used it. If SMS delivery fails, <b><span class="tooltip-link" title="Except if you have emergency codes available.">you can't sign in</span></b>.
 		</div>
-		<p>If you already have Authenticator installed and configured, this is a false alarm. Please sign in once with it to get rid of this warning. Service name on your Authenticator should be "{{ authenticator_id }}".</p>
+		<p>If you already have Authenticator installed and configured, this is a false alarm. Please sign in once with it to get rid of this warning. Name of the Authenticator code should be "{{ authenticator_id }}".</p>
 
 		<p>If you don't have Authenticator configured, please do so now:</p>
 	{% else %}
-		<div class="alert alert-success">
-			<i class="fa fa-heart"></i> You have configured Authenticator. The name of the code should be "{{ authenticator_id }}".
-			If that does not match to what your Authenticator app says, you have to reconfigure it.
-		</div>
+		<p><i class="fa fa-heart"></i> You have configured Authenticator. The name of the code should be "{{ authenticator_id }}".
+		If that does not match to what your Authenticator app says, you have to reconfigure it.</p>
 		<p>If you have lost the configuration, please configure Authenticator again:</p>
 	{% endif %}
 
@@ -152,7 +150,7 @@
 
 {% endif %}
 
-<div class="panel panel-{% if not emergency_codes %}primary{% else %}default{% endif %}">
+<div class="panel panel-{% if not emergency_codes %}danger{% else %}success{% endif %}">
 	<div class="panel-heading">
 		{% if not emergency_codes.valid %}<span class="label label-danger">Needs action</span> {% endif %}Emergency codes
 	</div>

@@ -76,7 +76,7 @@ def custom_log(request, message, **kwargs):
                             remote_addr, username, bid_public, message)
 
 
-__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate", "get_return_url", "check_browser_name", "map_username"]
+__all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate", "get_return_url", "check_browser_name", "map_username", "get_ratelimit_keys"]
 
 
 LOCAL_URLS = {
@@ -86,6 +86,12 @@ LOCAL_URLS = {
     "/idp/login": "SAML login",
 }
 
+
+def get_ratelimit_keys(request):
+    keys = [request.META.get("REMOTE_ADDR")]
+    if hasattr(request, "browser") and request.browser and request.browser.user:
+        keys.append(request.browser.user.username)
+    return keys
 
 @sd.timer("login_frontend.utils.store_location")
 def store_location_caching(request, location = None):

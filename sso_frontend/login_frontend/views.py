@@ -26,7 +26,7 @@ from login_frontend.authentication_views import protect_view
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.emails import new_authenticator_notify, new_emergency_generated_notify
-from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name, store_location_caching, get_return_url
+from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name, store_location_caching, get_return_url, get_ratelimit_keys
 from ratelimit.decorators import ratelimit
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
@@ -87,7 +87,7 @@ def custom_log(request, message, **kwargs):
     method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
                             remote_addr, username, bid_public, message)
 
-
+# There's no need to ratelimit this, as ratelimiting takes more resources than what is already happening here.
 @require_http_methods(["GET", "POST"])
 def main_redir(request):
     """ Hack to enable backward compatibility with pubtkt.
@@ -100,9 +100,9 @@ def main_redir(request):
 
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='80/5s', ratekey="5s_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='300/1m', ratekey="1m_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='5000/6h', ratekey="6h_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
 @protect_view("indexview", required_level=Browser.L_BASIC)
 def indexview(request):
     """ Index page: user is redirected
@@ -163,7 +163,9 @@ def indexview(request):
     response = render_to_response("login_frontend/indexview.html", ret, context_instance=RequestContext(request))
     return response
 
-
+@ratelimit(rate='80/5s', ratekey="5s_ping", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='300/1m', ratekey="1m_ping", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='5000/6h', ratekey="6h_ping", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
 @require_http_methods(["GET"])
 def automatic_ping(request, **kwargs):
     """ Handles browser queries, and updates browser status when required. """
@@ -213,9 +215,9 @@ def automatic_ping(request, **kwargs):
     return response
 
 @require_http_methods(["GET"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='5/5s', ratekey="5s", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='60/1m', ratekey="1m", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='500/6h', ratekey="6h", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
 def get_pubkey(request, **kwargs):
     service = kwargs.get("service")
     if service == "pubtkt":
@@ -229,6 +231,9 @@ def get_pubkey(request, **kwargs):
 
 
 @require_http_methods(["GET"])
+@ratelimit(rate='20/5s', ratekey="5s_timesync", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='300/1m', ratekey="1m_timesync", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='5000/6h', ratekey="6h_timesync", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
 def timesync(request, **kwargs):
     """ Calculates difference between server and client timestamps.
     timesync.js generates random id, which is used to detect page
@@ -312,9 +317,9 @@ def timesync(request, **kwargs):
 
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='30/5s', ratekey="5s_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='300/1m', ratekey="1m_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='5000/6h', ratekey="6h_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
 @protect_view("sessions", required_level=Browser.L_STRONG)
 def sessions(request):
     """ Shows sessions to the user. """
@@ -431,9 +436,9 @@ def sessions(request):
 
 
 @require_http_methods(["GET"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='80/5s', ratekey="5s_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='300/1m', ratekey="1m_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='5000/6h', ratekey="6h_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
 @protect_view("view_log", required_level=Browser.L_STRONG)
 def view_log(request, **kwargs):
     """ Shows log entries to the user """
@@ -491,9 +496,9 @@ def store_location(request):
     return HttpResponse("Invalid request")
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='80/5s', ratekey="5s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='80/5s', ratekey="5s_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='300/1m', ratekey="1m_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='5000/6h', ratekey="6h_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
 @protect_view("name_your_browser", required_level=Browser.L_STRONG)
 def name_your_browser(request):
     if request.method == 'POST':
@@ -552,9 +557,9 @@ def report_problem(request):
 
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='80/5s', ratekey="5s_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='300/1m', ratekey="1m_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='5000/6h', ratekey="6h_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
 @protect_view("configure", required_level=Browser.L_STRONG)
 def configure(request):
     """ Configuration view for general options. """
@@ -771,9 +776,9 @@ def get_emergency_codes_pdf(request, **kwargs):
     return response
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='5/5s', ratekey="5s", block=True, method=["POST", "GET"])
-@ratelimit(rate='60/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='500/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='10/5s', ratekey="5s_config", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='80/1m', ratekey="1m_config", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='1000/6h', ratekey="6h_config", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
 @protect_view("configure_authenticator", required_level=Browser.L_STRONG)
 def configure_authenticator(request):
     """ Google Authenticator configuration view. Only POST requests are allowed. """

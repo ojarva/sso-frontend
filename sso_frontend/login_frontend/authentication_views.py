@@ -23,6 +23,7 @@ from login_frontend.models import *
 from login_frontend.send_sms import send_sms
 from login_frontend.utils import save_timing_data, redirect_with_get_params, redir_to_sso, get_return_url, map_username
 from ratelimit.decorators import ratelimit
+from ratelimit.helpers import is_ratelimited
 import datetime
 import json
 import logging
@@ -378,15 +379,21 @@ def secondstepauth(request):
     return HttpResponse("Second step auth: no proper redirect configured.")
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='10/5s', ratekey="2s_url", block=True, method=["POST", "GET"])
+@ratelimit(rate='120/1m', ratekey="1m_url", block=True, method=["POST", "GET"])
+@ratelimit(rate='1000/6h', ratekey="6h_url", block=True, method=["POST", "GET"])
 # This method should not protected with protect_view. In this case, it is important to show specific error messages.
 def authenticate_with_url(request, **kwargs):
     """ Authenticates user with URL sent via SMS """
     def sid_cleanup(sid):
         keys = ["urlauth-%s-%s" % (k, sid) for k in ("params", "user", "bid")]
         dcache.delete(keys)
+
+    if is_ratelimited(request, True, True, ["POST"], None, "10/30s", [request.user.username], "30s_url"):
+        ret["ratelimited"] = True
+        ret["ratelimit_wait_until"] = timezone.now() + datetime.timedelta(seconds=120)
+        custom_log(request, "2f-url: ratelimited")
+        return render_to_response(template_name, ret, context_instance=RequestContext(request))
 
     template_name = "login_frontend/authenticate_with_url.html"
     sid = kwargs.get("sid")
@@ -515,7 +522,11 @@ def authenticate_with_authenticator(request):
         request.session.delete_test_cookie()
 
         custom_log(request, "2f-auth: POST request", level="debug")
-        if request.POST.get("otp"):
+        if is_ratelimited(request, True, False, ["POST"], None, "30/30s", [request.user.username], "30s_2f"):
+            ret["ratelimited"] = True
+            ret["ratelimit_wait_until"] = timezone.now() + datetime.timedelta(seconds=120)
+            custom_log(request, "2f-auth: ratelimited", level="warn")
+        elif request.POST.get("otp"):
             custom_log(request, "2f-auth: Form is valid", level="debug")
             otp = request.POST.get("otp")
             custom_log(request, "2f-auth: Testing OTP code %s at %s" % (otp, time.time()), level="debug")
@@ -672,7 +683,12 @@ def authenticate_with_sms(request):
         custom_log(request, "2f-sms: POST request", level="debug")
         browser_name = request.POST.get("name")
         ret["browser_name_value"] = browser_name
-        if request.POST.get("otp"):
+        if is_ratelimited(request, True, True, ["POST"], None, "60/15m", [request.user.username], "30s_sms"):
+            ret["ratelimited"] = True
+            ret["ratelimit_wait_until"] = timezone.now() + datetime.timedelta(seconds=900)
+            custom_log(request, "2f-sms: ratelimited", level="warn")
+
+        elif request.POST.get("otp"):
             custom_log(request, "2f-sms: Form is valid", level="debug")
             otp = request.POST.get("otp")
             status, message = request.browser.validate_sms(otp)
@@ -857,7 +873,11 @@ def authenticate_with_emergency(request):
         if otp:
             # whitespace is not important, but printed passwords include spaces for readability.
             otp = otp.replace(" ", "")
-        if codes.use_code(otp):
+        if is_ratelimited(request, True, True, ["POST"], None, "30/30s", [request.user.username], "30s_emergency"):
+            ret["ratelimited"] = True
+            ret["ratelimit_wait_until"] = timezone.now() + datetime.timedelta(seconds=120)
+            custom_log(request, "2f-emergency: ratelimited", level="warn")
+        elif codes.use_code(otp):
             # Proper code was provided.
             familiar_device = request.browser.user_is_familiar(request.browser.user, Browser.L_STRONG)
             emergency_used_notify(request, codes, familiar_device=familiar_device)

@@ -1,0 +1,6 @@
+<div class="alert alert-danger">
+    <i class="fa fa-clock-o"></i> You have tried to authenticate too many times. If you can't sign in, please contact <a href="{{ admin_email }}">{{ admin_email }}</a>.
+
+    <span class="onlybefore" data-timestamp="{{ ratelimit_wait_until }}"><b>You can try again {% include "snippets/timestamp.html" with timestamp=ratelimit_wait_until %}</b></span>
+    <span class="onlyafter hidden" data-timestamp="{{ ratelimit_wait_until }}"><b>You can try again now.</b></span>
+</div>

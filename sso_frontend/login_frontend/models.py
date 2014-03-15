@@ -441,7 +441,7 @@ class Browser(models.Model):
             return True
 
     @sd.timer("login_frontend.models.Browser.generate_sms_text")
-    def generate_sms_text(self, length=5, **kwargs):
+    def generate_sms_text(self, length=7, **kwargs):
         """ Generates new SMS code and returns contents of SMS.
 
         Formatting of the message, including line breaks, is important to
@@ -474,7 +474,7 @@ Requested from %s""" % request.remote_ip
 %s%s""" % (sms_code_id, settings.FQDN, sms_code, extra)
 
     @sd.timer("login_frontend.models.Browser.generate_sms")
-    def generate_sms(self, length=5):
+    def generate_sms(self, length=7):
         """ Generates new SMS code, but does not send the message.
         Returns (code_id, sms_code) tuple. code_id is random
         id for code, to avoid confusion with duplicate/old messages. """

@@ -9,7 +9,7 @@ South>=0.8.3
 auth-pubtkt
 django-compressor>=1.3
 django-extensions
-django-ratelimit2
+django-ratelimit2>=0.4.2
 django-redis-cache>=0.10.0
 django-redis-sessions>=0.4.0
 django-utils>=0.0.2
