@@ -24,7 +24,7 @@ from login_frontend.authentication_views import protect_view
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.emails import new_authenticator_notify, new_emergency_generated_notify
-from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name
+from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name, store_location_caching
 from ratelimit.decorators import ratelimit
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
@@ -48,7 +48,8 @@ import PIL, PIL.ImageFont, PIL.ImageDraw, PIL.Image
 
 dcache = get_cache("default")
 ucache = get_cache("user_mapping")
-
+user_cache = get_cache("users")
+bcache = get_cache("browsers")
 
 log = logging.getLogger(__name__)
 r = redis.Redis()
@@ -454,6 +455,19 @@ def view_log(request, **kwargs):
     response = render_to_response("login_frontend/view_log.html", ret, context_instance=RequestContext(request))
     return response
 
+
+@require_http_methods(["POST"])
+@ratelimit(rate='2/5s', ratekey="5s_location", block=True, method=["POST", "GET"])
+@ratelimit(rate='10/1m', ratekey="1m_location", block=True, method=["POST", "GET"])
+@ratelimit(rate='250/6h', ratekey="6h_location", block=True, method=["POST", "GET"])
+def store_location(request):
+    if request.method == 'POST':
+        custom_log(request, "Location info posted: %s" % request.POST.dict(), level="debug")
+        if not (hasattr(request, "browser") and request.browser):
+            custom_log(request, "No browser in request. Not storing location info", level="warn")
+            return HttpResponse("No browser available")
+        return store_location_caching(request, request.POST.dict())
+    return HttpResponse("Invalid request")
 
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="5s", block=True, method=["POST", "GET"])

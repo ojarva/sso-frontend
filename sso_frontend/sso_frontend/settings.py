@@ -226,6 +226,7 @@ MIDDLEWARE_CLASSES = (
     'login_frontend.middleware.request_timing.ViewLoggingMiddleware',
     'django_statsd.middleware.GraphiteRequestTimingMiddleware',
     'django_statsd.middleware.GraphiteMiddleware',
+    'login_frontend.middleware.location.LocationMiddleware',
     'login_frontend.middleware.real_remote_ip.RealRemoteIP', # this should be both first and last, as when processing responses, middlewares are executed in reverse order.
 )
 
@@ -237,18 +238,16 @@ MESSAGE_TAGS = {
 }
 
 TEMPLATE_CONTEXT_PROCESSORS = (
-"django.contrib.auth.context_processors.auth",
-"django.core.context_processors.debug",
-"django.core.context_processors.i18n",
-"django.core.context_processors.media",
-"django.core.context_processors.static",
-"django.core.context_processors.tz",
-"django.contrib.messages.context_processors.messages",
-"login_frontend.context_processors.add_browser",
-"login_frontend.context_processors.add_user",
-"login_frontend.context_processors.add_session_info",
-"login_frontend.context_processors.add_admin_email",
-"login_frontend.context_processors.add_vulnerability",
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
+    "django.core.context_processors.tz",
+    "django.contrib.messages.context_processors.messages",
+    "login_frontend.context_processors.add_misc_info",
+    "login_frontend.context_processors.add_user",
+    "login_frontend.context_processors.add_session_info",
 )
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

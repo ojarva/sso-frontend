@@ -19,26 +19,20 @@ from django.core.cache import get_cache
 
 dcache = get_cache("default")
 
-__all__ = ["add_admin_email", "add_browser", "add_user", "add_session_info"]
+__all__ = ["add_misc_info", "add_user", "add_session_info"]
 
-def add_admin_email(request):
-    return {"admin_email": settings.ADMIN_CONTACT_EMAIL}
-
-@sd.timer("login_frontend.context_processors.add_browser")
-def add_browser(request):
-    """ Adds "browser" to context, if available. """
+def add_misc_info(request):
     ret = {}
+    ret["admin_email"] = settings.ADMIN_CONTACT_EMAIL
+    if hasattr(request, "vulnerability"):
+        ret["vulnerability"] = request.vulnerability
+    if hasattr(request, "ask_location"):
+        ret["ask_location"] = request.ask_location
     if hasattr(request, "browser") and request.browser:
         browser = request.browser
         ret["auth_status"] = browser.get_auth_state()
         ret["browser"] = browser
     return ret
-
-def add_vulnerability(request):
-    """ Adds "vulnerability" to context, if available """
-    if hasattr(request, "vulnerability"):
-        return {"vulnerability": request.vulnerability}
-    return {}
 
 @sd.timer("login_frontend.context_processors.add_user")
 def add_user(request):

@@ -9,7 +9,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
-from login_frontend.models import User, BrowserDetails, KeystrokeSequence
+from login_frontend.models import User, BrowserDetails, KeystrokeSequence, UserLocation
 import datetime
 import dateutil.parser
 import geoip2
@@ -25,6 +25,8 @@ import time
 import urllib
 import pytz
 import re
+import os
+import sys
 import urlparse
 from django_statsd.clients import statsd as sd
 
@@ -33,12 +35,46 @@ from django.core.cache import get_cache
 dcache = get_cache("default")
 user_cache = get_cache("users")
 ucache = get_cache("user_mapping")
+bcache = get_cache("browsers")
 
 log = logging.getLogger(__name__)
 timing_log = logging.getLogger("timing_data")
 
 geo = geoip2.database.Reader(settings.GEOIP_DB)
 IP_NETWORKS = settings.IP_NETWORKS
+
+
+@sd.timer("login_frontend.utils.custom_log")
+def custom_log(request, message, **kwargs):
+    """ Automatically logs username, remote IP and bid_public """
+    if request is None:
+        log.warn("Skipping custom_log as request is None: %s", message)
+        return
+    try:
+        raise Exception
+    except:
+        stack = sys.exc_info()[2].tb_frame.f_back
+    if stack is not None:
+        stack = stack.f_back
+    while hasattr(stack, "f_code"):
+        co = stack.f_code
+        filename = os.path.normcase(co.co_filename)
+        filename = co.co_filename
+        lineno = stack.f_lineno
+        co_name = co.co_name
+        break
+
+    level = kwargs.get("level", "info")
+    method = getattr(log, level)
+    remote_addr = request.remote_ip
+    bid_public = username = ""
+    if hasattr(request, "browser") and request.browser:
+        bid_public = request.browser.bid_public
+        if request.browser.user:
+            username = request.browser.user.username
+    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
+                            remote_addr, username, bid_public, message)
+
 
 __all__ = ["redir_to_sso", "is_private_net", "save_timing_data", "get_and_refresh_user", "refresh_user", "get_geoip_string", "redirect_with_get_params", "dedup_messages", "paginate", "get_return_url", "check_browser_name", "map_username"]
 
@@ -49,6 +85,44 @@ LOCAL_URLS = {
     "/index": "index page",
     "/idp/login": "SAML login",
 }
+
+
+@sd.timer("login_frontend.utils.store_location")
+def store_location_caching(request, location = None):
+    r_k = "location-tmp-for-%s" % request.browser.bid_public
+    if not request.browser.user:
+        custom_log(request, "No signed-in user. Not storing location info: %s" % location, level="warn")
+        bcache.set(r_k, location, 60*60)
+        bcache.set(r_k+"-ip", request.remote_ip, 60*60)
+        return HttpResponse("No signed-in user.")
+    if not location:
+        location = bcache.get(r_k)
+        if location:
+            custom_log(request, "Loaded location from redis")
+            remote_ip = bcache.get(r_k+"-ip")
+            bcache.delete_many([r_k, r_k+"-ip"])
+    else:
+        remote_ip = request.remote_ip
+    if not isinstance(location, dict):
+        return HttpResponse("Invalid data")
+
+    if all (k in location for k in ("longitude", "latitude", "accuracy")):
+        data = {}
+        for k in ("longitude", "latitude", "altitude", "accuracy", "altitude_accuracy", "heading", "speed"):
+            try:
+                data[k] = float(location.get(k))
+            except ValueError:
+                data[k] = None
+        data["bid_public"] = request.browser.bid_public
+        data["remote_ip"] = remote_ip
+        data["user"] = request.browser.user
+        UserLocation.objects.create(**data)
+        bcache.set("location-stored-for-%s-%s" % (request.browser.bid_public, request.browser.user.username), timezone.now(), 600)
+        bcache.set("location-authorized-for-%s" % (request.browser.bid_public), True, 86400*7)
+    else:
+        custom_log(request, "Invalid store_location request: missing mandatory fields.", level="warn")
+        return HttpResponse("Invalid request: missing mandatory fields")
+    return HttpResponse("OK")
 
 @sd.timer("login_frontend.utils.map_username")
 def map_username(username):

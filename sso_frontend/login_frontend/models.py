@@ -31,7 +31,7 @@ ucache = get_cache("users")
 
 log = logging.getLogger(__name__)
 
-__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f", "BrowserTime", "UserService"]
+__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f", "BrowserTime", "UserService", "UserLocation"]
 
 redis_instance = redis.Redis()
 
@@ -970,6 +970,9 @@ class UserLocation(models.Model):
     user = models.ForeignKey("User")
     bid_public = models.CharField(max_length=37)
     received_at = models.DateTimeField(auto_now_add=True)
+
+    remote_ip = models.GenericIPAddressField()
+
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
     accuracy = models.DecimalField(max_digits=10, decimal_places=1)
@@ -978,8 +981,8 @@ class UserLocation(models.Model):
     heading = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
     speed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-    def __unicode(self):
-        return u"%s - %s,%s @ %s" % (self.user.username, latitude, longitude, accuracy)
+    def __unicode__(self):
+        return u"%s - %s,%s @ %sm" % (self.user.username, self.latitude, self.longitude, self.accuracy)
 
 
 class UserService(models.Model):
