@@ -213,6 +213,9 @@ class Browser(models.Model):
 
     save_browser = models.BooleanField(default=False)
 
+    password_last_entered_at = models.DateTimeField(null=True, blank=True)
+    twostep_last_entered_at = models.DateTimeField(null=True, blank=True)
+
     auth_level = models.DecimalField(max_digits=2, decimal_places=0, choices=A_AUTH_LEVEL, default=L_UNAUTH, db_index=True)
     auth_level_valid_until = models.DateTimeField(null=True, blank=True)
 
@@ -511,6 +514,9 @@ Requested from %s""" % request.remote_ip
         self.auth_level_valid_until = None
         self.auth_state_valid_until = None
         self.authenticator_qr_nonce = None
+        self.twostep_last_entered_at = None
+        self.password_last_entered_at = None
+
         if request is not None:
             django_logout(request)
         self.save()
@@ -846,6 +852,7 @@ class User(models.Model):
         self.strong_authenticator_generated_at = None
         self.strong_authenticator_used = False
         EmergencyCodes.objects.get(user=self).delete()
+        self.location_authorized = False
         self.save()
 
     @sd.timer("login_frontend.models.User.gen_authenticator")
