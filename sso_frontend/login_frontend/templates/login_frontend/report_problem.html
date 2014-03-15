@@ -11,7 +11,7 @@
 <p>Please read <a href="{% url 'introduction' %}">contents of the help page</a> too.</p>
 
 {% if browser %}
-<p>Unique, public ID for your browser is <code>{{ browser.bid_public }}</code>. If you are reporting any problems, please mention this ID. It greatly helps identifying your browser.</p>
+<p>Unique, public ID for your browser is <code>{{ browser.bid_public }}</code>. If you are reporting any problems, please mention this ID. It greatly helps identifying your browser. If someone asks for your browser cookies, paste this value. Other cookies are private, and shouldn't be shared.</p>
 
 {% if user %}
 <p>You're signed in as {{ user.username }}{% if user.first_name %} ({{ user.first_name }}{% if user.last_name %} {{ user.last_name }}{% endif %}){% endif %}.</p>
@@ -32,7 +32,7 @@
 <p>We'll try to answer to your report as soon as possible.</p>
 {% endif %}
 {% else %}
-<p>If you want to, you can report the problem you encountered, or new ideas. If you did not encounter error page, you can be sure the problem will not be fixed, unless you report it.</p>
+<p>If you want to, you can report the problem encountered. Even if you didn't encounter a problem, you can send new ideas or suggestions with this form. If you had a problem but did not encounter error page, you can be sure that the problem will not be fixed, unless you report it.</p>
 
 <form method="post" role="form" action="?">
     {% csrf_token %}

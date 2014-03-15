@@ -854,12 +854,13 @@ class User(models.Model):
             Log.objects.create(user=self, bid_public=bid_public, status=status, message=message, remote_ip=remote_ip)
 
     def reset(self):
+        """ Resets user's strong authentication configuration.
+        This does not sign out any open sessions. """
         self.strong_configured = False
         self.strong_authenticator_secret = None
         self.strong_authenticator_generated_at = None
         self.strong_authenticator_used = False
         EmergencyCodes.objects.get(user=self).delete()
-        self.location_authorized = False
         self.save()
 
     @sd.timer("login_frontend.models.User.gen_authenticator")

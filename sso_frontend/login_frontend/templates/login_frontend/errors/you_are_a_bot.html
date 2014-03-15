@@ -11,7 +11,7 @@ It seems you are a bot.
 This page returns 500 Internal Server error if the database is down, or something else is wrong.</div>
 
 {% if admin %}
-<div>If this is by mistake, please contact <a href="mailto:{{ admin }}">{{ admin }}</a>.</div>
+<div>If this is by mistake, please contact <a href="mailto:{{ admin }}">{{ admin }}</a>. Alternatively, you can <a href="{% url 'login_frontend.views.report_problem'%}">use this page</a>.</div>
 {% endif %}
 
 {% endblock %}

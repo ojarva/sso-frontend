@@ -9,7 +9,7 @@ The URL you tried to access contains invalid characters.
 
 <p>Your request was interrupted, as it contains invalid characters. Sorry about this.</p>
 
-<p>If you followed a link and landed on this page, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> and tell what happened.</p>
+<p>If you followed a link and landed on this page, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> and tell what happened. Alternatively, you can <a href="{% url 'login_frontend.views.report_problem'%}">use this page</a>.</p>
 
 <p>You can <a href="{% url 'login_frontend.views.indexview' %}">continue</a> to front page, but you won't be redirected to anywhere.</p>
 

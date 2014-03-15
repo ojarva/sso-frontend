@@ -518,9 +518,9 @@ def name_your_browser(request):
 
 
 @require_http_methods(["GET", "POST"])
-@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
-@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
-@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+@ratelimit(rate='5/3s', ratekey="5s_bug", block=True, method=["POST", "GET"])
+@ratelimit(rate='30/1m', ratekey="1m_bug", block=True, method=["POST", "GET"])
+@ratelimit(rate='500/6h', ratekey="6h_bug", block=True, method=["POST", "GET"])
 def report_problem(request):
     ret = {}
     if request.method == 'POST':

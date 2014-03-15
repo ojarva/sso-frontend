@@ -8,7 +8,7 @@
 
 <p>If you think this is an error, please explain what happened. {% if browser_public_bid %}Mentioning <b>{{ browser_public_bid }}</b> helps with solving the issue.{% endif %}</p>
 
-<p>You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
+<p>You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>. If you think this shouldn't happen, please <a href="{% url 'login_frontend.views.report_problem'%}">report a bug</a>.</p>
 
 
 {% endblock %}

@@ -10,14 +10,16 @@
 </div>
 {% endif %}
 
-<p>Processing your request was aborted, as it was missing validation token. 
+<p>Processing your request was aborted, as it was missing validation token.
 This is a security feature designed to protect you against malicious external sites.</p>
 
 <p><a class="btn btn-primary btn-lg" href="{% url 'login_frontend.views.indexview' %}">Continue</a></p>
 
+<p>Do you think this shouldn't happen? Please <a href="{% url 'login_frontend.views.report_problem'%}">report a bug</a>.</p>
+
 
 <hr/>
-<p>Technical details: Cross-Site Request Forgery (CSRF) check failed. Your POST request did not include valid token. This might be either configuration error, or 
+<p>Technical details: Cross-Site Request Forgery (CSRF) check failed. Your POST request did not include valid token. This might be either configuration error, or
 improperly configured external site. Alternatively, it was (failed) attack attempt. This error has been logged, and we'll take a look into it. For more information,
 you can read these pages:</p>
 

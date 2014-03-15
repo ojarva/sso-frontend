@@ -15,7 +15,7 @@
 
 <dl>
     <dt>Username and password {% if username %}<span class="label label-success">ok</span>{% endif %}</dt>
-    <dd>When username or password is asked, you should use same old username and password. You can use your email address too. {% if username %} You have already entered these.{% else %}If you don't know what is your username or password, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a>.{% endif %}</dd>
+    <dd>When username or password is asked, you should use same old username and password. You can use your email address too. {% if username %} You have already entered these.{% else %}If you don't know your username or password, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a>.{% endif %}</dd>
     <dt>Authenticator {% if user.strong_authenticator_used %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
     <dd>Authenticator generates 6-digit one-time passwords. It's a small app for your mobile phone. {% if user.strong_authenticator_used %}You have already configured and used Authenticator.{% else %}To configure it, go to <a href="{% url 'login_frontend.views.configure' %}">settings</a> and follow instructions.{% endif %} <a href="/static/img/instructions/authenticator.png">Screenshot of Authenticator</a> with multiple codes. If you are not sure which code you should enter, after entering incorrect one, sign-in view tells you.</dd>
     <dt>Emergency codes {% if user.emergency_codes_done %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
