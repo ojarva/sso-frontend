@@ -41,8 +41,7 @@ casper.start 'http://localhost:8000', ->
    @.then ->
     @.test.assertHttpStatus 200, "Admin user listing"
 
-   @.then ->
-    @.clickLabel("test_admin")
+   @.thenOpen('http://localhost:8000/admin_/user/test_admin')
    @.then ->
     @.test.assertHttpStatus 200, "Admin user page"
     @.test.assertUrlMatch 'http://localhost:8000/admin_/user/test_admin', "test_admin user page"
@@ -97,8 +96,7 @@ casper.start 'http://localhost:8000', ->
    @.then ->
     @.test.assertHttpStatus 200, "Log view"
 
-   @.then ->
-    @.clickLabel("test_admin")
+   @.thenOpen('http://localhost:8000/admin_/user/test_admin')
    @.then ->
     @.test.assertHttpStatus 200, "User details for test_admin"
 

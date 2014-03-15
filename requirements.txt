@@ -33,4 +33,4 @@ wsgiref>=0.1.2
 browser_compare>=0.0.1
 browser_vulnerabilities>=0.1.0
 reportlab>=3.0
-
+simplekml>=1.2.3

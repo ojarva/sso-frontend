@@ -27,7 +27,7 @@ import uuid
 
 dcache = get_cache("default")
 bcache = get_cache("browsers")
-ucache = get_cache("users")
+user_cache = get_cache("users")
 
 log = logging.getLogger(__name__)
 
@@ -102,6 +102,16 @@ class EmergencyCodes(models.Model):
 
     def codes_left(self):
         return EmergencyCode.objects.filter(codegroup=self).count()
+
+    def save(self, *args, **kwargs):
+        super(EmergencyCodes, self).save(*args, **kwargs)
+        user_cache.set("%s-emergency-codes-valid" % self.user.username, self.valid(), 7*86400)
+
+
+    def delete(self, *args, **kwargs):
+        # Delete cached emergency code status
+        user_cache.set("%s-emergency-codes-valid" % self.user.username, False, 7*86400)
+        super(EmergencyCodes, self).delete(*args, **kwargs)
 
     @sd.timer("login_frontend.models.EmergencyCodes.revoke_codes")
     def revoke_codes(self):
@@ -225,9 +235,6 @@ class Browser(models.Model):
     sms_code = models.CharField(max_length=10, null=True, blank=True)
     sms_code_id = models.CharField(max_length=5, null=True, blank=True)
     sms_code_generated_at = models.DateTimeField(null=True, blank=True)
-
-    authenticator_qr_nonce = models.CharField(max_length=37, null=True, blank=True)
-
     forced_sign_out = models.BooleanField(default=False, db_index=True)
 
     class Meta:

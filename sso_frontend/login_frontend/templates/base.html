@@ -27,6 +27,7 @@
 {% endif %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% block header %}{% endblock %}
+
 <meta property="og:title" content="Sign-in required" />
 <meta property="og:description" content="This resource is protected by the single sign-on service. After signing in, you will be automatically redirected to the service you tried to access." />
 <meta name="description" content="This resource is protected by the single sign-on service. After signing in, you will be automatically redirected to the service you tried to access." />
@@ -61,7 +62,14 @@
 {% if username %}
 <li><a id="sessions_link" href="{% url 'login_frontend.views.sessions' %}">Sessions <span class="badge">{{ num_sessions }}</span></a></li>
 {% if not user.emulate_legacy %}
-<li><a href="{% url 'login_frontend.views.configure' %}">Settings</a></li>
+<li><a href="{% url 'login_frontend.views.configure' %}">Settings
+    {% if not user.strong_authenticator_used %}
+        <span class="label label-danger">Actions needed</span>
+    {% else %}
+        {% if not user.location_authorized or not user.emergency_codes_done %}
+            <span class="label label-success">New features!</span>
+        {% endif %}
+    {% endif %}</a></li>
 {% endif %}
 {% if user.is_admin %}
 <li><a href="{% url "admin_frontend.views.indexview" %}">Admin</a></li>

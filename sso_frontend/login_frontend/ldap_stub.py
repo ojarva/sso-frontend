@@ -42,10 +42,10 @@ class LdapLogin:
         if self.username == "test_admin" and self.password == "testpassword":
             self.authenticated = True
             return True
-            
+
         if self.username == "server_down":
             return "server_down"
-        return "invalid_credentials"
+        return "invalid_password"
 
     def get_auth_tokens(self):
         """ Gets user tokens for pubtkt """

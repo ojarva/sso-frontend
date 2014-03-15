@@ -62,7 +62,7 @@ casper.start 'http://localhost:8000', ->
     }, true)
    @.then ->
     @.test.assertHttpStatus 200
-    @.test.assertUrlMatch "http://localhost:8000/name_your_browser?_sso=internal&next=/index", "Asking for browser name"
+    @.test.assertUrlMatch "http://localhost:8000/name_your_browser?_sso=internal&_sc=on&next=/index", "Asking for browser name"
 
 casper.run ->
   @.test.done()

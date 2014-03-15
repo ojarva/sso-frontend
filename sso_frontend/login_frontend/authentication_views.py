@@ -100,7 +100,7 @@ def protect_view(current_step, **main_kwargs):
                 # Avoid redirect loops
                 if current_step not in ("firststepauth", "secondstepauth",
                      "authenticate_with_sms", "authenticate_with_password",
-                     "authenticate_with_authenticator"):
+                     "authenticate_with_authenticator", "authenticate_with_emergency"):
                     get_params["_sso"] = "internal"
                     get_params["next"] = request.path
                     custom_log(request, "Automatically adding internal SSO. next=%s" % get_params["next"], level="debug")
@@ -200,6 +200,8 @@ def authenticate_with_password(request):
                 return redirect_with_get_params("login_frontend.views.indexview", request.GET.dict())
             custom_log(request, "1f: S_REQUEST_BASIC_ONLY requested", level="debug")
 
+        ret["signout_reason"] = bcache.get("%s-signout-reason" % browser.bid_public)
+
     if request.method == 'POST':
         custom_log(request, "1f: POST request", level="debug")
         username_orig = request.POST.get("username")
@@ -238,6 +240,7 @@ def authenticate_with_password(request):
             if auth_status == True:
                 # User signed in, so there's no reason to keep forced_sign_out anymore.
                 bcache.set("activity-%s" % browser.bid_public, True, 86400 * 9)
+                bcache.delete("%s-signout-reason" % browser.bid_public)
                 browser.password_last_entered_at = timezone.now()
                 browser.forced_sign_out = False
                 browser_name = dcache.get("browser-name-for-%s-%s" % (browser.bid_public, username))

@@ -7,13 +7,33 @@
 
 <p>This version provides strong authentication, and only asks your credentials when there's reason to do so. Old version required authentication every single day, even if you worked from same place using same device.</p>
 
+<h2>What are all these codes?</h2>
+
+<dl>
+    <dt>Username and password {% if username %}<span class="label label-success">ok</span>{% endif %}</dt>
+    <dd>When username or password is asked, you should use same old username and password. You can use your email address too. {% if username %} You have already entered these.{% else %}If you don't know what is your username or password, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a>.{% endif %}</dd>
+    <dt>Authenticator {% if user.strong_authenticator_used %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
+    <dd>Authenticator generates 6-digit one-time passwords. It's a small app for your mobile phone. {% if user.strong_authenticator_used %}You have already configured and used Authenticator.{% else %}To configure it, go to <a href="{% url 'login_frontend.views.configure' %}">settings</a> and follow instructions.{% endif %} <a href="/static/img/instructions/authenticator.png">Screenshot of Authenticator</a> with multiple codes. If you are not sure which code you should enter, after entering incorrect one, sign-in view tells you.</dd>
+    <dt>Emergency codes {% if user.emergency_codes_done %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
+    <dd>These are long random strings, that can be used to sign in, if you can't access your mobile phone. For example, if someone steals your purse / backpack / phone, you'll need these. {% if user.emergency_codes_done %}You have already generated and downloaded these. {% else %}To get these, go to <a href="{% url 'login_frontend.views.configure' %}">settings</a>.{% endif %} <a href="/static/img/instructions/emergency_codes.png">Example codes</a> (these are not valid for your account).</dd>
+</dl>
+
+<p>Additionally, there's two Google specific terms:</p>
+<dl>
+    <dt>Application specific passwords</dt>
+    <dd>These are for dedicated apps, such as Outlook and Mail.app. You don't need these in this service. For instructions, see <a href="https://support.google.com/accounts/answer/185833">this page</a>.</dd>
+    <dt>Scratch codes</dt>
+    <dd>These are emergency codes (see above) for Google Apps. However, as Google never asks for scratch codes (sign-ins are always handled by this service instead of Google), there's no need to store these.</p>
+</dl>
+
+
 <h2>What is strong authentication?</h2>
 
 <p>In strong authentication, in addition to your username and password, you must have something. In this service, it's one-time password (OTP). With OTPs, even if someone obtains your password, they are not able to sign in.</p>
 
 <h2>What is one-time password (OTP)?</h2>
 
-<p>In this service, one-time passwords are short - 5 or 6 digits - strings of numbers. You can use each number only once. You can get these numbers as SMS to your mobile phone (if your phone number is not up-to-date, please 
+<p>In this service, one-time passwords are short - 5 or 6 digits - strings of numbers. You can use each number only once. You can get these numbers as SMS to your mobile phone (if your phone number is not up-to-date, please
 contact IT team).</p>
 
 <h2>What is Authenticator?</h2>
@@ -23,7 +43,7 @@ contact IT team).</p>
 <p>If you don't have Authenticator app installed, you can find it from here:
 
 <ul>
-<li><a target="_blank" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a> <b>and</b> <a target="_blank" href="https://play.google.com/store/apps/details?id=com.google.zxing.client.android">barcode scanner</a>. If you're signed in to your Google account, you can install these remotely from Play Store. If not, search for "Google Authenticator" and "barcode" on your phone.</li> 
+<li><a target="_blank" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a> <b>and</b> <a target="_blank" href="https://play.google.com/store/apps/details?id=com.google.zxing.client.android">barcode scanner</a>. If you're signed in to your Google account, you can install these remotely from Play Store. If not, search for "Google Authenticator" and "barcode" on your phone.</li>
 <li><a target="_blank" href="https://itunes.apple.com/fi/app/google-authenticator/id388497605?mt=8">iPhone</a> (either install from iTunes, or search for "Google Authenticator")</li>
 <li><a target="_blank" href="http://www.windowsphone.com/en-us/store/app/authenticator/e7994dbc-2336-4950-91ba-ca22d653759b">Windows Phone</a>. Either install remotely or search for "Authenticator", select one published by Microsoft.</li>
 <li><a target="_blank" href="https://github.com/stozze/harbour-sgauth">Jolla</a> (search for SGAuth)</li>

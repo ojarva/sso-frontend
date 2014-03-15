@@ -1,0 +1,14 @@
+{% extends "login_frontend/base.html" %}
+
+{% block title %}Invalid request - {% endblock %}
+{% block content %}
+
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
+<div class="alert alert-danger">
+This link is single-use only. Please <a class="alert-link" href="{% url 'login_frontend.views.configure' %}">go back</a> and try again.
+</div>
+
+<p>You can use this link only once. If you lost the file that was available behind this link, please <a href="{% url 'login_frontend.views.configure' %}">go back to configuration view</a> and try again. If this problem persists, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> and we'll fix it as soon as possible.</p>
+
+{% endblock %}

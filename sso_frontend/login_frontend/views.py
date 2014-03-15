@@ -35,6 +35,7 @@ import json
 import logging
 import math
 import os
+import simplekml
 import pyotp
 import qrcode
 import re
@@ -533,6 +534,9 @@ def configure(request):
     emergency_codes = user.get_emergency_codes()
     ret["emergency_codes"] = emergency_codes
     ret["user_aliases"] = user_cache.get("%s-aliases" % user.username)
+    locations = UserLocation.objects.filter(user=user).count()
+    if locations > 0:
+        ret["locations_shared"] = locations
 
     if back_url:
         ret["back_url"] = back_url.url
@@ -603,7 +607,7 @@ def configure(request):
 def get_authenticator_qr(request, **kwargs):
     """ Outputs QR code for Authenticator. Uses single_use_code to prevent
     reloading / linking. """
-    if not request.browser.authenticator_qr_nonce == kwargs["single_use_code"]:
+    if not bcache.get("%s-authenticator_qr_nonce" % request.browser.bid_public) == kwargs["single_use_code"]:
         custom_log(request, "qr: Invalid one-time code for QR. Referrer: %s" % request.META.get("HTTP_REFERRER"), level="warn")
         return HttpResponseForbidden(open(settings.PROJECT_ROOT + "/static/img/invalid_nonce.png").read(), mimetype="image/png")
 
@@ -612,8 +616,7 @@ def get_authenticator_qr(request, **kwargs):
         return HttpResponseForbidden(open(settings.PROJECT_ROOT + "/static/img/valid_nonce_no_secret.png").read(), mimetype="image/png")
 
     # Delete QR nonce to prevent replay.
-    request.browser.authenticator_qr_nonce = None
-    request.browser.save()
+    bcache.delete("%s-authenticator_qr_nonce" % request.browser.bid_public)
 
     totp = pyotp.TOTP(request.browser.user.strong_authenticator_secret)
     img = qrcode.make(totp.provisioning_uri(request.browser.user.strong_authenticator_id))
@@ -633,7 +636,10 @@ def get_emergency_codes_image(request, **kwargs):
     r_k = "emergency-nonce-for-%s" % request.browser.bid_public
     if dcache.get(r_k) != kwargs["single_use_code"]:
         custom_log(request, "emergency codes: invalid one-time code for output. Referrer: %s" % request.META.get("HTTP_REFERRER"), level="warn")
-        return HttpResponseForbidden("You can use download link only once.")
+        response = render_to_response("login_frontend/download_invalid_nonce.html", {}, context_instance=RequestContext(request))
+        response.status_code = "403"
+        response.reason_phrase = "Forbidden"
+        return response
     dcache.delete(r_k)
 
     codes = request.browser.user.get_emergency_codes()
@@ -668,12 +674,32 @@ def get_emergency_codes_image(request, **kwargs):
 @ratelimit(rate='3/5s', ratekey="5s_low", block=True, method=["POST", "GET"])
 @ratelimit(rate='20/1m', ratekey="1m_low", block=True, method=["POST", "GET"])
 @ratelimit(rate='100/6h', ratekey="6h_low", block=True, method=["POST", "GET"])
+def get_locations_kml(request):
+    locations = UserLocation.objects.filter(user=request.browser.user).order_by("received_at")
+    kml = simplekml.Kml()
+    for point in locations:
+        kml.newpoint(name=str(point.received_at.strftime("%Y-%m-%d")), coords=[(point.longitude, point.latitude)])
+
+    response = HttpResponse(content_type="application/vnd.google-earth.kml+xml")
+    response['Content-Disposition'] = 'attachment; filename=%s-location-data.kml' % request.user.username
+    response.write(kml.kml())
+    add_user_log(request, "Downloaded location data", "info")
+    custom_log(request, "Downloaded location data", level="info")
+    return response
+
+@require_http_methods(["GET"])
+@ratelimit(rate='3/5s', ratekey="5s_low", block=True, method=["POST", "GET"])
+@ratelimit(rate='20/1m', ratekey="1m_low", block=True, method=["POST", "GET"])
+@ratelimit(rate='100/6h', ratekey="6h_low", block=True, method=["POST", "GET"])
 @protect_view("get_emergency_codes_pdf", required_level=Browser.L_STRONG)
 def get_emergency_codes_pdf(request, **kwargs):
     r_k = "emergency-nonce-for-%s" % request.browser.bid_public
     if dcache.get(r_k) != kwargs["single_use_code"]:
         custom_log(request, "emergency codes: invalid one-time code for output. Referrer: %s" % request.META.get("HTTP_REFERRER"), level="warn")
-        return HttpResponseForbidden("You can use download link only once.")
+        response = render_to_response("login_frontend/download_invalid_nonce.html", {}, context_instance=RequestContext(request))
+        response.status_code = "403"
+        response.reason_phrase = "Forbidden"
+        return response
     dcache.delete(r_k)
 
     codes = request.browser.user.get_emergency_codes()
@@ -685,9 +711,11 @@ def get_emergency_codes_pdf(request, **kwargs):
     p = canvas.Canvas(buffer, pagesize=A4, bottomup=0)
     pdfmetrics.registerFont(TTFont('defaultfont', settings.EMERGENCY_FONT))
     p.setFont('defaultfont', 20)
+    # Draw sheet timestamp (UTC) on top.
     p.drawString(100,100, str(codes.generated_at))
     i = 0
     for code in EmergencyCode.objects.all().filter(codegroup=codes).order_by("code_id"):
+        # Add space every 5 characters to improve readability.
         formatted_code = " ".join(textwrap.wrap(code.code_val, 5))
         p.drawString(100, 150 + i * 35, "#%s: %s" % (code.code_id, formatted_code))
         i += 1
@@ -697,11 +725,11 @@ def get_emergency_codes_pdf(request, **kwargs):
 
     p.showPage()
     p.save()
+    pdf = buffer.getvalue()
+    buffer.close()
+
     response = HttpResponse(content_type="application/pdf")
     response['Content-Disposition'] = 'attachment; filename=emergency_codes.pdf'
-    pdf = buffer.getvalue()
-
-    buffer.close()
     response.write(pdf)
     add_user_log(request, "Downloaded emergency codes", "info")
     custom_log(request, "Downloaded emergency codes", level="info")
@@ -767,8 +795,9 @@ def configure_authenticator(request):
     ret["authenticator_secret"] = user.strong_authenticator_secret
     ret["authenticator_id"] = user.strong_authenticator_id
 
-    request.browser.authenticator_qr_nonce = create_browser_uuid()
-    ret["authenticator_qr_nonce"] = request.browser.authenticator_qr_nonce
+    authenticator_qr_nonce = create_browser_uuid()
+    bcache.set("%s-authenticator_qr_nonce" % request.browser.bid_public, authenticator_qr_nonce, 600)
+    ret["authenticator_qr_nonce"] = authenticator_qr_nonce
     request.browser.save()
 
     ret["get_params"] = urllib.urlencode(request.GET)

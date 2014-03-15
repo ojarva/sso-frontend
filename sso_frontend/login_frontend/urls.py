@@ -7,6 +7,7 @@ urlpatterns = patterns('login_frontend.views',
     url(r'^index.php$', 'indexview'),
     url(r'^index$', 'indexview', name='index'),
 
+    url(r'^download/location/kml', 'get_locations_kml'),
     url(r'^name_your_browser$', 'name_your_browser'),
     url(r'^sessions$', 'sessions'),
     url(r'^ping/internal/js$', 'automatic_ping', {"internal": True}),
@@ -24,7 +25,7 @@ urlpatterns = patterns('login_frontend.views',
     url(r'^introduction$', TemplateView.as_view(template_name="login_frontend/introduction.html"), name='introduction'),
     url(r'^developer_introduction$', TemplateView.as_view(template_name="login_frontend/developer_introduction.html"), name='developer_introduction'),
     url(r'^robots.txt$', TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
-    url(r'^get_pubkey/(?P<service>(.+))$', 'get_pubkey'),
+    url(r'^download/pubkey/(?P<service>(.+))$', 'get_pubkey'),
 
     # timesync
     url(r'^timesync$', 'timesync'),

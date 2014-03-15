@@ -18,6 +18,7 @@ from django_statsd.clients import statsd as sd
 from django.core.cache import get_cache
 
 dcache = get_cache("default")
+user_cache = get_cache("users")
 
 __all__ = ["add_misc_info", "add_user", "add_session_info"]
 
@@ -32,6 +33,7 @@ def add_misc_info(request):
         browser = request.browser
         ret["auth_status"] = browser.get_auth_state()
         ret["browser"] = browser
+
     #should_timesync is not added here, as it is per-page property.
     #not all pages should start executing timesync.
     return ret
@@ -42,18 +44,20 @@ def add_user(request):
     try:
         if request.browser and request.browser.user:
             user = request.browser.user
+            r_k = "%s-emergency-codes-valid" % user.username
+            e_done = user_cache.get(r_k)
+            if e_done is None:
+                emergency_codes = user.get_emergency_codes()
+                user.emergency_codes_done = False
+                if emergency_codes:
+                    if emergency_codes.valid():
+                        user.emergency_codes_done = True
+                user_cache.set(r_k, user.emergency_codes_done, 86400*7)
+            else:
+                user.emergency_codes_done = e_done
             ret_dict = {"user": user, "username": user.username, "emulate_legacy": user.emulate_legacy}
-            ret_dict["first_name"] = dcache.get("first_name-for-%s" % user.username)
-            ret_dict["last_name"] = dcache.get("last_name-for-%s" % user.username)
-            if ret_dict["first_name"] is None or ret_dict["last_name"] is None:
-                try:
-                    django_user = DjangoUser.objects.get(username=user.username)
-                    ret_dict["first_name"] = django_user.first_name
-                    ret_dict["last_name"] = django_user.last_name
-                    dcache.set("first_name-for-%s" % user.username, django_user.first_name, 7200)
-                    dcache.set("last_name-for-%s" % user.username, django_user.last_name, 7200)
-                except DjangoUser.DoesNotExist:
-                    pass
+            ret_dict["first_name"] = user.first_name
+            ret_dict["last_name"] = user.first_name
             return ret_dict
     except AttributeError:
         pass
