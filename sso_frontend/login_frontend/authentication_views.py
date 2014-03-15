@@ -529,6 +529,7 @@ def authenticate_with_authenticator(request):
         elif request.POST.get("otp"):
             custom_log(request, "2f-auth: Form is valid", level="debug")
             otp = request.POST.get("otp")
+            otp = otp.replace(" ", "") # spaces doesn't matter
             custom_log(request, "2f-auth: Testing OTP code %s at %s" % (otp, time.time()), level="debug")
             (status, message) = user.validate_authenticator_code(otp, request)
 
@@ -691,6 +692,7 @@ def authenticate_with_sms(request):
         elif request.POST.get("otp"):
             custom_log(request, "2f-sms: Form is valid", level="debug")
             otp = request.POST.get("otp")
+            otp = otp.replace(" ", "") # spaces doesn't matter
             status, message = request.browser.validate_sms(otp)
 
             save_browser = False

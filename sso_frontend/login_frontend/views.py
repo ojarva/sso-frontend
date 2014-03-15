@@ -660,10 +660,13 @@ def get_authenticator_qr(request, **kwargs):
     bcache.delete("%s-authenticator_qr_nonce" % request.browser.bid_public)
 
     totp = pyotp.TOTP(request.browser.user.strong_authenticator_secret)
-    img = qrcode.make(totp.provisioning_uri(request.browser.user.strong_authenticator_id))
+    qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=20, border=0)
+    qr.add_data(totp.provisioning_uri(request.browser.user.strong_authenticator_id))
+    img = qr.make_image()
     stringio = StringIO()
     img.save(stringio)
     stringio.seek(0)
+
     custom_log(request, "qr: Downloaded Authenticator secret QR code", level="info")
     return HttpResponse(stringio.read(), content_type="image/png")
 

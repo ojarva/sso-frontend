@@ -11,7 +11,7 @@
 </div>
 <div class="panel-body">
 
-<p>Google Authenticator generates one-time passwords on your phone. It's faster and more reliable than receiving SMS messages. After configuring Google Authenticator, 
+<p>Google Authenticator generates one-time passwords on your phone. It's faster and more reliable than receiving SMS messages. After configuring Google Authenticator,
 you can still authenticate using SMS messages if needed.</p>
 
 </div>
@@ -26,9 +26,9 @@ you can still authenticate using SMS messages if needed.</p>
 
 <ul>
 
-<li><a target="_window" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a> <b>and</b> 
+<li><a target="_window" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a> <b>and</b>
     <a target="_window" href="https://play.google.com/store/apps/details?id=com.google.zxing.client.android">barcode scanner</a>.
-    If you're signed in to Google, open these links and click <button class="btn btn-sm btn-default" disabled="disabled">Install</button> to send those to your phone.</li> 
+    If you're signed in to Google, open these links and click <button class="btn btn-sm btn-default" disabled="disabled">Install</button> to send those to your phone.</li>
 
 <li><a target="_window" href="https://itunes.apple.com/fi/app/google-authenticator/id388497605?mt=8">iPhone</a>. Or search for "Google Authenticator" from App Store.</li>
 
@@ -50,13 +50,13 @@ you can still authenticate using SMS messages if needed.</p>
 <li>In Authenticator, select <button class="btn btn-sm btn-default" disabled="disabled">Begin Setup</button> and click <button class="btn btn-sm btn-default" disabled="disabled">Scan a barcode</button>. Don't select any of the listed accounts.</li>
 <li>Scan this QR code and continue to next step below.</li>
 </ol>
-<p><img width="410" height="410" src="{% url 'login_frontend.views.get_authenticator_qr' authenticator_qr_nonce %}"></p>
-
+<p><img class="img-responsive" src="{% url 'login_frontend.views.get_authenticator_qr' authenticator_qr_nonce %}"></p>
+<p class="text-center"><i class="fa fa-sort-down"></i> After scanning, scroll down to the last step. <i class="fa fa-sort-down"></i></p>
 </div>
 
 
 <div class="manual-instructions"><hr/>
-If you can't scan this code, you can setup Authenticator manually. 
+If you can't scan this code, you can setup Authenticator manually.
 <button data-open-class="manual-instructions" class="toggle btn btn-sm btn-info">Show alternative instructions</button>
 </div>
 
@@ -85,8 +85,8 @@ If you can't scan this code, you can setup Authenticator manually.
 	{{ invalid_otp }} If trying again doesn't help, try reconfiguring your Authenticator. If you can't get this to work, please contact IT team.
 </div>
 
-<p>Having problems with "your clock is off"? Try syncing clock of your phone. 
-On some cell networks, operators clocks are off. In that case, on Android, go to "Settings > Time correction for codes > Sync now". 
+<p>Having problems with "your clock is off"? Try syncing clock of your phone.
+On some cell networks, operators clocks are off. In that case, on Android, go to "Settings > Time correction for codes > Sync now".
 On Windows Phone, similar feature is enabled by default. On iPhone, you're out of luck.</p>
 
 {% endif %}

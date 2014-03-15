@@ -311,9 +311,9 @@ class Browser(models.Model):
             validity_time = datetime.timedelta(hours=10)
         else:
             if self.save_browser:
-                validity_time = datetime.timedelta(days=14)
+                validity_time = datetime.timedelta(days=30)
             else:
-                validity_time = datetime.timedelta(days=1)
+                validity_time = datetime.timedelta(hours=10)
         self.auth_state_valid_until = timezone.now() + validity_time
         self.save()
 
@@ -325,9 +325,9 @@ class Browser(models.Model):
             validity_time = datetime.timedelta(hours=10)
         else:
             if self.save_browser:
-                validity_time = datetime.timedelta(days=14)
+                validity_time = datetime.timedelta(days=30)
             else:
-                validity_time = datetime.timedelta(days=1)
+                validity_time = datetime.timedelta(hours=10)
         self.auth_level_valid_until = timezone.now() + validity_time
         self.save()
 

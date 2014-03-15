@@ -1,6 +1,9 @@
 {% extends "login_frontend/base.html" %}
 
 {% block title %}Emergency codes - {% endblock %}
+{% block header %}
+<script src="/static/js/emergency_codes_created.js"></script>
+{% endblock %}
 
 {% block content %}
 
@@ -21,9 +24,15 @@
 	<li>Don't store these codes (only) on your laptop/mobile phone/wallet. These should be available if you lose your purse/backpack/valuables.</li>
 </ul>
 
-<p><span class="onlybefore" data-timestamp="{{ code_valid_until }}">Download link expires {% include "snippets/timestamp.html" with timestamp=code_valid_until %} or after first use.</span><span class="onlyafter hidden" data-timestamp="{{ code_valid_until }}">Download link expired. <a href="?{{ get_params }}">Go back and request a new code</a>.</span></p>
+<span id="not_downloaded">
+<p><span class="onlybefore" data-timestamp="{{ code_valid_until }}"><a class="btn btn-primary" id="download_link" href="{% url 'login_frontend.views.get_emergency_codes_pdf' dl_uuid %}"><i class="fa fa-download"></i> Download codes</a>
+<br/>This download link expires {% include "snippets/timestamp.html" with timestamp=code_valid_until %} or after first use.
 
-<a class="btn btn-primary" href="{% url 'login_frontend.views.get_emergency_codes_pdf' dl_uuid %}">Download codes</a>
+</span><span class="onlyafter hidden" data-timestamp="{{ code_valid_until }}">Download link expired. <a href="?{{ get_params }}">Go back and request a new code</a>.</span></p>
+</span>
+<span id="downloaded" class="hidden">
+	If the download succeeded, you can <a href="{% url 'login_frontend.views.configure' %}">continue to configuration view</a>. Otherwise, please go back and try again.
+</span>
 
 <hr/>
 
