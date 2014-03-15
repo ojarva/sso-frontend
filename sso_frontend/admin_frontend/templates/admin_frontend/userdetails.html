@@ -69,6 +69,21 @@
 </tr>
 
 <tr>
+<th>User aliases</th>
+<td>{% for alias in user_aliases %}{{ alias }} {% if not forloop.last %} - {% endif %}{% endfor %}</td>
+</tr>
+
+<tr>
+    <th>Password expires</th>
+    <td>{% include "snippets/timestamp.html" with timestamp=auser.password_expires %}</td>
+</tr>
+
+<tr>
+    <th>Password changed</th>
+    <td>{% include "snippets/timestamp.html" with timestamp=auser.password_changed %}</td>
+</tr>
+
+<tr>
 <th>Authenticator configured</th>
 <td>{% if auser.strong_authenticator_generated_at %}{% include "snippets/timestamp.html" with timestamp=auser.strong_authenticator_generated_at %}{% else %}No{% endif %}</td>
 </tr>
@@ -90,11 +105,12 @@
 
 <tr>
     <th>Emergency codes</th>
-    <td>{% if auser.get_emergency_codes.valid %}Generated and downloaded {% include "snippets/timestamp.html" with timestamp=auser.get_emergency_codes.downloaded_at %}
+    <td>{% if auser.get_emergency_codes.valid %}Generated and downloaded {% include "snippets/timestamp.html" with timestamp=auser.get_emergency_codes.downloaded_at %}.
+        {{ auser.get_emergency_codes.codes_left }} left.
         {% else %}
         {% if not auser.get_emergency_codes %}Never generated.{% else %}
         Generated but not downloaded ({% include "snippets/timestamp.html" with timestamp=auser.get_emergency_codes.generated_at %}).
-        {% endif %}{% endif %}</td>
+        {% endif %}. {% endif %}</td>
 </tr>
 
 <tr>

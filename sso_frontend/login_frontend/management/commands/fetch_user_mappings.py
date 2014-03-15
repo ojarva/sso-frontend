@@ -22,6 +22,7 @@ class Command(BaseCommand): # pragma: no cover
     def handle(self, *args, **options):
         api = slumber.API(settings.FUM_API_ENDPOINT, auth=_slumber_auth.TokenAuth(settings.FUM_ACCESS_TOKEN))
         cache = get_cache("user_mapping")
+        user_cache = get_cache("users")
 
         c = 1
         while True:
@@ -29,12 +30,17 @@ class Command(BaseCommand): # pragma: no cover
             for user in data["results"]:
                 if not "username" in user:
                     continue
-                cache.set("email-to-username-%s@futu" % user["username"], user["username"], self.KEY_EXPIRE)
+                username = user["username"]
+                email = user["email"]
+                user_aliases = ["%s@futu" % username, email]
+                cache.set("email-to-username-%s@futu" % username, username, self.KEY_EXPIRE)
                 if "email" in user:
-                    cache.set("email-to-username-%s" % user["email"], user["username"], self.KEY_EXPIRE)
-                    cache.set("username-to-email-%s" % user["username"], user["email"], self.KEY_EXPIRE)
-                for email in user.get("email_aliases", []):
-                    cache.set("email-to-username-%s" % email, user["username"], self.KEY_EXPIRE)
+                    cache.set("email-to-username-%s" % email, username, self.KEY_EXPIRE)
+                    cache.set("username-to-email-%s" % username, email, self.KEY_EXPIRE)
+                for email_alias in user.get("email_aliases", []):
+                    cache.set("email-to-username-%s" % email_alias, username, self.KEY_EXPIRE)
+                    user_aliases.append(email_alias)
+                user_cache.set("%s-aliases" % username, user_aliases, self.KEY_EXPIRE)
             c += 1
             if "next" not in data or data["next"] is None:
                 break

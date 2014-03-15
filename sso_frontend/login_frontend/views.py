@@ -513,6 +513,7 @@ def configure(request):
     ret["authenticator_id"] = user.get_authenticator_id()
     emergency_codes = user.get_emergency_codes()
     ret["emergency_codes"] = emergency_codes
+    ret["user_aliases"] = user_cache.get("%s-aliases" % user.username)
 
     if back_url:
         ret["back_url"] = back_url.url

@@ -306,6 +306,9 @@ helps making this service better.</p>
 {% if user.password_expires %}
 <li><b>Password expires</b> {% include "snippets/timestamp.html" with timestamp=user.password_expires %}</li>
 {% endif %}
+{% if user_aliases %}
+<li><b>Aliases</b> (you can use any of these to sign in): {% for alias in user_aliases %}{{ alias }} {% if not forloop.last %} - {% endif %}{% endfor %}
+{% endif %}
 <li><b>Authenticate with SMS by default:</b> {% if user.strong_sms_always %}yes. You'll automatically receive SMS every time strong authentication is required. Do note that SMS does not work too well when traveling.{% else %}By default, you'll get to Authenticator page. However, you can always click "use SMS" link, if you want to.{% endif %}</li>
 </ul>
 </div>

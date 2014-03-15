@@ -21,6 +21,9 @@ import logging
 import sys
 import os
 from django_statsd.clients import statsd as sd
+from django.core.cache import get_cache
+
+user_cache = get_cache("users")
 
 log = logging.getLogger(__name__)
 user_log = logging.getLogger(__name__)
@@ -81,7 +84,7 @@ def indexview(request, **kwargs):
 
     if kwargs.get("body_only"):
         return render_to_response("admin_frontend/snippets/indexview.html", ret, context_instance=RequestContext(request))
-     
+
     return render_to_response("admin_frontend/indexview.html", ret, context_instance=RequestContext(request))
 
 @require_http_methods(["GET"])
@@ -156,6 +159,8 @@ def userdetails(request, **kwargs):
     ret["duser"] = get_object_or_404(DjangoUser, username=username)
     ret["browsers"] = Browser.objects.filter(user=ret["auser"])
     ret["logins"] = BrowserLogin.objects.filter(user=ret["auser"])
+    ret["user_aliases"] = user_cache.get("%s-aliases" % username)
+
     return render_to_response("admin_frontend/userdetails.html", ret, context_instance=RequestContext(request))
 
 @require_http_methods(["GET"])
