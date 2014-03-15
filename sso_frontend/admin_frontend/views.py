@@ -14,7 +14,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-from login_frontend.models import Browser, User, BrowserLogin, BrowserUsers, Log
+from login_frontend.models import Browser, User, BrowserLogin, BrowserUsers, Log, EmergencyCodes
 from login_frontend.utils import get_and_refresh_user, paginate
 from login_frontend.views import protect_view
 import logging
@@ -71,6 +71,8 @@ def indexview(request, **kwargs):
     ret["num_authenticator_used"] = User.objects.filter(strong_authenticator_used=True).count()
     ret["num_strong_configured_not_used"] = User.objects.exclude(strong_authenticator_generated_at=None).filter(strong_authenticator_used=False).count()
     ret["num_skips"] = User.objects.filter(strong_skips_available__gt=0).filter(strong_skips_available__lt=6).filter(strong_configured=False).count()
+
+    ret["num_emergency_codes"] = EmergencyCodes.objects.exclude(downloaded_at=None).exclude(current_code=None).count()
 
     active_browsers = Browser.objects.exclude(user=None)
     ret["active_browsers"] = []

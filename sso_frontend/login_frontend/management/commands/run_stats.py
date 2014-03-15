@@ -36,6 +36,8 @@ class Command(BaseCommand):
         sd.gauge("stats.models.KeystrokeSequence.total", KeystrokeSequence.objects.all().count())
         sd.gauge("stats.models.UserService.total", UserService.objects.all().count())
         sd.gauge("stats.models.AuthenticatorCode.total", AuthenticatorCode.objects.all().count())
+        sd.gauge("stats.models.EmergencyCodes.total", EmergencyCodes.objects.all().count())
+        sd.gauge("stats.models.EmergencyCodes.total_valid", EmergencyCodes.objects.exclude(downloaded_at=None).exclude(current_code=None).count())
 
         # Strong configuration
         sd.gauge("stats.models.User.strong_configured", User.objects.all().filter(strong_configured=True).count())

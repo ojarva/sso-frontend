@@ -10,6 +10,7 @@
 <li>{{ num_sms_always }} opted to primarily use SMS authentication.</li>
 <li>{{ num_strong_configured_not_used }} did configure Authenticator, but did not use it.</li>
 <li>{{ num_skips }} have skipped 2-factor authentication and did not configure it.</li>
+<li>{{ num_emergency_codes }} users have valid emergency codes.</li>
 </div>
 
 <div class="col-md-4">
@@ -41,7 +42,7 @@
 
 <p>Do note that almost all pages under this admin section contain private data, including IP addresses. All actions - including viewing entries - in admin pages are logged. Expect these logs to be available for others too.</p>
 
-<p>Only following users can access this admin section: 
+<p>Only following users can access this admin section:
 {% for admin in admins %}
 {% if not forloop.first %} - {% endif %}
 {{ admin.username }}{% endfor %}.</p>
