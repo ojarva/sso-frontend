@@ -965,6 +965,23 @@ class User(models.Model):
         self.save()
         return changed
 
+
+class UserLocation(models.Model):
+    user = models.ForeignKey("User")
+    bid_public = models.CharField(max_length=37)
+    received_at = models.DateTimeField(auto_now_add=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    accuracy = models.DecimalField(max_digits=10, decimal_places=1)
+    altitude = models.DecimalField(max_digits=10, decimal_places=1, null=True, blank=True)
+    altitude_accuracy = models.DecimalField(max_digits=10, decimal_places=1, null=True, blank=True)
+    heading = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
+    speed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    def __unicode(self):
+        return u"%s - %s,%s @ %s" % (self.user.username, latitude, longitude, accuracy)
+
+
 class UserService(models.Model):
     user = models.ForeignKey("User")
     last_accessed = models.DateTimeField(auto_now=True)
