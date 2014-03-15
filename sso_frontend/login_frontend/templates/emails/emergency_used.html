@@ -25,7 +25,7 @@
 <p>{% if codes.codes_left > 0 %}
         You still have {{ codes.codes_left }} code{{ codes.codes_left|pluralize }} available.
     {% else %}
-        You don't have any emergency codes left.
+        <b>This was your last emergency code. You can't sign in with emergency codes again if you don't generate and download a new set of codes.</b>
     {% endif %}</p>
 
 <p><small>You can't reply to this email. You can't unsubscribe from these emails. If this came to wrong email address, please contact {{ admin_email }} and we'll fix it.</small></p>

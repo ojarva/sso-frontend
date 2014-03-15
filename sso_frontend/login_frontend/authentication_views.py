@@ -238,6 +238,7 @@ def authenticate_with_password(request):
             if auth_status == True:
                 # User signed in, so there's no reason to keep forced_sign_out anymore.
                 bcache.set("activity-%s" % browser.bid_public, True, 86400 * 9)
+                browser.password_last_entered_at = timezone.now()
                 browser.forced_sign_out = False
                 browser_name = dcache.get("browser-name-for-%s-%s" % (browser.bid_public, username))
                 if browser_name:
@@ -535,6 +536,7 @@ def authenticate_with_authenticator(request):
                 custom_log(request, "2f-auth: Authenticator code did not match. Testing SMS", level="info")
                 status, _ = request.browser.validate_sms(otp)
             if status:
+                request.browser.twostep_last_entered_at = timezone.now()
                 if browser_name and browser_name != request.browser.name:
                     request.browser.name = browser_name
 
@@ -565,7 +567,9 @@ def authenticate_with_authenticator(request):
                 else:
                     custom_log(request, "2f-auth: Browser name is not set. Redirect to naming view", level="debug")
                     # Don't send auth_state_changed(), as it would redirect all browser windows to name form
-                    return redirect_with_get_params("login_frontend.views.name_your_browser", request.GET)
+                    get_params = request.GET.dict()
+                    get_params["_sc"] = "on"
+                    return redirect_with_get_params("login_frontend.views.name_your_browser", get_params)
             else:
                 custom_log(request, "2f-auth: Incorrect Authenticator OTP provided: %s" % message, level="warn")
                 add_user_log(request, "Incorrect Authenticator OTP provided: %s" % message, "warning")
@@ -689,6 +693,7 @@ def authenticate_with_sms(request):
                 (status, _) = request.browser.user.validate_authenticator_code(otp, request)
 
             if status:
+                request.browser.twostep_last_entered_at = timezone.now()
                 if browser_name and browser_name != request.browser.name:
                     request.browser.name = browser_name
 
@@ -722,7 +727,9 @@ def authenticate_with_sms(request):
                 else:
                     custom_log(request, "2f-sms: Browser name is not set. Redirect to naming view", level="debug")
                     # Don't send auth_state_changed(), as it would redirect all browser windows to name form
-                    return redirect_with_get_params("login_frontend.views.name_your_browser", request.GET)
+                    get_params = request.GET.dict()
+                    get_params["_sc"] = "on"
+                    return redirect_with_get_params("login_frontend.views.name_your_browser", get_params)
             else:
                 if message:
                     ret["message"] = message

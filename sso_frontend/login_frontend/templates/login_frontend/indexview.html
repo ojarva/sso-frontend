@@ -17,6 +17,9 @@
 <div>
 
 <ul class="list-group">
+{% if password_expiring %}
+	<li class="list-group-item list-group-item-danger">Your password expires {% include "snippets/timestamp.html" with timestamp=password_expiring %}. Please change it as soon as possible. If you let it expire, you'll be signed out and can't sign in again.
+{% endif %}
 
 {% if auth_level == "strong" %}
 	<li class="list-group-item list-group-item-success">You have authenticated with <a class="alert-link" role="button" href="{% url 'introduction' %}">strong authentication</a>.</li>
@@ -24,7 +27,7 @@
 	<li class="list-group-item list-group-item-success">You are fully authenticated.</li>
 {% elif auth_level == "basic" %}
 
-	<li class="list-group-item list-group-item-warning">You are authenticated only on basic level. To access services, you have to <a href="{% url 'login_frontend.authentication_views.secondstepauth' %}?{{get_params}}">authenticate with 
+	<li class="list-group-item list-group-item-warning">You are authenticated only on basic level. To access services, you have to <a href="{% url 'login_frontend.authentication_views.secondstepauth' %}?{{get_params}}">authenticate with
 	strong authentication</a>.</li>
 
 {% elif auth_level == "emulate_legacy" %}

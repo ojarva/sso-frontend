@@ -32,6 +32,8 @@ def add_misc_info(request):
         browser = request.browser
         ret["auth_status"] = browser.get_auth_state()
         ret["browser"] = browser
+    #should_timesync is not added here, as it is per-page property.
+    #not all pages should start executing timesync.
     return ret
 
 @sd.timer("login_frontend.context_processors.add_user")

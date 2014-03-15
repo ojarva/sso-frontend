@@ -108,14 +108,17 @@ def indexview(request):
     # TODO: "valid until"
     ret = {}
 
+    user = request.browser.user
+    browser = request.browser
+
     if request.method == "POST":
         if request.POST.get("my_computer"):
             save_browser = False
             if request.POST.get("my_computer") == "on":
                 save_browser = True
-            if request.browser.save_browser != save_browser:
-                request.browser.save_browser = save_browser
-                request.browser.save()
+            if browser.save_browser != save_browser:
+                browser.save_browser = save_browser
+                browser.save()
                 if save_browser:
                     custom_log(request, "Marked browser as remembered", level="info")
                     add_user_log(request, "Marked browser as remembered", "eye")
@@ -126,23 +129,33 @@ def indexview(request):
                     messages.info(request, "You're no longer remembered on this browser")
                 return redirect_with_get_params("login_frontend.views.indexview", request.GET.dict())
 
-    ret["username"] = request.browser.user.username
-    ret["user"] = request.browser.user
+    ret["username"] = user.username
+    ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
-    ret["user_services"] = UserService.objects.filter(user=request.browser.user).order_by("-access_count")[0:5]
+    ret["user_services"] = UserService.objects.filter(user=user).order_by("-access_count")[0:5]
+    if user.password_expires:
+        if user.password_expires > timezone.now():
+            diff = user.password_expires - timezone.now()
+            if diff < datetime.timedelta(days=14):
+                custom_log(request, "Password is expiring in %s. Show warning" % diff, level="info")
+                ret["password_expiring"] = user.password_expires
+        else:
+            custom_log(request, "Password has expired. Sign user out.", level="warn")
+            browser.logout()
+            return redirect_with_get_params("login_frontend.views.indexview", request.GET)
 
     auth_level = request.browser.get_auth_level()
-    if request.browser.user.emulate_legacy:
+    if user.emulate_legacy:
         ret["auth_level"] = "emulate_legacy"
-        ret["session_expire"] = request.browser.auth_level_valid_until
+        ret["session_expire"] = browser.auth_level_valid_until
     elif auth_level == Browser.L_STRONG:
         ret["auth_level"] = "strong"
     elif auth_level == Browser.L_STRONG_SKIPPED:
         ret["auth_level"] = "strong_skipped"
     elif auth_level == Browser.L_BASIC:
         ret["auth_level"] = "basic"
-    ret["remembered"] = request.browser.save_browser
-    ret["should_timesync"] = request.browser.should_timesync()
+    ret["remembered"] = browser.save_browser
+    ret["should_timesync"] = browser.should_timesync()
 
     response = render_to_response("login_frontend/indexview.html", ret, context_instance=RequestContext(request))
     return response
@@ -154,9 +167,9 @@ def automatic_ping(request, **kwargs):
     location = request.GET.get("location")
     if location:
         if hasattr(request, "browser") and request.browser:
-            dcache.set("last-known-location-%s" % request.browser.bid_public, location, 3600)
-            dcache.set("last-known-location-timestamp-%s" % request.browser.bid_public, time.time(), 3600)
-            dcache.set("last-known-location-from-%s" % request.browser.bid_public, request.remote_ip, 3600)
+            bcache.set("last-known-location-%s" % request.browser.bid_public, location, 3600)
+            bcache.set("last-known-location-timestamp-%s" % request.browser.bid_public, time.time(), 3600)
+            bcache.set("last-known-location-from-%s" % request.browser.bid_public, request.remote_ip, 3600)
         activity = request.GET.get("activity")
         hidden = request.GET.get("hidden")
         error = request.GET.get("error")
@@ -214,7 +227,12 @@ def get_pubkey(request, **kwargs):
 
 @require_http_methods(["GET"])
 def timesync(request, **kwargs):
-    """ Calculates difference between server and client timestamps """
+    """ Calculates difference between server and client timestamps.
+    timesync.js generates random id, which is used to detect page
+    reloads. Round-trip timestamps are stored in redis lists,
+    with relatively short expire time (30s). Therefore, there's
+    no need to clean up already calculated timesyncs.
+    """
     ret = {}
     browser_random = kwargs.get("browser_random")
     redis_id = browser_random
@@ -389,7 +407,7 @@ def sessions(request):
         cache_keys = [("last_known_location", "last-known-location-%s"), ("last_known_location_from", "last-known-location-from-%s"), ("last_known_location_timestamp", "last-known-location-timestamp-%s")]
         for tk, k in cache_keys:
             r_k = k % browser.bid_public
-            val = dcache.get(r_k)
+            val = bcache.get(r_k)
             if val:
                 if tk == "last_known_location_timestamp":
                     val = datetime.datetime.fromtimestamp(float(val))
@@ -487,7 +505,8 @@ def name_your_browser(request):
             else:
                 custom_log(request, "Browser name '%s' was rejected." % browser_name, level="info")
         custom_log(request, "Sending auth_state_changed", level="debug")
-        request.browser.auth_state_changed()
+        if request.GET.get("_sc"):
+            request.browser.auth_state_changed()
         return redir_to_sso(request)
     ret = {}
     ret["get_params"] = urllib.urlencode(request.GET)

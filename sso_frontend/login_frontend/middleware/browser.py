@@ -21,8 +21,13 @@ from login_frontend.providers import pubtkt_logout
 from login_frontend.utils import dedup_messages
 import logging
 import re
+import os
+import sys
 
+bcache = get_cache("browsers")
 dcache = get_cache("default")
+user_cache = get_cache("users")
+
 
 log = logging.getLogger(__name__)
 
@@ -35,8 +40,41 @@ DISALLOWED_UA = [
 
 __all__ = ["get_browser", "BrowserMiddleware", "get_browser_instance"]
 
+
+@sd.timer("middleware.browser.custom_log")
+def custom_log(request, message, **kwargs):
+    """ Automatically logs username, remote IP and bid_public """
+    if request is None:
+        log.warn("Skipping custom_log as request is None: %s", message)
+        return
+    try:
+        raise Exception
+    except:
+        stack = sys.exc_info()[2].tb_frame.f_back
+    if stack is not None:
+        stack = stack.f_back
+    while hasattr(stack, "f_code"):
+        co = stack.f_code
+        filename = os.path.normcase(co.co_filename)
+        filename = co.co_filename
+        lineno = stack.f_lineno
+        co_name = co.co_name
+        break
+
+    level = kwargs.get("level", "info")
+    method = getattr(log, level)
+    remote_addr = request.remote_ip
+    bid_public = username = ""
+    if hasattr(request, "browser") and request.browser:
+        bid_public = request.browser.bid_public
+        if request.browser.user:
+            username = request.browser.user.username
+    method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
+                            remote_addr, username, bid_public, message)
+
+
 @sd.timer("get_browser_instance")
-def get_browser_instance(request):    
+def get_browser_instance(request):
     bid = request.COOKIES.get(Browser.C_BID)
     if not bid:
         return None
@@ -58,7 +96,7 @@ def get_browser(request):
     bid = browser.bid_public
 
     if request.path.startswith("/csp-report") or request.path.startswith("/timesync"):
-        log.debug("Browser '%s' from '%s' reporting CSP/timesync - skip sign-out processing", bid, request.remote_ip)
+        custom_log(request, "Browser '%s' from '%s' reporting CSP/timesync - skip sign-out processing" % (bid, request.remote_ip), level="debug")
         sd.incr("get_browser.skip", 1)
         return browser
 
@@ -69,19 +107,19 @@ def get_browser(request):
         # Mark session based logins as signed_out
         sessions = BrowserLogin.objects.filter(browser=browser).filter(expires_session=True).filter(signed_out=False)
         for session in sessions:
-            log.info("Marking session %s for %s (user %s) as signed out, after browser session id cookie disappeared.", session.sso_provider, browser.bid, session.user.username)
+            custom_log(request, "Marking session %s for %s (user %s) as signed out, after browser session id cookie disappeared." % (session.sso_provider, browser.bid, session.user.username), level="info")
             session.signed_out = True
             session.save()
         if not browser.save_browser:
             # Browser was restarted, and save_browser is not set. Logout.
-            log.info("Browser bid_public=%s was restarted. Logging out. path: %s", browser.bid_public, request.path)
+            custom_log(request, "Browser bid_public=%s was restarted. Logging out. path: %s", (browser.bid_public, request.path), level="info")
             sd.incr("get_browser.browser_restart", 1)
             dedup_messages(request, messages.INFO, "According to our records, your browser was restarted. Therefore, you were signed out. If this is your own computer, you can avoid this by checking 'Remember this browser' below the sign-in form.")
             browser.logout(request)
 
     if browser.user:
         r_k = "browser-location-last-update-%s-%s" % (browser.user.username, browser.bid_public)
-        last_update = dcache.get(r_k)
+        last_update = bcache.get(r_k)
         remote_address = request.remote_ip
         if last_update != remote_address:
             user_to_browser, _ = BrowserUsers.objects.get_or_create(user=browser.user, browser=browser)
@@ -94,11 +132,47 @@ def get_browser(request):
                 user_to_browser.remote_ip = remote_address
                 user_to_browser.last_seen = timezone.now()
             user_to_browser.save()
-            dcache.set(r_k, remote_address, 30)
+            bcache.set(r_k, remote_address, 30)
+        # Check for password expiration
+        user = browser.user
+        if user.password_expires:
+            # Password expiration date is stored.
+            if user.password_expires < timezone.now():
+                # password expired
+                custom_log(request, "Signing out, as user password expired", level="warn")
+                bcache.set("%s-signout-reason" % browser.bid_public, "password_expired", 86400*14)
+                browser.logout(request)
+        if user.password_changed and browser.password_last_entered_at:
+            if user.password_changed > browser.password_last_entered_at:
+                # password was changed after it was entered to this application
+                signed_out = False
+                if browser.get_auth_level() >= Browser.L_STRONG:
+                    # User is authenticated with strong auth. Request password again.
+                    browser.set_auth_level(Browser.L_PUBLIC)
+                    browser.set_auth_state(Browser.S_REQUEST_BASIC_ONLY)
+                    signed_out = True
+                elif browser.get_auth_level() == Browser.L_BASIC:
+                    # User is authenticated with basic auth. Request everything again
+                    # But don't sign out, as there's no need to clean up related settings and name.
+                    browser.set_auth_level(Browser.L_UNAUTH)
+                    browser.set_auth_state(Browser.S_REQUEST_BASIC)
+                    signed_out = True
+                if signed_out:
+                    custom_log(request, "Requesting more authentication, as user hasn't signed out since password was changed", level="info")
+                    bcache.set("%s-signout-reason" % browser.bid_public, "password_changed", 86400*14)
+        if browser.twostep_last_entered_at and browser.get_auth_level() >= Browser.L_STRONG:
+            # 2f timestamp is recorded and user is authenticated with strong authentication
+            if user.primary_phone_refresh > browser.twostep_last_entered_at:
+                # Primary phone was changed after user signed in.
+                # Downgrade to basic authentication -> 2f is asked again.
+                browser.set_auth_level(Browser.L_BASIC)
+                browser.set_auth_state(Browser.S_REQUEST_STRONG)
+                custom_log(request, "Requesting more authentication, as user primary phone changed after signing in", level="info")
+                bcache.set("%s-signout-reason" % browser.bid_public, "2f_changed")
     return browser
 
 class BrowserMiddleware(object):
-    """ Adds request.browser. """ 
+    """ Adds request.browser. """
 
     @sd.timer("BrowserMiddleware.process_request")
     def process_request(self, request):
@@ -127,7 +201,7 @@ class BrowserMiddleware(object):
             log.debug("Browser from '%s' reporting CSP/timesync - skip process_response", request.remote_ip)
             sd.incr("login_frontend.middleware.BrowserMiddleware.process_response.skip", 1)
             return response
-        
+
         # Browser from process_request is not available here.
         browser = get_browser_instance(request)
 

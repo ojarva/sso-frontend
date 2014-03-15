@@ -3,9 +3,6 @@ import ldap
 import logging
 from django.conf import settings
 from django_statsd.clients import statsd as sd
-from django.core.cache import get_cache
-
-ucache = get_cache("user_mapping")
 
 __all__ = ["LdapLogin"]
 
