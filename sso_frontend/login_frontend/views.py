@@ -24,7 +24,7 @@ from login_frontend.authentication_views import protect_view
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.emails import new_authenticator_notify, new_emergency_generated_notify
-from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name, store_location_caching
+from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name, store_location_caching, get_return_url
 from ratelimit.decorators import ratelimit
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
@@ -528,7 +528,6 @@ def configure(request):
 
     ret["user"] = user
     ret["get_params"] = urllib.urlencode(request.GET)
-    back_url = redir_to_sso(request, no_default=True)
     ret["csp_violations"] = dcache.get("csp-has-reports-for-%s" % user.username)
     ret["authenticator_id"] = user.get_authenticator_id()
     emergency_codes = user.get_emergency_codes()
@@ -538,9 +537,10 @@ def configure(request):
     if locations > 0:
         ret["locations_shared"] = locations
 
+    back_url = redir_to_sso(request, no_default=True)
     if back_url:
         ret["back_url"] = back_url.url
-
+    ret["return_readable"] = get_return_url(request)
 
     if request.method == "POST":
         if request.POST.get("always_sms") == "on":

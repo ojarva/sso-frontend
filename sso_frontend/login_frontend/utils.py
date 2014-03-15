@@ -181,6 +181,7 @@ INVALID_BROWSER_RE = (
     re.compile(r".*asdf.*"),
     re.compile(r".*qwerty.*"),
     re.compile(r".*1234.*"),
+    re.compile(r"^[0-9]*$"),
 )
 
 @sd.timer("login_frontend.utils.check_browser_name")

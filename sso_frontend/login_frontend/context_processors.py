@@ -48,13 +48,13 @@ def add_user(request):
             e_done = user_cache.get(r_k)
             if e_done is None:
                 emergency_codes = user.get_emergency_codes()
-                user.emergency_codes_done = False
+                user.emergency_codes_valid = False
                 if emergency_codes:
                     if emergency_codes.valid():
-                        user.emergency_codes_done = True
-                user_cache.set(r_k, user.emergency_codes_done, 86400*7)
+                        user.emergency_codes_valid = True
+                user_cache.set(r_k, user.emergency_codes_valid, 86400*7)
             else:
-                user.emergency_codes_done = e_done
+                user.emergency_codes_valid = e_done
             ret_dict = {"user": user, "username": user.username, "emulate_legacy": user.emulate_legacy}
             ret_dict["first_name"] = user.first_name
             ret_dict["last_name"] = user.first_name

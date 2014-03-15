@@ -63,10 +63,10 @@
 <li><a id="sessions_link" href="{% url 'login_frontend.views.sessions' %}">Sessions <span class="badge">{{ num_sessions }}</span></a></li>
 {% if not user.emulate_legacy %}
 <li><a href="{% url 'login_frontend.views.configure' %}">Settings
-    {% if not user.strong_authenticator_used %}
+    {% if not user.strong_authenticator_used or not user.emergency_codes_valid %}
         <span class="label label-danger">Actions needed</span>
     {% else %}
-        {% if not user.location_authorized or not user.emergency_codes_done %}
+        {% if not user.location_authorized %}
             <span class="label label-success">New features!</span>
         {% endif %}
     {% endif %}</a></li>

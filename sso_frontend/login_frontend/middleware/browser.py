@@ -160,6 +160,8 @@ def get_browser(request):
                 if signed_out:
                     custom_log(request, "Requesting more authentication, as user hasn't signed out since password was changed", level="info")
                     bcache.set("%s-signout-reason" % browser.bid_public, "password_changed", 86400*14)
+                    # Notify other browser windows to refresh (& sign out)
+                    browser.auth_state_changed()
         if browser.twostep_last_entered_at and browser.get_auth_level() >= Browser.L_STRONG:
             # 2f timestamp is recorded and user is authenticated with strong authentication
             if user.primary_phone_refresh > browser.twostep_last_entered_at:
