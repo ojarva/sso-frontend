@@ -10,7 +10,9 @@ from io import BytesIO
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache import get_cache
+from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
+from django.core.validators import validate_email
 from django.db.models import Q
 from django.http import HttpResponseForbidden, HttpResponse, Http404
 from django.shortcuts import render_to_response
@@ -519,6 +521,40 @@ def name_your_browser(request):
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
 @ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
 @ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
+def report_problem(request):
+    ret = {}
+    if request.method == 'POST':
+        email = request.POST.get("email")
+        description = request.POST.get("description")
+        please_reply = request.POST.get("please_reply", False)
+        feelings = request.POST.get("feelings")
+        if hasattr(request, "browser") and request.browser:
+            # Don't use browser ID user provided - it either matches request.browser or is completely bogus.
+            bid_public = request.browser.bid_public
+        else:
+            bid_public = "-"
+        ret["email"] = email
+        ret["description"] = description
+        ret["please_reply"] = please_reply
+        dont_send = False
+        try:
+            validate_email(email)
+        except:
+            if please_reply:
+                dont_send = True
+                messages.warning(request, "If you want a reply to your report, please enter proper email address")
+        if not dont_send:
+            ret["report_sent"] = True
+            contents = "%s: feelings %s with %s. [%s] reply.\n\n%s" % (email, feelings, bid_public, please_reply, description)
+            mail_admins("Bug report from login service", contents)
+            custom_log(request, "Received feedback from user: %s" % contents, level="warn")
+    return render_to_response("login_frontend/report_problem.html", ret, context_instance=RequestContext(request))
+
+
+@require_http_methods(["GET", "POST"])
+@ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
+@ratelimit(rate='300/1m', ratekey="1m", block=True, method=["POST", "GET"])
+@ratelimit(rate='5000/6h', ratekey="6h", block=True, method=["POST", "GET"])
 @protect_view("configure", required_level=Browser.L_STRONG)
 def configure(request):
     """ Configuration view for general options. """
@@ -646,8 +682,6 @@ def get_emergency_codes_image(request, **kwargs):
     if not codes or codes.codes_left() == 0:
         custom_log(request, "Tried to download emergency codes; none available.", level="error")
         raise Http404
-
-
 
     font = PIL.ImageFont.truetype(settings.EMERGENCY_FONT, 17)
     img = PIL.Image.new("RGB", (350, 35 + 10 + 35 * codes.codes_left()), (255,255,255))

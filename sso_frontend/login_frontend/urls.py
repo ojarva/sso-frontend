@@ -7,6 +7,8 @@ urlpatterns = patterns('login_frontend.views',
     url(r'^index.php$', 'indexview'),
     url(r'^index$', 'indexview', name='index'),
 
+    url(r'^debug', 'report_problem'),
+    url(r'^report/problem', 'report_problem'),
     url(r'^download/location/kml', 'get_locations_kml'),
     url(r'^name_your_browser$', 'name_your_browser'),
     url(r'^sessions$', 'sessions'),

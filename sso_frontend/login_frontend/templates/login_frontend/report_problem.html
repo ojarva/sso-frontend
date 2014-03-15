@@ -1,0 +1,78 @@
+{% extends "login_frontend/base.html" %}
+
+{% block title %}Problems? {% endblock %}
+
+{% block content %}
+
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
+<h3>Problems or ideas?</h3>
+
+<p>Please read <a href="{% url 'introduction' %}">contents of the help page</a> too.</p>
+
+{% if browser %}
+<p>Unique, public ID for your browser is <code>{{ browser.bid_public }}</code>. If you are reporting any problems, please mention this ID. It greatly helps identifying your browser.</p>
+
+{% if user %}
+<p>You're signed in as {{ user.username }}{% if user.first_name %} ({{ user.first_name }}{% if user.last_name %} {{ user.last_name }}{% endif %}){% endif %}.</p>
+    {% endif %}
+
+{% endif %}
+
+{% if browser or user %}
+<h3>Send a report</h3>
+{% endif %}
+
+{% if report_sent %}
+<div class="alert alert-success">
+    Thanks! Your report has been sent.
+</div>
+
+{% if please_reply %}
+<p>We'll try to answer to your report as soon as possible.</p>
+{% endif %}
+{% else %}
+<p>If you want to, you can report the problem you encountered, or new ideas. If you did not encounter error page, you can be sure the problem will not be fixed, unless you report it.</p>
+
+<form method="post" role="form" action="?">
+    {% csrf_token %}
+    <div class="form-group">
+    <label for="id_email">Email address</label>
+    <input type="email" class="form-control" id="id_email" name="email" placeholder="Enter email" {% if email %}value="{{ email}}"{% elif user.email %}value="{{ user.email }}"{% endif %}>
+    </div>
+    {% if browser %}
+    <div class="form-group">
+    <label for="id_bid_public">Browser identification</label>
+    <input type="text" class="form-control" id="id_bid_public" name="bid_public" value="{{ browser.bid_public }}" disabled>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+    <label for="id_description">Description</label>
+    <textarea id="id_description" class="form-control" rows="8" name="description">{% if description %}{{ description }}{% else %}I encountered following issue:{% endif %}
+</textarea>
+    <p class="help-block">Please describe the issue/idea as well as possible.</p>
+    </div>
+    <div class="form-group">
+        <label for="id_feelings">How do you feel about this?</label>
+        <select class="form-control" id="id_feelings" name="feelings">
+            <option>Neutral</option>
+            <option>Confused</option>
+            <option>Frustrated</option>
+            <option>Worried</option>
+            <option>Angry</option>
+            <option>Hopeful</option>
+            <option>Curious</option>
+            <option>Annoyed</option>
+        </select>
+    </div>
+    <div class="checkbox">
+    <label>
+      <input name="please_reply" type="checkbox" {% if please_reply %}checked{% endif %}> Please reply to this report.
+    </label>
+    </div>
+  <button type="submit" class="btn btn-default">Submit</button>
+</form>
+{% endif %}
+
+{% endblock %}

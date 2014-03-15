@@ -3,6 +3,10 @@
 {% block title %}Introduction - {% endblock %}
 {% block content %}
 
+<h2>Encountered a bug?</h2>
+
+<p>Please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> or head to <a href="{% url 'login_frontend.views.report_problem' %}">separate reporting page</a>.</p>
+
 <h2>What has changed?</h2>
 
 <p>This version provides strong authentication, and only asks your credentials when there's reason to do so. Old version required authentication every single day, even if you worked from same place using same device.</p>
