@@ -119,11 +119,7 @@ class Processor(object):
         """
         Determines _subject and _subject_type for Assertion Subject.
         """
-        try:
-            user = User.objects.get(username=self._django_request.user.username)
-            self._subject = user.email
-        except User.DoesNotExist:
-            self._subject = self._django_request.user.email
+        self._subject = self._django_request.browser.user.email
 
     def _encode_response(self):
         """
