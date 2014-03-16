@@ -44,6 +44,7 @@ class Command(BaseCommand):
         sd.gauge("stats.models.User.strong_sms_always", User.objects.all().filter(strong_sms_always=True).count())
         sd.gauge("stats.models.User.emulate_legacy", User.objects.all().filter(emulate_legacy=True).count())
         sd.gauge("stats.models.User.strong_authenticator_secret", User.objects.all().exclude(strong_authenticator_secret=None).count())
+        sd.gauge("stats.models.User.strong_authenticator_used", User.objects.filter(strong_authenticator_used=True).count())
         sd.gauge("stats.models.User.primary_phone_changed", User.objects.all().filter(primary_phone_changed=True).count())
         sd.gauge("stats.models.User.no_phone_available", User.objects.all().filter(primary_phone=None, secondary_phone=None).count())
 

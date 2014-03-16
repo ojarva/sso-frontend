@@ -171,9 +171,6 @@ class Log(models.Model):
     message = models.TextField()
     status = models.CharField(max_length=30, default="question")
 
-    class Meta:
-        ordering = ["-timestamp"]
-
     def __unicode__(self):
         return u"%s %s@%s with %s: %s (%s)" % (self.timestamp, self.user, self.remote_ip, self.bid_public, self.message, self.status)
 
@@ -236,9 +233,6 @@ class Browser(models.Model):
     sms_code_id = models.CharField(max_length=5, null=True, blank=True)
     sms_code_generated_at = models.DateTimeField(null=True, blank=True)
     forced_sign_out = models.BooleanField(default=False, db_index=True)
-
-    class Meta:
-        ordering = ["-created"]
 
     def __unicode__(self):
         return u"%s: %s" % (self.bid_public, self.ua)
@@ -628,7 +622,6 @@ Requested from %s""" % request.remote_ip
 class BrowserTime(models.Model):
     class Meta:
         get_latest_by = "checked_at"
-        ordering = ["checked_at"]
 
     def __unicode__(self):
         return u"%s: %s ms +- %s ms" % (self.browser.bid_public, self.time_diff, self.measurement_error)
@@ -664,7 +657,6 @@ class BrowserP0f(models.Model):
     )
 
     class Meta:
-        ordering = ["first_seen", "last_seen"]
         get_latest_by = "updated_at"
 
     def __unicode__(self):
@@ -693,17 +685,17 @@ class BrowserP0f(models.Model):
 class BrowserLogin(models.Model):
 
     class Meta:
-        ordering = ["-auth_timestamp", "sso_provider"]
         index_together = [
          ["signed_out", "expires_at"],
          ["auth_timestamp", "sso_provider"],
+         ["browser", "user"],
         ]
 
     def __unicode__(self):
         return u"%s with %s: %s to %s at %s" % (self.user.username, self.browser.get_readable_ua(), self.sso_provider, self.remote_service, self.auth_timestamp)
 
-    browser = models.ForeignKey("Browser")
-    user = models.ForeignKey("User")
+    browser = models.ForeignKey("Browser", db_index=True)
+    user = models.ForeignKey("User", db_index=True)
 
     sso_provider = models.CharField(max_length=30, help_text="(Internal) name of SSO provider", db_index=True)
     remote_service = models.CharField(max_length=1000, null=True, blank=True, help_text="URL to remote service, if available")
@@ -718,14 +710,16 @@ class BrowserLogin(models.Model):
 
 class BrowserUsers(models.Model):
 
-    class Meta:
-        ordering = ["-auth_timestamp"]
-
     def __unicode__(self):
         return u"%s with %s at %s (%s)" % (self.user.username, self.browser.get_readable_ua(), self.auth_timestamp, self.max_auth_level)
 
-    user = models.ForeignKey('User')
-    browser = models.ForeignKey('Browser')
+    class Meta:
+        index_together = [
+          ["user", "browser"],
+        ]
+
+    user = models.ForeignKey('User', db_index=True)
+    browser = models.ForeignKey('Browser', db_index=True)
     auth_timestamp = models.DateTimeField(null=True, help_text="Timestamp of the latest authentication", db_index=True)
     max_auth_level = models.CharField(max_length=1, choices=Browser.A_AUTH_LEVEL, default=Browser.L_UNAUTH, help_text="Highest authentication level for this User/Browser combination")
 
@@ -737,7 +731,7 @@ class BrowserUsers(models.Model):
 
 class BrowserDetails(models.Model):
     """ Holds additional information for Browser """
-    browser = models.ForeignKey("Browser")
+    browser = models.ForeignKey("Browser", db_index=True)
     timestamp = models.DateTimeField()
 
     remote_clock_offset = models.IntegerField(null=True, blank=True)
@@ -763,8 +757,8 @@ class KeystrokeSequence(models.Model):
       (PASSWORD, "Password field"),
     )
 
-    browser = models.ForeignKey("Browser", null=True)
-    user = models.ForeignKey("User")
+    browser = models.ForeignKey("Browser", null=True, db_index=True)
+    user = models.ForeignKey("User", db_index=True)
 
     resolution = models.TextField(blank=True, null=True) # Screen resolution, used to determine whether external display was used.
     fieldname = models.CharField(max_length=1, choices=KEYSTROKE_FIELD)
@@ -774,21 +768,18 @@ class KeystrokeSequence(models.Model):
 
 class User(models.Model):
 
-    class Meta:
-        ordering = ["username"]
-
     def __unicode__(self):
         return u"%s" % self.username
 
     username = models.CharField(max_length=50, primary_key=True)
-    is_admin = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False, db_index=True)
 
     strong_configured = models.BooleanField(default=False, help_text="True if user has saved strong authentication preferences")
     strong_authenticator_secret = models.CharField(max_length=30, null=True, blank=True, help_text="Secret for TOTP generation")
     strong_authenticator_id = models.CharField(max_length=30, null=True, blank=True, help_text="Name of the current Authenticator configuration")
     strong_authenticator_num = models.IntegerField(default=0, help_text="Running counter for Authenticator numbering")
     strong_authenticator_generated_at = models.DateTimeField(null=True, help_text="Timestamp of generating authenticator secret")
-    strong_authenticator_used = models.BooleanField(default=False, help_text="True if user has used authenticator")
+    strong_authenticator_used = models.BooleanField(default=False, help_text="True if user has used authenticator", db_index=True)
 
     strong_sms_always = models.BooleanField(default=False, help_text="True if user wants to always use SMS")
 
@@ -811,7 +802,7 @@ class User(models.Model):
     password_changed = models.DateTimeField(null=True)
     password_expires = models.DateTimeField(null=True)
 
-    location_authorized = models.BooleanField(default=False)
+    location_authorized = models.BooleanField(default=False, db_index=True)
 
     user_tokens = models.CharField(max_length=255, null=True, blank=True, help_text="List of pubtkt tokens")
 
@@ -975,7 +966,7 @@ class User(models.Model):
 
 
 class UserLocation(models.Model):
-    user = models.ForeignKey("User")
+    user = models.ForeignKey("User", db_index=True)
     bid_public = models.CharField(max_length=37)
     received_at = models.DateTimeField(auto_now_add=True)
 
@@ -994,19 +985,21 @@ class UserLocation(models.Model):
 
 
 class UserService(models.Model):
-    user = models.ForeignKey("User")
+    user = models.ForeignKey("User", db_index=True)
     last_accessed = models.DateTimeField(auto_now=True)
     service_url = models.CharField(max_length=2000)
-    access_count = models.IntegerField(default=0)
-
-    class Meta:
-        ordering = ["access_count", "service_url"]
+    access_count = models.IntegerField(default=0, db_index=True)
 
     def __unicode__(self):
         return u"%s - %s - %s" % (self.access_count, user.username, service_url)
 
+    class Meta:
+        index_together = [
+          ["user", "last_accessed"],
+        ]
+
 class AuthenticatorCode(models.Model):
-    user = models.ForeignKey("User")
+    user = models.ForeignKey("User", db_index=True)
     generated_at = models.DateTimeField()
     authenticator_id = models.CharField(max_length=30, default="undefined")
     authenticator_secret = models.CharField(max_length=30, help_text="Secret for TOTP generation")

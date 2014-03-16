@@ -80,9 +80,9 @@ def indexview(request, **kwargs):
         if browser.auth_level_valid_until > timezone.now() and browser.auth_state_valid_until > timezone.now() and browser.auth_level >= Browser.L_STRONG:
             ret["active_browsers"].append(browser)
 
-    ret["last_logins"] = BrowserLogin.objects.all()[0:10]
+    ret["last_logins"] = BrowserLogin.objects.all().order_by("-auth_timestamp")[0:10]
 
-    ret["admins"] = User.objects.filter(is_admin=True)
+    ret["admins"] = User.objects.filter(is_admin=True).order_by("username")
 
     if kwargs.get("body_only"):
         return render_to_response("admin_frontend/snippets/indexview.html", ret, context_instance=RequestContext(request))
@@ -117,7 +117,7 @@ def search(request):
     ret["browsers"] = Browser.objects.filter(Q(bid_public=q) | Q(ua__icontains=q))[0:100]
     ret["active_browsers_for_user"] = Browser.objects.filter(user__username=q)
     ret["all_browsers_for_user"] = BrowserUsers.objects.filter(user__username=q)
-    ret["users"] = User.objects.filter(Q(username=q) | Q(email=q) | Q(primary_phone__contains=q) | Q(secondary_phone__contains=q))[0:100]
+    ret["users"] = User.objects.filter(Q(username=q) | Q(email=q) | Q(primary_phone__contains=q) | Q(secondary_phone__contains=q)).order_by("username")[0:100]
 
     return render_to_response("admin_frontend/search.html", ret, context_instance=RequestContext(request))
 
