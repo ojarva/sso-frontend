@@ -1068,7 +1068,7 @@ class UserLocation(models.Model):
         dcache.delete("runstats-stats.models.UserLocation.total")
 
     def save(self, *args, **kwargs):
-        super(BrowserUsers, self).save(*args, **kwargs)
+        super(UserLocation, self).save(*args, **kwargs)
         dcache.delete("runstats-stats.models.UserLocation.total")
 
 
