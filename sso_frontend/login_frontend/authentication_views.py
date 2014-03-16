@@ -78,6 +78,8 @@ def custom_log(request, message, **kwargs):
     method("[%s:%s:%s] %s - %s - %s - %s", filename, lineno, co_name,
                             remote_addr, username, bid_public, message)
 
+INCLUDE_PARAMS_NEXT = ("saml_id", )
+
 @sd.timer("login_frontend.authentication_views.protect_view")
 def protect_view(current_step, **main_kwargs):
     """ After this is executed, kwargs["required_level"] is satisfied.
@@ -103,7 +105,15 @@ def protect_view(current_step, **main_kwargs):
                      "authenticate_with_sms", "authenticate_with_password",
                      "authenticate_with_authenticator", "authenticate_with_emergency"):
                     get_params["_sso"] = "internal"
-                    get_params["next"] = request.path
+                    included_get_params = {}
+                    for p in INCLUDE_PARAMS_NEXT:
+                        if p in get_params:
+                            included_get_params[p] = get_params[p]
+                            del get_params[p]
+                    if len(included_get_params) > 0:
+                        get_params["next"] = "%s?%s" % (request.path, urllib.urlencode(included_get_params))
+                    else:
+                        get_params["next"] = request.path
                     custom_log(request, "Automatically adding internal SSO. next=%s" % get_params["next"], level="debug")
 
             browser = request.browser
