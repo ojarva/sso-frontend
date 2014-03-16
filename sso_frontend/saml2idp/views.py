@@ -24,7 +24,8 @@ import saml2idp_metadata
 import xml_signing
 
 from login_frontend.utils import redirect_with_get_params
-from login_frontend.models import BrowserLogin, add_user_log
+from login_frontend.models import BrowserLogin, add_user_log, Browser
+from login_frontend.authentication_views import protect_view
 
 from django.utils import timezone
 import os
@@ -143,7 +144,7 @@ def login_begin(request, *args, **kwargs):
     custom_log(request, "Storing SAMLRequest=%s and RelayState=%s with saml_id=%s" % (source['SAMLRequest'], source['RelayState'], saml_id), level="debug")
     return redirect_with_get_params("saml2idp.views.login_process", {"saml_id": saml_id})
 
-@login_required
+@protect_view("saml.login_init", required_level=Browser.L_STRONG)
 def login_init(request, resource, **kwargs):
     """
     Initiates an IdP-initiated link to a simple SP resource/target URL.
@@ -166,7 +167,7 @@ def login_init(request, resource, **kwargs):
     proc.init_deep_link(request, sp_config, url)
     return _generate_response(request, proc)
 
-@login_required
+@protect_view("saml.login_process", required_level=Browser.L_STRONG)
 def login_process(request):
     """
     Processor-based login continuation.
@@ -193,7 +194,6 @@ def logout(request):
     custom_log(request, "Redirecting to logout page from GET logout", level="debug")
     return redirect_with_get_params("login_frontend.authentication_views.logoutview", request.GET)
 
-@login_required
 @csrf_exempt
 def slo_logout(request):
     """
