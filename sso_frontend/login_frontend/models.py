@@ -103,15 +103,19 @@ class EmergencyCodes(models.Model):
     def codes_left(self):
         return EmergencyCode.objects.filter(codegroup=self).count()
 
+
     def save(self, *args, **kwargs):
         super(EmergencyCodes, self).save(*args, **kwargs)
         user_cache.set("%s-emergency-codes-valid" % self.user.username, self.valid(), 7*86400)
-
+        dcache.delete("runstats-stats.models.EmergencyCodes.total")
+        dcache.delete("runstats-stats.models.EmergencyCodes.total_valid")
 
     def delete(self, *args, **kwargs):
         # Delete cached emergency code status
+        super(EmergencyCodes, self).delete( *args, **kwargs)
         user_cache.set("%s-emergency-codes-valid" % self.user.username, False, 7*86400)
-        super(EmergencyCodes, self).delete(*args, **kwargs)
+        dcache.delete("runstats-stats.models.EmergencyCodes.total")
+        dcache.delete("runstats-stats.models.EmergencyCodes.total_valid")
 
     @sd.timer("login_frontend.models.EmergencyCodes.revoke_codes")
     def revoke_codes(self):
@@ -173,6 +177,15 @@ class Log(models.Model):
 
     def __unicode__(self):
         return u"%s %s@%s with %s: %s (%s)" % (self.timestamp, self.user, self.remote_ip, self.bid_public, self.message, self.status)
+
+    def delete(self, *args, **kwargs):
+        super(Log, self).delete( *args, **kwargs)
+        dcache.delete("runstats-stats.models.Log.total")
+
+    def save(self, *args, **kwargs):
+        super(Log, self).save(*args, **kwargs)
+        dcache.delete("runstats-stats.models.Log.total")
+
 
 
 class Browser(models.Model):
@@ -236,6 +249,15 @@ class Browser(models.Model):
 
     def __unicode__(self):
         return u"%s: %s" % (self.bid_public, self.ua)
+
+    def delete(self, *args, **kwargs):
+        super(Browser, self).delete( *args, **kwargs)
+        dcache.delete_many(["runstats-stats.models.Browser.total", "stats.models.Browser.associated_user"])
+
+    def save(self, *args, **kwargs):
+        super(Browser, self).save(*args, **kwargs)
+        dcache.delete_many(["runstats-stats.models.Browser.total", "stats.models.Browser.associated_user"])
+
 
     @sd.timer("login_frontend.models.Browser.user_is_familiar")
     def user_is_familiar(self, user, auth_level):
@@ -620,17 +642,27 @@ Requested from %s""" % request.remote_ip
         return icon
 
 class BrowserTime(models.Model):
-    class Meta:
-        get_latest_by = "checked_at"
-
-    def __unicode__(self):
-        return u"%s: %s ms +- %s ms" % (self.browser.bid_public, self.time_diff, self.measurement_error)
 
     browser = models.ForeignKey("Browser")
     checked_at = models.DateTimeField(auto_now_add=True, db_index=True)
     timezone = models.IntegerField(default=0, null=True, blank=True)
     time_diff = models.IntegerField()
     measurement_error = models.DecimalField(max_digits=11, decimal_places=3)
+
+    class Meta:
+        get_latest_by = "checked_at"
+
+    def __unicode__(self):
+        return u"%s: %s ms +- %s ms" % (self.browser.bid_public, self.time_diff, self.measurement_error)
+
+    def delete(self, *args, **kwargs):
+        super(BrowserTime, self).delete( *args, **kwargs)
+        dcache.delete("runstats-stats.models.BrowserTime.total")
+
+    def save(self, *args, **kwargs):
+        super(BrowserTime, self).save(*args, **kwargs)
+        dcache.delete("runstats-stats.models.BrowserTime.total")
+
 
     def is_meaningful(self):
         return abs(time_diff) * 1.1 > measurement_error
@@ -656,11 +688,6 @@ class BrowserP0f(models.Model):
       (OS_BOTH, "Using both"),
     )
 
-    class Meta:
-        get_latest_by = "updated_at"
-
-    def __unicode__(self):
-        return u"%s: %s" % (self.browser.bid_public, self.first_seen)
 
     browser = models.ForeignKey("Browser")
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
@@ -678,22 +705,26 @@ class BrowserP0f(models.Model):
     os_flavor = models.CharField(max_length=32, null=True, blank=True)
     link_type = models.CharField(max_length=32, null=True, blank=True)
 
+    class Meta:
+        get_latest_by = "updated_at"
+
+    def delete(self, *args, **kwargs):
+        super(BrowserP0f, self).delete( *args, **kwargs)
+        dcache.delete("runstats-stats.models.BrowserP0f.total")
+
+    def save(self, *args, **kwargs):
+        super(BrowserP0f, self).save(*args, **kwargs)
+        dcache.delete("runstats-stats.models.BrowserP0f.total")
+
+    def __unicode__(self):
+        return u"%s: %s" % (self.browser.bid_public, self.first_seen)
+
+
     def get_readable_uptime(self):
         if self.uptime_sec:
             return datetime.timedelta(seconds=self.uptime_sec).__str__()
 
 class BrowserLogin(models.Model):
-
-    class Meta:
-        index_together = [
-         ["signed_out", "expires_at"],
-         ["auth_timestamp", "sso_provider"],
-         ["browser", "user"],
-        ]
-
-    def __unicode__(self):
-        return u"%s with %s: %s to %s at %s" % (self.user.username, self.browser.get_readable_ua(), self.sso_provider, self.remote_service, self.auth_timestamp)
-
     browser = models.ForeignKey("Browser", db_index=True)
     user = models.ForeignKey("User", db_index=True)
 
@@ -708,16 +739,25 @@ class BrowserLogin(models.Model):
 
     signed_out = models.BooleanField(default=False, help_text="Session has been closed")
 
-class BrowserUsers(models.Model):
-
-    def __unicode__(self):
-        return u"%s with %s at %s (%s)" % (self.user.username, self.browser.get_readable_ua(), self.auth_timestamp, self.max_auth_level)
-
     class Meta:
         index_together = [
-          ["user", "browser"],
+         ["signed_out", "expires_at"],
+         ["auth_timestamp", "sso_provider"],
+         ["browser", "user"],
         ]
 
+    def __unicode__(self):
+        return u"%s with %s: %s to %s at %s" % (self.user.username, self.browser.get_readable_ua(), self.sso_provider, self.remote_service, self.auth_timestamp)
+
+    def delete(self, *args, **kwargs):
+        super(BrowserLogin, self).delete( *args, **kwargs)
+        dcache.delete(["runstats-stats.models.BrowserLogin.total", "stats.models.BrowserLogin.active"])
+
+    def save(self, *args, **kwargs):
+        super(BrowserLogin, self).save(*args, **kwargs)
+        dcache.delete(["runstats-stats.models.BrowserLogin.total", "stats.models.BrowserLogin.active"])
+
+class BrowserUsers(models.Model):
     user = models.ForeignKey('User', db_index=True)
     browser = models.ForeignKey('Browser', db_index=True)
     auth_timestamp = models.DateTimeField(null=True, help_text="Timestamp of the latest authentication", db_index=True)
@@ -728,6 +768,22 @@ class BrowserUsers(models.Model):
 
     remote_ip_passive = models.GenericIPAddressField(null=True, blank=True, help_text="Last remote IP address")
     last_seen_passive = models.DateTimeField(null=True)
+
+    def __unicode__(self):
+        return u"%s with %s at %s (%s)" % (self.user.username, self.browser.get_readable_ua(), self.auth_timestamp, self.max_auth_level)
+
+    class Meta:
+        index_together = [
+          ["user", "browser"],
+        ]
+
+    def delete(self, *args, **kwargs):
+        super(BrowserUsers, self).delete( *args, **kwargs)
+        dcache.delete("runstats-stats.models.BrowserUsers.total")
+
+    def save(self, *args, **kwargs):
+        super(BrowserUsers, self).save(*args, **kwargs)
+        dcache.delete("runstats-stats.models.BrowserUsers.total")
 
 class BrowserDetails(models.Model):
     """ Holds additional information for Browser """
@@ -744,6 +800,15 @@ class BrowserDetails(models.Model):
 
     resolution = models.TextField(null=True, blank=True)
     plugins = models.TextField(null=True, blank=True)
+
+
+    def delete(self, *args, **kwargs):
+        super(BrowserDetails, self).delete( *args, **kwargs)
+        dcache.delete("runstats-stats.models.BrowserDetails.total")
+
+    def save(self, *args, **kwargs):
+        super(BrowserDetails, self).save(*args, **kwargs)
+        dcache.delete("runstats-stats.models.BrowserDetails.total")
 
 class KeystrokeSequence(models.Model):
     OTP_AUTHENTICATOR = 0
@@ -766,11 +831,15 @@ class KeystrokeSequence(models.Model):
     timestamp = models.DateTimeField()
     timing = models.TextField()
 
+    def delete(self, *args, **kwargs):
+        super(KeystrokeSequence, self).delete( *args, **kwargs)
+        dcache.delete("runstats-stats.models.KeystrokeSequence.total")
+
+    def save(self, *args, **kwargs):
+        super(KeystrokeSequence, self).save(*args, **kwargs)
+        dcache.delete("runstats-stats.models.KeystrokeSequence.total")
+
 class User(models.Model):
-
-    def __unicode__(self):
-        return u"%s" % self.username
-
     username = models.CharField(max_length=50, primary_key=True)
     is_admin = models.BooleanField(default=False, db_index=True)
 
@@ -805,6 +874,17 @@ class User(models.Model):
     location_authorized = models.BooleanField(default=False, db_index=True)
 
     user_tokens = models.CharField(max_length=255, null=True, blank=True, help_text="List of pubtkt tokens")
+
+    def __unicode__(self):
+        return u"%s" % self.username
+
+    def delete(self, *args, **kwargs):
+        super(User, self).delete( *args, **kwargs)
+        dcache.delete_many(["runstats-stats.models.User.total", "stats.models.User.strong_configured", "stats.models.User.strong_sms_always", "stats.models.User.emulate_legacy", "stats.models.User.strong_authenticator_secret", "stats.models.User.strong_authenticator_used", "stats.models.User.primary_phone_changed", "stats.models.User.no_phone_available"])
+
+    def save(self, *args, **kwargs):
+        super(User, self).save(*args, **kwargs)
+        dcache.delete_many(["runstats-stats.models.User.total", "stats.models.User.strong_configured", "stats.models.User.strong_sms_always", "stats.models.User.emulate_legacy", "stats.models.User.strong_authenticator_secret", "stats.models.User.strong_authenticator_used", "stats.models.User.primary_phone_changed", "stats.models.User.no_phone_available"])
 
     def get_emergency_codes(self):
         try:
@@ -983,6 +1063,14 @@ class UserLocation(models.Model):
     def __unicode__(self):
         return u"%s - %s,%s @ %sm" % (self.user.username, self.latitude, self.longitude, self.accuracy)
 
+    def delete(self, *args, **kwargs):
+        super(UserLocation, self).delete( *args, **kwargs)
+        dcache.delete("runstats-stats.models.UserLocation.total")
+
+    def save(self, *args, **kwargs):
+        super(BrowserUsers, self).save(*args, **kwargs)
+        dcache.delete("runstats-stats.models.UserLocation.total")
+
 
 class UserService(models.Model):
     user = models.ForeignKey("User", db_index=True)
@@ -991,15 +1079,34 @@ class UserService(models.Model):
     access_count = models.IntegerField(default=0, db_index=True)
 
     def __unicode__(self):
-        return u"%s - %s - %s" % (self.access_count, user.username, service_url)
+        return u"%s - %s - %s" % (self.access_count, self.user.username, self.service_url)
 
     class Meta:
         index_together = [
           ["user", "last_accessed"],
         ]
 
+    def delete(self, *args, **kwargs):
+        super(UserService, self).delete( *args, **kwargs)
+        dcache.delete("runstats-stats.models.UserService.total")
+
+    def save(self, *args, **kwargs):
+        super(UserService, self).save(*args, **kwargs)
+        dcache.delete("runstats-stats.models.UserService.total")
+
 class AuthenticatorCode(models.Model):
     user = models.ForeignKey("User", db_index=True)
     generated_at = models.DateTimeField()
     authenticator_id = models.CharField(max_length=30, default="undefined")
     authenticator_secret = models.CharField(max_length=30, help_text="Secret for TOTP generation")
+
+    def __unicode__(self):
+        return u"%s: %s - %s" % (self.user.username, self.generated_at, self.authenticator_id)
+
+    def delete(self, *args, **kwargs):
+        super(AuthenticatorCode, self).delete( *args, **kwargs)
+        dcache.delete("runstats-stats.models.AuthenticatorCode.total")
+
+    def save(self, *args, **kwargs):
+        super(AuthenticatorCode, self).save(*args, **kwargs)
+        dcache.delete("runstats-stats.models.AuthenticatorCode.total")
