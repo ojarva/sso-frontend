@@ -900,6 +900,12 @@ def authenticate_with_emergency(request):
             request.browser.set_auth_state(Browser.S_AUTHENTICATED)
             return redir_to_sso(request)
         else:
+            if re.match("^[0-9]{5,7}$", otp):
+                custom_log(request, "Tried to enter SMS/authenticator code", level="info")
+                ret["twostep_code"] = True
+            if re.match("^[0-9]{8}$", otp):
+                custom_log(request, "Tried to use Google apps emergency code", level="info")
+                ret["gapps_code"] = True
             custom_log(request, "Incorrect emergency code", level="info")
             ret["invalid_otp"] = True
 
