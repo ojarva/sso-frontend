@@ -7,10 +7,20 @@ function check_notifications() {
  }
 }
 
-function geolocation_success(location) {
+function geolocation_success(coords) {
  $("#enable-location").addClass("hidden");
  $("#enable-location-thanks").removeClass("hidden");
  $.post("?", {"location": "share"});
+ data = {}
+ c = coords.coords;
+ data["latitude"] = c.latitude;
+ data["longitude"] = c.longitude;
+ data["accuracy"] = c.accuracy;
+ data["altitude"] = c.altitude;
+ data["altitude_accuracy"] = c.altitudeAccuracy;
+ data["speed"] = c.speed;
+ data["heading"] = c.heading;
+ $.post("/ping/location", data);
 }
 
 function geolocation_error(error) {
