@@ -34,7 +34,9 @@
 
 <h2 class="page-header">Keystroke timing</h2>
 
-<p>Please enter <kbd id="password_choice">7013880</kbd> (<a href="#" class="another_password">want another?</a>) to the field below as many times as you want to - more is better. Try to hit it correctly, but if you make a mistake, it does not matter, just do enter it again. Press enter to clean the field and start over. There's 7 different passwords available - having ten samples for each password would be really great!</p>
+<p>Keystroke timing records timestamps for entering text. Keystroke timing is (relatively) unique, and hard to imitate. To fine-tune keystroke identifying, more data is needed.</p>
+
+<p>Enter <kbd id="password_choice">7013880</kbd> (<a href="#" class="another_password">want another?</a>) to the field below as many times as you want to - more is better. Try to hit it correctly, but if you make a mistake, it does not matter, just do enter it again. Press enter to clean the field and start over. There's 7 different passwords available - having ten samples for each password would be really great!</p>
 
 <form method="post" action="/data" id="keystroke_timing_form">
     <input type="hidden" name="timing_data" id="keystroke_timing_data">
@@ -63,20 +65,20 @@
             <p class="help-block">Want to receive some results later on? Fill in your email.</p>
         </div>
     </div>
-  <div class="form-group">
-    <label for="device_type" class="col-sm-3 control-label">Device type</label>
-    <div class="col-sm-9">
-        <select class="listen_changes form-control" name="device_type">
-            <option>Please select</option>
-            <option>Phone</option>
-            <option>Tablet</option>
-            <option>Laptop with external keyboard/display</option>
-            <option>Laptop</option>
-            <option>Desktop</option>
-            <option>Something else</option>
-        </select>
+    <div class="form-group">
+        <label for="device_type" class="col-sm-3 control-label">Device type</label>
+        <div class="col-sm-9">
+            <select class="listen_changes form-control" name="device_type">
+                <option>Please select</option>
+                <option>Phone</option>
+                <option>Tablet</option>
+                <option>Laptop with external keyboard/display</option>
+                <option>Laptop</option>
+                <option>Desktop</option>
+                <option>Something else</option>
+            </select>
+        </div>
     </div>
-  </div>
     <div class="form-group">
         <div class="col-sm-3">
             Do you currently use VPN or proxy?
@@ -102,7 +104,6 @@
         </div>
     </div>
     {% endif %}
-  </div>
 </form>
 
 
