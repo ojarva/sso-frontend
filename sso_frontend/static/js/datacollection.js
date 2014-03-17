@@ -57,7 +57,7 @@ $(document).ready(function (){
         }
         current_password_samples = 0;
         $("#password_choice").html(passwords[current_password]);
-        $("#id_password_choice").html(passwords[current_password]);
+        $("#id_password_choice").val(passwords[current_password]);
         $("#maybe_change_password").addClass("hidden");
         return false;
     });
