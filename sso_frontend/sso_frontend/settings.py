@@ -292,6 +292,7 @@ INSTALLED_APPS = (
     'cspreporting',
     'django_extensions',
     'django_statsd',
+    'datacollection',
 )
 
 # A sample logging configuration. The only tangible logging

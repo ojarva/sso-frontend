@@ -69,6 +69,11 @@
    data[id] = {"timing": [], "strength": false};
    $(this).keyup(function(e) {
     var id = $(this).attr("id");
+    if ($(this).data("timing-reset")) {
+        data[id].timing = [];
+        $(this).removeData("timing-reset")
+    }
+
     var keycode = e.keyCode || "";
     var timestamp = e.timeStamp || 0;
     var d = {"keycode": "", "timestamp": timestamp, "raw_timestamp": (new Date()).getTime(), "length": $(this).val().length }
@@ -102,4 +107,3 @@
  }
 
 }) (jQuery);
-

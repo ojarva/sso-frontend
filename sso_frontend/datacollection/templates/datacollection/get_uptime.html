@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block header %}
+{% endblock %}
+
+{% block title %}Data - {% endblock %}
+{% block content %}
+
+<h1>Getting uptime</h1>
+
+<p>What is uptime? uptime tells when you last rebooted your computer. Finding this for your device might be a bit difficult. If you don't want to get that, just scrap it - uptime isn't that important for this study.</p>
+
+<h3>Windows</h3>
+<p>Well, how technical person you are? This requires a few steps. Open <kbd>cmd.exe</kbd> (press <kbd>windows key</kbd>+<kbd>R</kbd> and write <kbd>cmd.exe</kbd>). After terminal window opens, run <kbd>systeminfo | find /i "boot time"</kbd>.</p>
+
+<p>If you don't want to open terminal, open task manager (<kbd>ctrl</kbd>+<kbd>alt</kbd>+<kbd>del</kbd>), go to "Performance" tab and click "Resource monitor" button. Under "Performance" tab (again), there's field "Up time" at the bottom of the page.</p>
+
+<h3>OS X</h3>
+
+<p>Go to "Applications &gt; Utilities" and click "Terminal" (or use Spotlight and search for "Terminal".). Run command <kbd>uptime</kbd>. Output should be something like </p>
+
+<code>12:10  up 3 days,  1:12, 12 users, load averages: 2.07 2.00 1.89</code>
+
+<p>You can copy and paste this whole line (or just relevant parts, "up 3 days,  1:12").</p>
+
+<h3>Linux</h3>
+
+<p>Open terminal and run command <kbd>uptime</kbd>. Copy and paste the output.</p>
+
+<h3>Android</h3>
+
+<p>If you want to, you can install <a href="https://play.google.com/store/apps/details?id=org.jtb.utwidget">this small widget</a>. It's free and doesn't require any permissions to run.</p>
+
+<h3>iOS</h3>
+
+<p>If you want to, you can install <a href="https://itunes.apple.com/us/app/system-status-lite-battery/id407752428">this small app</a>. It's quite useful, and free. For uptime, look for "System uptime" field.</p>
+
+{% endblock %}
