@@ -110,9 +110,11 @@ def index(request):
             return HttpResponse("OK")
     try:
         p0fapi = p0f.P0f(settings.P0F_SOCKET)
-        ret["uptime"] = p0fapi.get_info(request.META.get("REMOTE_ADDR")).get("uptime")
-    except ValueError:
-        pass
+        p0finfo = p0fapi.get_info(request.META.get("REMOTE_ADDR"))
+        ret["uptime"] = p0finfo.get("uptime")
+        custom_log(request, "p0f: %s" % p0finfo)
+    except:
+        custom_log(request, "p0f failed")
 
     ret["data_id"] = data_id
     response = render_to_response("datacollection/index.html", ret, context_instance=RequestContext(request))
