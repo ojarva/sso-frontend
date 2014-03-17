@@ -55,9 +55,7 @@
 
 <h2 class="page-header">Keystroke timing</h2>
 
-<p>Keystroke timing records timestamps for entering text. Keystroke timing is (relatively) unique, and hard to imitate. To fine-tune keystroke identifying, more data is needed.</p>
-
-<p>Enter <kbd id="password_choice">7013880</kbd> (<a href="#" class="another_password">want another?</a>) to the field below as many times as you want to - more is better. Try to hit it correctly, but if you make a mistake, it does not matter, just do enter it again. Press enter to clean the field and start over. There's 7 different passwords available - having ten samples for each password would be really great!</p>
+<p>Enter <kbd id="password_choice">7013880</kbd> (<a href="#" class="another_password">want another?</a>) to the field below as many times as you want to - more is better. There's 7 different passwords available - if you could enter each of those at least ten times, that would be really great!</p>
 
 <form method="post" action="/data" id="keystroke_timing_form">
     {% csrf_token %}
@@ -72,6 +70,11 @@
 <p><span class="label label-info" id="keystroke_samples">0</span> sample(s) sent.</p>
 
 <p class="hidden" id="maybe_change_password">You've already entered this password quite many times. <a href="#" class="another_password">Want to try another?</a></p>
+
+<hr>
+
+<p>Keystroke timing records timestamps for entering text. Keystroke timing is (relatively) unique, and hard to imitate.</p>
+
 
 <h2 class="page-header">Background information</h2>
 
