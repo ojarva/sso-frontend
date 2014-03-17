@@ -81,6 +81,10 @@ $(document).ready(function (){
         }
     });
 
+    $("#connection_type_form").ajaxForm(function() {
+        $("#connection_type_form_saved").removeClass("hidden");
+    });
+
     $("#browser_details_form").ajaxForm();
     $("#id_browser_details").timing({"destination": "#id_browser_details"});
     $("#browser_details_form").submit();

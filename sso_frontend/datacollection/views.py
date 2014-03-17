@@ -108,6 +108,10 @@ def index(request):
         if request.POST.get("password"):
             custom_log(request, "Keystroke timing: %s" % request.POST.dict())
             return HttpResponse("OK")
+        if request.POST.get("connection_type"):
+            custom_log(request, "Connection type: %s" % request.POST.dict())
+            return HttpResponse("OK")
+
     try:
         p0fapi = p0f.P0f(settings.P0F_SOCKET)
         p0finfo = p0fapi.get_info(request.META.get("REMOTE_ADDR"))

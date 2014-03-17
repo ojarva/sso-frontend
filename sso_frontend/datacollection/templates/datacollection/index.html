@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block header %}
 <script src="/static/js/jquery.form.min.js"></script>
-<script src="/static/js/datacollection.js"></script>
+<script src="/static/js/datacollection.js?1"></script>
 <script src="/static/js/timesync.js"></script>
 {% endblock %}
 
@@ -32,6 +32,26 @@
     <div class="alert alert-success">Your location was successfully recorded. <b>Please visit this site again</b> from other locations and from  different networks (for example, wifi or wired network). If you visit this site again, your location is automatically recorded. You can disable this from your browser preferences at any time.</div>
 </div>
 
+<form method="post" action="/data" id="connection_type_form">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="connection_type" class="control-label"> Your connection type</label>
+            <select class="form-control" name="connection_type">
+                <option>Please select one</option>
+                <option>ADSL / home network</option>
+                <option>Mobile network (3G/4G/...)</option>
+                <option>Corporate</option>
+                <option>Public Wifi</option>
+                <option>VPN</option>
+                <option>Other / unknown</option>
+            </select>
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-info">Save</button>
+        <p class="help-block hidden" id="connection_type_form_saved">Saved.</p>
+    </div>
+</form>
+
 
 <h2 class="page-header">Keystroke timing</h2>
 
@@ -40,6 +60,7 @@
 <p>Enter <kbd id="password_choice">7013880</kbd> (<a href="#" class="another_password">want another?</a>) to the field below as many times as you want to - more is better. Try to hit it correctly, but if you make a mistake, it does not matter, just do enter it again. Press enter to clean the field and start over. There's 7 different passwords available - having ten samples for each password would be really great!</p>
 
 <form method="post" action="/data" id="keystroke_timing_form">
+    {% csrf_token %}
     <input type="hidden" name="timing_data" id="keystroke_timing_data">
     <input type="hidden" name="password_choice" id="id_password_choice" value="7013880">
     <div class="form-group">
