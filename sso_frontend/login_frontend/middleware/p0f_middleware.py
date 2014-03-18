@@ -15,7 +15,7 @@ import logging
 import p0f
 import socket
 
-dcache = get_cache("default")
+bcache = get_cache("browsers")
 
 log = logging.getLogger(__name__)
 
@@ -36,13 +36,14 @@ class P0fMiddleware(object):
 
         if not hasattr(request, "browser") or not request.browser:
             return
+
         browser = request.browser
         remote_addr = request.remote_ip
         r_k = "p0f-last-update-%s" % (browser.bid_public)
-        last_update = dcache.get(r_k)
+        last_update = bcache.get(r_k)
         if last_update == remote_addr:
             return
-        dcache.set(r_k, remote_addr, 30)
+        bcache.set(r_k, remote_addr, 30)
 
         def update_newest(newest, remote_info):
             if remote_info["uptime_sec"] == None and newest.uptime_sec == None:
@@ -62,7 +63,7 @@ class P0fMiddleware(object):
             if up_mod_days and up_mod_days > datetime.timedelta(days=1):
                 # Detect wraparound
                 up_mod_sec = up_mod_days.days * 86400
-              
+
                 if expected_uptime > up_mod_sec:
                     log.debug("p0f: %s@%s - uptime wraparound detected: %s", browser.bid_public, remote_addr, expected_uptime)
                     newest.wraparounds += 1
@@ -93,6 +94,7 @@ class P0fMiddleware(object):
             try:
                 sd.incr("p0f.queried", 1)
                 remote_info = p0fapi.get_info(remote_addr)
+                request.p0f = remote_info
                 sd.incr("p0f.fetched", 1)
             except KeyError, e:
                 # No information exists.
@@ -143,4 +145,3 @@ class P0fMiddleware(object):
         except socket.error, e:
             sd.incr("p0f.error.socket", 1)
             log.error("p0f raised socket.error: %s", str(e))
-

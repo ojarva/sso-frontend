@@ -7,6 +7,9 @@ log = logging.getLogger(__name__)
 class VulnerableBrowser(object):
     @sd.timer("VulnerableBrowser.process_request")
     def process_request(self, request):
+        if request.path.startswith("/timesync"):
+            return
+
         request.vulnerability = None
         ua = request.META.get("HTTP_USER_AGENT")
         if ua is None:
