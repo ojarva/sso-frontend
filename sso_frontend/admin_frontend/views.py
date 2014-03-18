@@ -28,6 +28,7 @@ user_cache = get_cache("users")
 log = logging.getLogger(__name__)
 user_log = logging.getLogger(__name__)
 
+
 @sd.timer("admin_frontend.views.custom_log")
 def custom_log(request, message, **kwargs):
     """ Automatically adds remote IP address and public browser ID to log entries """
@@ -161,7 +162,7 @@ def userdetails(request, **kwargs):
     ret["duser"] = get_object_or_404(DjangoUser, username=username)
     ret["browsers"] = Browser.objects.filter(user=ret["auser"])
     ret["logins"] = BrowserLogin.objects.filter(user=ret["auser"])
-    ret["user_aliases"] = user_cache.get("%s-aliases" % username)
+    ret["user_aliases"] = ret["auser"].get_aliases()
 
     return render_to_response("admin_frontend/userdetails.html", ret, context_instance=RequestContext(request))
 

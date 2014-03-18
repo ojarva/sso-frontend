@@ -15,10 +15,12 @@
 
 <dl>
     <dt>Username and password {% if username %}<span class="label label-success">ok</span>{% endif %}</dt>
-    <dd>When username or password is asked, you should use same old username and password. You can use your email address too. {% if username %} You have already entered these.{% else %}If you don't know your username or password, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a>.{% endif %}</dd>
+    <dd>When username or password is asked, you should use same old username and password. You can use your email address too. {% if username %} You have already entered these. {% if user.get_aliases %} You can use any of these to sign in: {{ username }}, {% for alias in user.get_aliases %}{% if forloop.last %} or {% endif %}{{ alias }}{% if not forloop.last %}, {% endif %}{% endfor %}. {% endif %}{% else %}If you don't know your username or password, please contact <a href="mailto:{{ admin_email }}">{{ admin_email }}</a>.{% endif %}</dd>
     <dt>Authenticator {% if user.strong_authenticator_used %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
     <dd>Authenticator generates 6-digit one-time passwords. It's a small app for your mobile phone. {% if user.strong_authenticator_used %}You have already configured and used Authenticator.{% else %}To configure it, go to <a href="{% url 'login_frontend.views.configure' %}">settings</a> and follow instructions.{% endif %} <a href="/static/img/instructions/authenticator.png">Screenshot of Authenticator</a> with multiple codes. If you are not sure which code you should enter, after entering incorrect one, sign-in view tells you.</dd>
-    <dt>Emergency codes {% if user.emergency_codes_done %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
+    <dt>SMS</dt>
+    <dd>Instead of using Authenticator, you can use 7-digit passwords sent as SMS. This is less reliable than Authenticator. SMS is automatically sent to each phone number we have for you.</dd>
+    <dt>Emergency codes {% if user.emergency_codes_valid %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
     <dd>These are long random strings, that can be used to sign in, if you can't access your mobile phone. For example, if someone steals your purse / backpack / phone, you'll need these. {% if user.emergency_codes_valid %}You have already generated and downloaded these. {% else %}To get these, go to <a href="{% url 'login_frontend.views.configure' %}">settings</a>.{% endif %} <a href="/static/img/instructions/emergency_codes.png">Example codes</a> (these are not valid for your account).</dd>
 </dl>
 

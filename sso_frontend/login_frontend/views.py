@@ -59,6 +59,7 @@ r = redis.Redis()
 
 user_log = logging.getLogger("users.%s" % __name__)
 
+
 @sd.timer("login_frontend.views.custom_log")
 def custom_log(request, message, **kwargs):
     """ Automatically logs username, remote IP and bid_public """
@@ -573,7 +574,7 @@ def configure(request):
     ret["authenticator_id"] = user.get_authenticator_id()
     emergency_codes = user.get_emergency_codes()
     ret["emergency_codes"] = emergency_codes
-    ret["user_aliases"] = user_cache.get("%s-aliases" % user.username)
+    ret["user_aliases"] = user.get_aliases()
     locations = UserLocation.objects.filter(user=user).count()
     if locations > 0:
         ret["locations_shared"] = locations

@@ -886,6 +886,9 @@ class User(models.Model):
         super(User, self).save(*args, **kwargs)
         dcache.delete_many(["runstats-stats.models.User.total", "stats.models.User.strong_configured", "stats.models.User.strong_sms_always", "stats.models.User.emulate_legacy", "stats.models.User.strong_authenticator_secret", "stats.models.User.strong_authenticator_used", "stats.models.User.primary_phone_changed", "stats.models.User.no_phone_available"])
 
+    def get_aliases(self):
+        return user_cache.get("%s-aliases" % self.username)
+
     def get_emergency_codes(self):
         try:
             return EmergencyCodes.objects.get(user=self)

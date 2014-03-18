@@ -150,7 +150,7 @@
 
 {% endif %}
 
-<div class="panel panel-{% if emergency_codes.valid %}success{% else %}danger{% endif %}">
+<div class="panel panel-{% if user.emergency_codes_valid %}success{% else %}danger{% endif %}">
 	<div class="panel-heading">
 		{% if not emergency_codes.valid %}<span class="label label-danger">Needs action</span> {% endif %}Emergency codes
 	</div>
