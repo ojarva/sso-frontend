@@ -28,10 +28,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% block header %}{% endblock %}
 
+{% block og_headers %}
 <meta property="og:title" content="Sign-in required" />
 <meta property="og:description" content="This resource is protected by the single sign-on service. After signing in, you will be automatically redirected to the service you tried to access." />
 <meta name="description" content="This resource is protected by the single sign-on service. After signing in, you will be automatically redirected to the service you tried to access." />
 <meta property="og:type" content="website" />
+{% endblock %}
 </head>
 
 
@@ -51,9 +53,9 @@
           <a class="navbar-brand" href="{% url 'login_frontend.views.indexview' %}"><img alt="Futurice" src="/static/img/futurice-logo-mini.png"/></a>
           {% if username %}
             {% if first_name %}
-              <p class="navbar-text"><span class="tooltip-link" data-placement="bottom" title="{{ username }}">Signed in as <b>{{ first_name }}</b></span>.</p>
+              <p class="navbar-text"><span class="tooltip-link" data-placement="bottom" title="{{ username }}">Signed in as <strong>{{ first_name }}</strong></span>.</p>
             {% else %}
-              <p class="navbar-text">Signed in as <b>{{ username }}</b></p>
+              <p class="navbar-text">Signed in as <strong>{{ username }}</strong></p>
             {% endif %}
           {% endif %}
         </div>

@@ -2,7 +2,7 @@
 {% load full_uri %}
 <p>Hi {% if first_name %}{{ first_name }}{% else %}{{ username }}{% endif %},</p>
 
-<p>Emergency code was used on your account. What does this mean? If it was used by you, everything is fine. If you didn't do that, <b>you must take actions.</b></p>
+<p>Emergency code was used on your account. What does this mean? If it was used by you, everything is fine. If you didn't do that, <strong>you must take actions.</strong></p>
 
 <p>Please check these details match:</p>
 
@@ -10,11 +10,11 @@
 <li>Browser: {{ browser.get_readable_ua }}</li>
 <li>IP address: {{ remote_ip }} ({{ remote_ip|ip_to_geoip }})</li>
 {% if browser.name %}<li>Browser name set by you: {{ browser.name }}</li>{% endif %}
-<li>{% if familiar_device %}You have used the same browser earlier.{% else %}You have <b>not</b> used this browser earlier.{% endif %}</li>
+<li>{% if familiar_device %}You have used the same browser earlier.{% else %}You have <strong>not</strong> used this browser earlier.{% endif %}</li>
 <li><a href="{% full_uri 'login_frontend.views.view_log' browser.bid_public %}">Review log entries</a></li>
 </ul>
 
-<p><b>If you did not do this or details above are not correct, please immediately do the following:</b></p>
+<p><strong>If you did not do this or details above are not correct, please immediately do the following:</strong></p>
 
 <ol>
 <li>open <a href="{% full_uri 'login_frontend.views.sessions' %}">sessions</a> page, and hit "Sign out all my sessions".</li>
@@ -25,7 +25,7 @@
 <p>{% if codes.codes_left > 0 %}
         You still have {{ codes.codes_left }} code{{ codes.codes_left|pluralize }} available.
     {% else %}
-        <b>This was your last emergency code. You can't sign in with emergency codes again if you don't generate and download a new set of codes.</b>
+        <strong>This was your last emergency code. You can't sign in with emergency codes again if you don't generate and download a new set of codes.</strong>
     {% endif %}</p>
 
 <p><small>You can't reply to this email. You can't unsubscribe from these emails. If this came to wrong email address, please contact {{ admin_email }} and we'll fix it.</small></p>

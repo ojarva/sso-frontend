@@ -13,7 +13,7 @@
 <p>You're not allowed to access this page.</p>
 
 {% endif %}
-<p>If you think this is an error, please send email to <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> and explain what happened (or you can use <a href="{% url 'login_frontend.views.report_problem'%}">this page</a>). {% if browser_public_bid %}Mentioning <b>{{ browser_public_bid }}</b> helps with solving the issue.{% endif %}</p>
+<p>If you think this is an error, please send email to <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> and explain what happened (or you can use <a href="{% url 'login_frontend.views.report_problem'%}">this page</a>). {% if browser_public_bid %}Mentioning <strong>{{ browser_public_bid }}</strong> helps with solving the issue.{% endif %}</p>
 
 <p>You can continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>.</p>
 

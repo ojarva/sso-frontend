@@ -65,9 +65,9 @@ or "Work profile" and "Personal profile" for different browser user profiles.</p
  <dd>{{ detailed.last_known_location_from }} ({% include "snippets/timestamp.html" with timestamp=detailed.last_known_location_timestamp %})</dd>
 {% else %}
  <dt>Last seen</dt>
- <dd>{% if detailed.this_session %}Right now (this session){% else %}<b>{% include "snippets/timestamp.html" with timestamp=detailed.session.last_seen %}</b>{% endif %}</dd>
+ <dd>{% if detailed.this_session %}Right now (this session){% else %}<strong>{% include "snippets/timestamp.html" with timestamp=detailed.session.last_seen %}</strong>{% endif %}</dd>
  <dt>Last address</dt>
- <dd><b>{{ detailed.session.remote_ip }}</b> ({{ detailed.geo }})</dd>
+ <dd><strong>{{ detailed.session.remote_ip }}</strong> ({{ detailed.geo }})</dd>
 {% endif %}
  <dt>Remembered</dt>
  <dd>{% if detailed.browser.save_browser %}<span class="tooltip-link" title="You have marked this browser as 'remembered'">yes</span>{% else %}no{% endif %}</dd>
@@ -133,9 +133,9 @@ or "Work profile" and "Personal profile" for different browser user profiles.</p
 <i class="fa fa-{{icon}}"></i>
 {% endfor %}
 
-   {% if detailed.this_session %}Right now (this session){% else %}<b>{% include "snippets/timestamp.html" with timestamp=detailed.session.last_seen %}</b>{% endif %}<br/>
- from <b>{{ detailed.session.remote_ip }}</b> ({{ detailed.geo }})<br/>
- with <b><span class="tooltip-link" title="{{ detailed.browser.ua }}">{{ detailed.browser.get_readable_ua }}</span></b> {% if detailed.browser.save_browser %}(<span class="tooltip-link" title="You have marked this browser as 'remembered'">remembered</span>){% endif %}<br/>
+   {% if detailed.this_session %}Right now (this session){% else %}<strong>{% include "snippets/timestamp.html" with timestamp=detailed.session.last_seen %}</strong>{% endif %}<br/>
+ from <strong>{{ detailed.session.remote_ip }}</strong> ({{ detailed.geo }})<br/>
+ with <strong><span class="tooltip-link" title="{{ detailed.browser.ua }}">{{ detailed.browser.get_readable_ua }}</span></strong> {% if detailed.browser.save_browser %}(<span class="tooltip-link" title="You have marked this browser as 'remembered'">remembered</span>){% endif %}<br/>
 {% if detailed.browser.name %}
 <i><a href="#" data-toggle="modal" data-target="#browser_name_{{ detailed.browser.bid_public }}">{{ detailed.browser.name }}</a></i>
 {% else %}
@@ -143,11 +143,11 @@ or "Work profile" and "Personal profile" for different browser user profiles.</p
 {% endif %}
 <ul>
 {% for login in detailed.logins %}
-<li><span data-toggle="popover" 
-          data-placement="bottom" 
-          class="popover-link" 
-          data-trigger="hover" 
-          title="Details for {{ login.sso_provider }}" 
+<li><span data-toggle="popover"
+          data-placement="bottom"
+          class="popover-link"
+          data-trigger="hover"
+          title="Details for {{ login.sso_provider }}"
           data-content='Signing out this browser will not sign out this session.
 {% if login.message %}It was used to log in to {{ login.message }}.
 {% elif login.remote_service %}It was used to log in to "{{ login.remote_service }}".{% endif %}
@@ -157,11 +157,11 @@ or "Work profile" and "Personal profile" for different browser user profiles.</p
 {% if login.message %} to {{ login.message }}{% endif %}
 </li>
 {% empty %}
-<li><span data-toggle="popover" 
-          data-placement="top" 
-          class="popover-link" 
-          data-trigger="hover" 
-          title="No unrevocable logins" 
+<li><span data-toggle="popover"
+          data-placement="top"
+          class="popover-link"
+          data-trigger="hover"
+          title="No unrevocable logins"
           data-content="No unrevocable logins associated with this session. If you sign out this session, no harm can be done."
      >No unrevocable logins</span></li>
 {% endfor %}

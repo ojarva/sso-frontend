@@ -20,7 +20,7 @@
 {% endif %}
 
 {% if return_readable %}
-<p><small>After signing in, you'll be redirected to <b>{{ return_readable }}</b>.</small></p>
+<p><small>After signing in, you'll be redirected to <strong>{{ return_readable }}</strong>.</small></p>
 {% endif %}
 {% if authenticator_not_used %}
 	<div class="alert alert-info">
@@ -35,7 +35,7 @@
 	</div>
 
 	<p>You're authenticating with Authenticator password.
-	It is a {% if is_invalid_otp %}<b>6-digit code</b>{% else %}6-digit code{% endif %} from Authenticator app.
+	It is a {% if is_invalid_otp %}<strong>6-digit code</strong>{% else %}6-digit code{% endif %} from Authenticator app.
         The name of that code should be "{{ authenticator_id }}".
         If this does not match and/or the code is not working, you can <a href="{% url 'login_frontend.authentication_views.authenticate_with_sms' %}?{{ get_params }}">sign in with SMS</a>.</p>
 {% endif %}

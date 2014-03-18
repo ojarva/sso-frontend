@@ -39,11 +39,14 @@ The site does not implement OpenID 2.0's relying party verification mechanism.</
 
 <p>Following information will be released:</p>
 
-<ul>
-<li><b>email</b>: {{ sreg.email }}</li>
-<li><b>username</b>: {{ sreg.nickname }}</li>
-<li><b>full name</b>: {{ sreg.fullname }}</li>
-</ul>
+<dl class="dl-horizontal">
+<dt>email</dt>
+<dd>{{ sreg.email }}</dd>
+<dt>username</dt>
+<dd>{{ sreg.nickname }}</dd>
+<dt>full name</dt>
+<dd>{{ sreg.fullname }}</dd>
+</dl>
 
 <form method="post">{% csrf_token %}
 Verify your identity to the relying party?

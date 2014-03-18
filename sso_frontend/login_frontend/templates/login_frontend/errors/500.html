@@ -6,7 +6,7 @@
 
 <p>Something went seriously wrong. We'll take a look as soon as possible. This has been reported already.</p>
 
-<p>If you think additional information is useful, please explain what you did to reach this page. {% if browser_public_bid %}Mentioning <b>{{ browser_public_bid }}</b> helps with solving the issue.{% endif %}</p>
+<p>If you think additional information is useful, please explain what you did to reach this page. {% if browser_public_bid %}Mentioning <strong>{{ browser_public_bid }}</strong> helps with solving the issue.{% endif %}</p>
 
 <p>You can try to continue to <a href="{% url 'login_frontend.views.indexview' %}">front page</a>. If you want to provide additional details of what happened, you can email to <a href="mailto:{{ admin_email }}">{{ admin_email }}</a> or <a href="{% url 'login_frontend.views.report_problem'%}">use this page</a>.</p>
 
