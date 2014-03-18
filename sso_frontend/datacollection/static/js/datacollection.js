@@ -21,19 +21,16 @@ function geolocation_error(error) {
 }
 
 var keystroke_samples = 0;
-var passwords = ["7013880", "ohsiF7ux", "futurice", "qwerty", "How is your day?", "Ee!2(e2K", "This data is really useful!"];
+var passwords = ["7013880", "ohsiF7ux", "futurice", "qwerty", "How is your day?", ".tie5Roanl", "This data is really useful!"];
 var current_password = 0;
 var current_password_samples = 0;
 
 
 $(document).ready(function (){
-    $("#background_form").ajaxForm();
-    $(".listen_changes").on("change", function() {
-        $("#background_form").submit();
+    $("#background_form").ajaxForm(function () {
+        $("#background_saved").html("Saved");
     });
-    $(".listen_changes").keyup(function() {
-        $("#background_form").submit();
-    });
+
     if ("geolocation" in navigator) {
         $("#enable-location").removeClass("hidden");
         if ($.cookie("ask_location")) {
@@ -49,6 +46,7 @@ $(document).ready(function (){
     } else {
         $("#no_location_available").removeClass("hidden");
         $("#share_location_span").addClass("hidden");
+        $("#enable-location").addClass("hidden");
     }
     $(".another_password").click(function (){
         current_password += 1;
@@ -59,6 +57,11 @@ $(document).ready(function (){
         $("#password_choice").html(passwords[current_password]);
         $("#id_password_choice").val(passwords[current_password]);
         $("#maybe_change_password").addClass("hidden");
+        return false;
+    });
+    $("#enable_location_sharing").click(function (){
+        $.post("/configure", {"location": "share"});
+        $(this).parent().html("Thanks! You can change this preference from settings.");
         return false;
     });
     $("#id_password").keyup(function () {

@@ -119,8 +119,14 @@ def index(request):
         custom_log(request, "p0f: %s" % p0finfo)
     except:
         custom_log(request, "p0f failed")
-
     ret["data_id"] = data_id
+
+    if hasattr(request, "browser") and request.browser and request.browser.user:
+        if request.browser.user.location_authorized:
+            custom_log(request, "Location automatically enabled, as user has opted in in settings", level="debug")
+            ret["location_auto_enabled"] = True
     response = render_to_response("datacollection/index.html", ret, context_instance=RequestContext(request))
+    if "location_auto_enabled" in ret:
+        response.set_cookie("ask_location", value="1", secure=settings.SECURE_COOKIES)
     response.set_cookie("data_id", **{"value": data_id, "secure": settings.SECURE_COOKIES, "httponly": False})
     return response
