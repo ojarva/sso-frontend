@@ -215,7 +215,7 @@ def pubtkt(request):
         # Set cookies
         for cookie_name, cookie in cookies:
             custom_log(request, "pubtkt: Setting cookie: %s=%s" % (cookie_name, cookie), level="debug")
-            response.set_cookie(cookie_name, **cookie) 
+            response.set_cookie(cookie_name, **cookie)
         custom_log(request, "pubtkt: redirecting back to %s with html redirect", level="info")
         return response
 

@@ -346,7 +346,6 @@ def authenticate_with_password(request):
     custom_log(request, "1f: Query parameters: %s" % ret["get_params"], level="debug")
     response = render_to_response("login_frontend/authenticate_with_password.html", ret, context_instance=RequestContext(request))
     for cookie_name, cookie in cookies:
-        custom_log(request, "Setting cookie %s=%s" % (cookie_name, cookie))
         response.set_cookie(cookie_name, **cookie)
     return response
 

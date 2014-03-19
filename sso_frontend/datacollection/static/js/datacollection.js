@@ -67,6 +67,7 @@ $(document).ready(function (){
         $("#id_password_choice").val(passwords[current_password]);
         $("#maybe_change_password").addClass("hidden");
         $("#id_password").val("");
+        $("#id_password").data("timing-reset", true);
         $("#id_password").focus();
 
         return false;
