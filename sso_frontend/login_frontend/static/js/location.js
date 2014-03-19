@@ -16,6 +16,6 @@ function handle_location_error(err) {
 
 $(document).ready(function() {
  if ("geolocation" in navigator) {
-  navigator.geolocation.getCurrentPosition(handle_location, handle_location_error);
+  navigator.geolocation.getCurrentPosition(handle_location, handle_location_error, {maximumAge: 120000});
  }
 });
