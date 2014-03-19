@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block header %}
 <script src="/static/js/jquery.form.min.js"></script>
-<script src="/static/js/datacollection.js?4"></script>
+<script src="/static/js/datacollection.js?6"></script>
 <script src="/static/js/timesync.js"></script>
 {% endblock %}
 
@@ -43,7 +43,7 @@
     <p>The data is handled confidentially - no identifying information will be published. If you click this button, the browser will ask for authorization. The location is only recorded if you explicitly allow it. <i>Don't want to share? Just skip to next step.</i></p>
 
     <div class="hidden" id="location-error">
-        <div class="alert alert-warning" id="location-error-message">Oops. An error occured. Maybe you denied access to your location? That's totally okay. If you still want to share it, you have to refresh this page.</div>
+        <div class="alert alert-warning" id="location-error-message">Oops. An error occured. Maybe you denied access to your location? That's totally okay - just continue to the next step. If you still want to share it, you have to refresh this page.</div>
 
         <div id="location-error-extra"></div>
 
@@ -53,7 +53,7 @@
 </div>
 
 <div id="no_location_available" class="hidden">
-    <p>It seems your browser does not support geolocation API, so it is not possible to locate you.</p>
+    <p>It seems your browser does not support geolocation API, so it is not possible to locate you. You can select your connection type below and continue to the keystroke timing.</p>
 </div>
 
 <div id="enable-location-thanks" class="hidden">
