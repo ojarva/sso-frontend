@@ -274,6 +274,7 @@ TEMPLATE_DIRS = (
 
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
+COMPRESS_REBUILD_TIMEOUT=86400*365*10 # Don't force rebuilds
 
 INSTALLED_APPS = (
     'django.contrib.auth',

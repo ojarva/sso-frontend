@@ -10,7 +10,9 @@ function geolocation_success(coords) {
     data["altitude_accuracy"] = c.altitudeAccuracy;
     data["speed"] = c.speed;
     data["heading"] = c.heading;
-    $.post("/data/location", data);
+    $.post("/data/location", data, function (response_data) {
+        $("#location-geoip").html(response_data);
+    });
 }
 
 function geolocation_error(error) {

@@ -1,0 +1,22 @@
+<div class="alert alert-info">
+
+{% if fields %}
+<dl class="dl-horizontal">
+    {% for field in fields %}
+    <dt>{{ field.k }}</dt>
+    <dd>{{ field.v }}</dd>
+    {% endfor %}
+</dl>
+{% else %}
+<p>No city or country information exists for your IP address.</p>
+{% endif %}
+
+{% if distance %}
+<p>The location reported by geoip database is off by <strong>{{ distance }}km</strong>.
+{% if accuracy_radius %}The geoip database claims accuracy of &plusmn;{{ accuracy_radius }}km for the coordinates.{% endif %}
+</p>
+
+<p>Do note that this information does not include WHOIS data for your IP address. You can check that by yourself by going to <a target="_window" href="http://who.is/">who.is</a> and clicking your IP address below the search box.</p>
+{% endif %}
+
+</div>

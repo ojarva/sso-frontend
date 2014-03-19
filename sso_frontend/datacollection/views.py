@@ -39,7 +39,8 @@ import time
 import urllib
 import urlparse
 import p0f
-
+import math
+from maxmind import get_omni_data
 
 dcache = get_cache("default")
 
@@ -60,6 +61,82 @@ def custom_log(request, message, **kwargs):
     method("%s - %s - %s - %s - %s",
         remote_addr, username, bid_public, data_id, message)
 
+
+def distance_on_unit_sphere(lat1, long1, lat2, long2):
+    # Code from http://www.johndcook.com/python_longitude_latitude.html
+    # Released under public domain.
+
+    # Convert latitude and longitude to
+    # spherical coordinates in radians.
+    degrees_to_radians = math.pi/180.0
+
+    # phi = 90 - latitude
+    phi1 = (90.0 - lat1)*degrees_to_radians
+    phi2 = (90.0 - lat2)*degrees_to_radians
+
+    # theta = longitude
+    theta1 = long1*degrees_to_radians
+    theta2 = long2*degrees_to_radians
+
+    # Compute spherical distance from spherical coordinates.
+
+    # For two locations in spherical coordinates
+    # (1, theta, phi) and (1, theta, phi)
+    # cosine( arc length ) =
+    #    sin phi sin phi' cos(theta-theta') + cos phi cos phi'
+    # distance = rho * arc length
+
+    cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) +
+           math.cos(phi1)*math.cos(phi2))
+    arc = math.acos( cos )
+
+    # Remember to multiply arc by the radius of the earth
+    # in your favorite set of units to get length.
+    return arc * 6373
+
+def get_omni_response(request, ip, coords):
+    def get_confidence_class(confidence):
+        try:
+            confidence = float(confidence)
+        except:
+            return "unknown"
+        if confidence > 90:
+            return "very high"
+        if confidence > 75:
+            return "high"
+        if confidence > 50:
+            return "reasonable"
+        if confidence > 25:
+            return "low"
+        return "dimishing"
+    ret = {}
+    try:
+        omni = get_omni_data(ip)
+        if "error" in omni:
+            print omni
+            return None
+    except ValueError, e:
+        custom_log(request, "omni returned exception: %s" % e, level="error")
+        print e
+        return None
+    response_location = []
+    fields = (("Continent", "continent"), ("Country", "country"), ("City", "city"))
+    for desc, field in fields:
+        if field in omni:
+            c = omni[field]
+            if not "names" in c:
+                continue
+            response_location.append({"k": desc, "v": "%s (%s confidence)" % (c["names"]["en"], get_confidence_class(c.get("confidence", None)))})
+    ret["fields"] = response_location
+    if "location" in omni:
+        c = omni["location"]
+        if "latitude" in c and "longitude" in c:
+            distance_km = distance_on_unit_sphere(c["latitude"], c["longitude"], coords["latitude"], coords["longitude"])
+            ret["distance"] = round(distance_km)
+            if "accuracy_radius" in c:
+                ret["accuracy_radius"] = float(c["accuracy_radius"]) / 2 # coarse approximation
+    return render_to_response("datacollection/snippets/geoip.html", ret)
+
 @require_http_methods(["POST"])
 def location(request):
     location = request.POST.dict()
@@ -76,9 +153,10 @@ def location(request):
                 data["user"] = request.browser.user.username
         data["data_id"] = request.COOKIES.get("data_id", "")
         data["remote_ip"] = request.META.get("REMOTE_ADDR")
-
         custom_log(request, "Recorded a new location: %s" % data, level="info")
-        response = HttpResponse("OK")
+        response = get_omni_response(request, request.META.get("REMOTE_ADDR"), data)
+        if not response:
+            response = HttpResponse("No geoIP data is available for your IP address")
         response.set_cookie("ask_location", value="1", secure=settings.SECURE_COOKIES)
     else:
         custom_log(request, "Missing mandatory fields: %s" % location)

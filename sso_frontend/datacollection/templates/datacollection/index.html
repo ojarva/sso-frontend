@@ -64,6 +64,9 @@
 <div id="enable-location-thanks" class="hidden">
     <div class="alert alert-success">Your location was successfully recorded. <strong>Please visit this site again</strong> from other locations and from different networks (for example, wifi or wired network). If you visit this site again, your location is automatically recorded. You can disable this from your browser preferences at any time. {% if location_auto_enabled %}<span class="tooltip-link" title="This notice is only visible for signed-in users">This was executed automatically, as you have opted in to sharing your location under <a href="{% url 'login_frontend.views.configure' %}">settings</a>.</span>{% endif %}</div>
 
+    <div id="location-geoip"></div>
+
+
     {% if not location_auto_enabled and username and first_name %}
         <p class="tooltip-link" title="This question is only visible for signed-in users">Want to <a href="#" id="enable_location_sharing">enable this by default</a> (for {{ first_name }})?</p>
     {% endif %}
