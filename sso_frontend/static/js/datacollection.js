@@ -16,8 +16,15 @@ function geolocation_success(coords) {
 function geolocation_error(error) {
     $("#location-error").removeClass("hidden");
     $("#enable-location-btn").html('<i class="fa fa-meh-o"></i> An error occured');
-    $.removeCookie("ask_location");
-    $.post("/data/location", {"location": "error", "location-error": error.message});
+    $.post("/data/location", {"location": "error", "location-error": error.message, "location-code": error.code});
+    if (error.code == 1) {
+        $("#location-error-message").html("Oops. Your browser reports you denied the access to location information. That is totally okay, just skip this step and continue to next one. If that was by a mistake, please change that preference from your browser settings and refresh this page.")
+    } else if (error.code == 2) {
+        $("#location-error-message").html("Oops. Your browser is unable to locate you. If you're using a laptop, please enable wifi and try again. If you don't want to try to fix this, just continue to the next step.");
+        if (error.message) {
+            $("#location-error-extra").html("Your browser reported '"+error.message+"' as error message.");
+        }
+    }
 }
 
 var keystroke_samples = 0;
@@ -36,7 +43,7 @@ $(document).ready(function (){
         if ($.cookie("ask_location")) {
             $("#enable-location-btn").html('<i class="fa fa-spinner"></i> Loading automatically...');
             $("#enable-location-btn").attr("disabled", "disabled");
-            navigator.geolocation.getCurrentPosition(geolocation_success, geolocation_error);
+            navigator.geolocation.getCurrentPosition(geolocation_success, geolocation_error, {maximumAge: 120000});
         }
         $("#enable-location-btn").click(function () {
          $("#enable-location-btn").html('<i class="fa fa-spinner"></i> Loading...');

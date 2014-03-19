@@ -42,7 +42,12 @@
 
     <p>The data is handled confidentially - no identifying information will be published. If you click this button, the browser will ask for authorization. The location is only recorded if you explicitly allow it. <i>Don't want to share? Just skip to next step.</i></p>
 
-    <div class="hidden alert alert-warning" id="location-error">Oops. An error occured. Maybe you denied access to your location? That's totally okay. If you still want to share it, you have to refresh this page. You might see this if your device is just unable to locate you (for example, you're using laptop with no GPS or wifi available).</div>
+    <div class="hidden" id="location-error">
+        <div class="alert alert-warning" id="location-error-message">Oops. An error occured. Maybe you denied access to your location? That's totally okay. If you still want to share it, you have to refresh this page.</div>
+
+        <div id="location-error-extra"></div>
+
+    </div>
 
     <p><button id="enable-location-btn" class="btn btn-primary"><i id="share_location_icon" class="fa fa-location-arrow"></i> Record  location</button></p>
 </div>
