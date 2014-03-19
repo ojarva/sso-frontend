@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block header %}
 <script src="/static/js/jquery.form.min.js"></script>
-<script src="/static/js/datacollection.js?3"></script>
+<script src="/static/js/datacollection.js?4"></script>
 <script src="/static/js/timesync.js"></script>
 {% endblock %}
 
 {% block og_headers %}
-<meta property="og:title" content="Survey" />
-<meta property="og:description" content="This small survey collects interesting data for my thesis. Want to know your typing accuracy?" />
+<meta property="og:title" content="Location data and typing speed survey" />
+<meta property="og:description" content="This page collects interesting data for my thesis. Want to know your typing accuracy?" />
 <meta name="description" content="" />
 <meta property="og:type" content="website" />
 {% endblock %}
@@ -33,7 +33,7 @@
     <dt>What is recorded?</dt>
     <dd>Your IP address and location.</dd>
     <dt>Why?</dt>
-    <dd>To validate the accuracy of geoip/WHOIS data. No public studies seems to exist.</dd>
+    <dd>To validate the accuracy of geoip/WHOIS data. Public studies does not seem to exist.</dd>
     <dt>Anonymizing?</dt>
     <dd>Your exact location won't be shared. Enough noise will be added. Your exact IP address won't be shared.</dd>
 </dl>
@@ -42,7 +42,7 @@
 
     <p>The data is handled confidentially - no identifying information will be published. If you click this button, the browser will ask for authorization. The location is only recorded if you explicitly allow it. <i>Don't want to share? Just skip to next step.</i></p>
 
-    <div class="hidden alert alert-warning" id="location-error">Oops. An error occured. Maybe you denied access to your location? That's totally okay. If you still want to share it, you have to refresh this page.</div>
+    <div class="hidden alert alert-warning" id="location-error">Oops. An error occured. Maybe you denied access to your location? That's totally okay. If you still want to share it, you have to refresh this page. You might see this if your device is just unable to locate you (for example, you're using laptop with no GPS or wifi available).</div>
 
     <p><button id="enable-location-btn" class="btn btn-primary"><i id="share_location_icon" class="fa fa-location-arrow"></i> Record  location</button></p>
 </div>
@@ -98,7 +98,7 @@
     <dd>Keystroke timing does not include identifying information. It's not combined to any other data (like IP address or your location).</dd>
 </dl>
 
-<p>Enter <kbd id="password_choice">7013880</kbd> (<a href="#" class="another_password">want to try next?</a>) to the field below and press enter (or "Send")  as many times as you want to - more is better. There's <span class="tooltip-link" title='"7013880", "ohsiF7ux", "futurice", "qwerty", "How is your day?", ".tie5Roanl", "This data is really useful!"'>7 different passwords</span> available - if you could enter each of those at least ten times, that would be really great!</p>
+<p>Enter <kbd id="password_choice">7013880</kbd> (<a href="#" class="another_password">want to skip this and continue with next one?</a>) to the field below and press enter (or "Send")  as many times as you want to - more is better. There's <span class="tooltip-link" title='"7013880", "ohsiF7ux", "futurice", "qwerty", "How is your day?", ".tie5Roanl", "This data is really useful!"'>7 different passwords</span> available - if you could enter each of those at least ten times, that would be really great!</p>
 
 <form method="post" action="/data" id="keystroke_timing_form">
     {% csrf_token %}
