@@ -21,7 +21,7 @@ from login_frontend.authentication_views import protect_view
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.emails import new_authenticator_notify, new_emergency_generated_notify
-from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name, store_location_caching, get_return_url, get_ratelimit_keys
+from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name, store_location_caching, get_return_url, get_ratelimit_keys, is_private_net
 from ratelimit.decorators import ratelimit
 import datetime
 import json
@@ -110,6 +110,9 @@ def get_omni_response(request, ip, coords):
             return "low"
         return "dimishing"
     ret = {}
+    private_net = is_private_net(ip)
+    if private_net:
+        return HttpResponse("You're connected from %s." % private_net)
     try:
         omni = get_omni_data(ip)
         if "error" in omni:

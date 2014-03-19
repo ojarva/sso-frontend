@@ -249,7 +249,7 @@ def redir_to_sso(request, **kwargs):
 
 @sd.timer("login_frontend.utils.is_private_net")
 def is_private_net(ip_address):
-    """ Returns True if specified in private networks, imported from
+    """ Returns description if specified in private networks, imported from
         local_settings """
     try:
         ip = ipaddr.IPv4Address(ip_address)
