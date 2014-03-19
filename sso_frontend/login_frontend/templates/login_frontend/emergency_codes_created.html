@@ -1,8 +1,11 @@
 {% extends "login_frontend/base.html" %}
+{% load compress %}
 
 {% block title %}Emergency codes - {% endblock %}
 {% block header %}
+{% compress js %}
 <script src="/static/js/emergency_codes_created.js"></script>
+{% endcompress %}
 {% endblock %}
 
 {% block content %}
