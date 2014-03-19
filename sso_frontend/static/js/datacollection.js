@@ -72,7 +72,7 @@ $(document).ready(function (){
             $("#id_password").parent().addClass("has-warning").removeClass("has-success");
         }
     });
-    $("#id_password").timing({"destination": "#keystroke_timing_data"});
+    $("#id_password").timing({"destination": "#id_keystroke_timing_data", "disable_data": true });
     $("#keystroke_timing_form").ajaxForm(function() {
         $("#id_password").data("timing-reset", true);
         keystroke_samples = keystroke_samples + 1;

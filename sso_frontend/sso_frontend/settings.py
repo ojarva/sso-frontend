@@ -332,6 +332,14 @@ LOGGING = {
             'backupCount': 100,
             'formatter': 'standard',
         },
+        'logfile_audit': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': PROJECT_ROOT + "/logs/audit",
+            'maxBytes': 50000000,
+            'backupCount': 100,
+            'formatter': 'plain',
+        },
 
         'logfile_saml': {
             'level':'DEBUG',
@@ -387,7 +395,7 @@ LOGGING = {
             'formatter': 'standard',
         },
 
-	'logfile_p0f': {
+        'logfile_p0f': {
             'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/p0f_data",
@@ -446,6 +454,11 @@ LOGGING = {
           'handlers': ['logfile_timing'],
           'propagate': False,
           'level': 'DEBUG',
+        },
+        'audit': {
+          'handlers': ['logfile_audit'],
+          'propagate': True,
+          'level': 'INFO',
         },
         '': {
           'handlers': ['logfile_main'],

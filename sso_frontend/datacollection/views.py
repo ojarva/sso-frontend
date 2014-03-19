@@ -127,6 +127,6 @@ def index(request):
             ret["location_auto_enabled"] = True
     response = render_to_response("datacollection/index.html", ret, context_instance=RequestContext(request))
     if "location_auto_enabled" in ret:
-        response.set_cookie("ask_location", value="1", secure=settings.SECURE_COOKIES)
-    response.set_cookie("data_id", **{"value": data_id, "secure": settings.SECURE_COOKIES, "httponly": False})
+        response.set_cookie("ask_location", value="1", secure=settings.SECURE_COOKIES, max_age=86400*180)
+    response.set_cookie("data_id", value=data_id, secure=settings.SECURE_COOKIES, max_age=86400*180)
     return response
