@@ -31,9 +31,9 @@ urlpatterns = patterns('login_frontend.views',
 
     # timesync
     url(r'^timesync$', 'timesync'),
-    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))$', 'timesync'),
-    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))$', 'timesync'),
-    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>(.+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))/(?P<command>(.+))$', 'timesync'),
+    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>([-]\d+))/(?P<browser_time>(\d+))$', 'timesync'),
+    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>([-]\d+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))$', 'timesync'),
+    url(r'^timesync/(?P<browser_random>(\d+))/(?P<browser_timezone>([-]\d+))/(?P<browser_time>(\d+))/(?P<last_server_time>(\d+))/(?P<command>(.+))$', 'timesync'),
 )
 
 urlpatterns += patterns('login_frontend.authentication_views',
