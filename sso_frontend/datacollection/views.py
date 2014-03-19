@@ -134,6 +134,8 @@ def get_omni_response(request, ip, coords):
     if "location" in omni:
         c = omni["location"]
         if "latitude" in c and "longitude" in c:
+            ret["latitude"] = c["latitude"]
+            ret["longitude"] = c["longitude"]
             distance_km = distance_on_unit_sphere(c["latitude"], c["longitude"], coords["latitude"], coords["longitude"])
             ret["distance"] = round(distance_km)
             if "accuracy_radius" in c:
