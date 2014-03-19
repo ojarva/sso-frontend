@@ -28,7 +28,7 @@ function geolocation_error(error) {
 }
 
 var keystroke_samples = 0;
-var passwords = ["7013880", "ohsiF7ux", "futurice", "qwerty", "How is your day?", ".tie5Roanl", "This data is really useful!"];
+var passwords = ["ohsiF7ux", "qwerty", ".tie5Roanl", "7013880", "futurice", "How is your day?", ".tie5Roanl", "This data is really useful!"];
 var current_password = 0;
 var current_password_samples = 0;
 
