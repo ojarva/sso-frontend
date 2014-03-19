@@ -66,6 +66,9 @@ $(document).ready(function (){
         $("#password_choice").html(passwords[current_password]);
         $("#id_password_choice").val(passwords[current_password]);
         $("#maybe_change_password").addClass("hidden");
+        $("#id_password").val("");
+        $("#id_password").focus();
+
         return false;
     });
     $("#enable_location_sharing").click(function (){
@@ -91,6 +94,7 @@ $(document).ready(function (){
         if (current_password_samples > 9) {
             $("#maybe_change_password").removeClass("hidden");
         }
+        $("#id_password").focus();
     });
 
     $("#connection_type_form").ajaxForm(function() {
