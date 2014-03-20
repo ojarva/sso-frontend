@@ -169,9 +169,66 @@ def location(request):
     return response
 
 @require_http_methods(["POST"])
+def location_only(request):
+    location = request.POST.dict()
+    data_id = request.COOKIES.get("data_id")
+    if not data_id:
+        return HttpResponse("You must enable cookies before visiting this site")
+    if (all (k in location for k in ("longitude", "latitude", "accuracy"))):
+        data = {}
+        for k in ("longitude", "latitude", "altitude", "accuracy", "altitude_accuracy", "heading", "speed"):
+            try:
+                data[k] = float(location.get(k))
+            except ValueError:
+                data[k] = None
+        if hasattr(request, "browser") and request.browser:
+            data["bid_public"] = request.browser.bid_public
+            if request.browser.user:
+                data["user"] = request.browser.user.username
+        data["data_id"] = data_id
+        data["remote_ip"] = request.META.get("REMOTE_ADDR")
+        custom_log(request, "Recorded a new location_only: %s" % data, level="info")
+        response = HttpResponse("OK: this is your proof for finishing the task: <strong>%s</strong>" % data_id)
+        response.set_cookie("ask_location", value="1", secure=settings.SECURE_COOKIES)
+    else:
+        custom_log(request, "Missing mandatory fields: %s" % location)
+        response = HttpResponse("Invalid location data - your browser does not support this")
+    return response
+
+@require_http_methods(["POST"])
 def browser_details(request):
     custom_log(request, "Browser details: %s" % request.POST.dict())
     return HttpResponse("OK")
+
+@require_http_methods(["GET", "POST"])
+def index_location_only(request):
+    data_id = request.COOKIES.get("data_id")
+    ret = {}
+    if not data_id:
+        data_id = create_browser_uuid()
+        bid_public = None
+        if hasattr(request, "browser") and request.browser:
+            bid_public = request.browser.bid_public
+        custom_log(request, "Creating new data_id for location only: %s. bid_public=%s. UA=%s" % (data_id, bid_public, request.META.get("HTTP_USER_AGENT")), level="info")
+
+    try:
+        p0fapi = p0f.P0f(settings.P0F_SOCKET)
+        p0finfo = p0fapi.get_info(request.META.get("REMOTE_ADDR"))
+        ret["uptime"] = p0finfo.get("uptime")
+        custom_log(request, "p0f: %s" % p0finfo)
+    except:
+        custom_log(request, "p0f failed")
+    ret["data_id"] = data_id
+
+    if request.POST.get("connection_type"):
+        custom_log(request, "Connection type: %s" % request.POST.dict())
+        return HttpResponse("OK")
+
+    response = render_to_response("datacollection/index_location_only.html", ret, context_instance=RequestContext(request))
+    response.set_cookie("data_id", value=data_id, secure=settings.SECURE_COOKIES, max_age=86400*180)
+    return response
+
+
 
 @require_http_methods(["GET", "POST"])
 def index(request):
