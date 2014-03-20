@@ -10,7 +10,7 @@ function geolocation_success(coords) {
     data["altitude_accuracy"] = c.altitudeAccuracy;
     data["speed"] = c.speed;
     data["heading"] = c.heading;
-    $.post("/data/location", data, function (response_data) {
+    $.post("/data/location_post", data, function (response_data) {
         $("#location-geoip").html(response_data);
     });
 }
@@ -18,7 +18,7 @@ function geolocation_success(coords) {
 function geolocation_error(error) {
     $("#location-error").removeClass("hidden");
     $("#enable-location-btn").html('<i class="fa fa-meh-o"></i> An error occured');
-    $.post("/data/location", {"location": "error", "location-error": error.message, "location-code": error.code});
+    $.post("/data/location_post", {"location": "error", "location-error": error.message, "location-code": error.code});
     if (error.code == 1) {
         $("#location-error-message").html("Oops. Your browser reports you denied the access to location information. That is totally okay, just skip this step and continue to next one. If that was by a mistake, please change that preference from your browser settings and refresh this page.")
     } else if (error.code == 2) {
