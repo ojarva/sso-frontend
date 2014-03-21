@@ -111,12 +111,12 @@
     <dd>Keystroke timing does not include identifying information. It's not combined to any other data (like IP address or your location).</dd>
 </dl>
 
-<p>Enter <kbd id="password_choice">.tie5Roanl</kbd> (<a href="#" class="another_password">want to skip this and continue with next one?</a>) to the field below and press enter (or "Send") as many times as you want to - more is better. There's <span class="tooltip-link" title='"7013880", "ohsiF7ux", "futurice", "qwerty", "How is your day?", ".tie5Roanl", "This data is really useful!"'>7 different passwords</span> available - if you could enter each of those at least ten times, that would be really great!</p>
+<p>Enter <kbd id="password_choice">How is your day?</kbd> (<a href="#" class="another_password">want to skip this and continue with next one?</a>) to the field below and press enter (or "Send") as many times as you want to - more is better. There's <span class="tooltip-link" title='"7013880", "ohsiF7ux", "futurice", "qwerty", "How is your day?", ".tie5Roanl", "This data is really useful!"'>7 different passwords</span> available - if you could enter each of those at least ten times, that would be really great!</p>
 
 <form method="post" action="/data" id="keystroke_timing_form">
     {% csrf_token %}
     <input type="hidden" name="keystroke_timing_data" id="id_keystroke_timing_data">
-    <input type="hidden" name="password_choice" id="id_password_choice" value=".tie5Roanl">
+    <input type="hidden" name="password_choice" id="id_password_choice" value="How is your day?">
     <div class="form-group">
         <input type="text" class="form-control" name="password" id="id_password"  autocomplete="off">
     </div>
