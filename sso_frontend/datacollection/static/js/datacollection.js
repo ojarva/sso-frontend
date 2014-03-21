@@ -20,7 +20,7 @@ function geolocation_error(error) {
     $("#enable-location-btn").html('<i class="fa fa-meh-o"></i> An error occured');
     $.post("/data/location_post", {"location": "error", "location-error": error.message, "location-code": error.code});
     if (error.code == 1) {
-        $("#location-error-message").html("Oops. Your browser reports you denied the access to location information. That is totally okay, just skip this step and continue to next one. If that was by a mistake, please change that preference from your browser settings and refresh this page.")
+        $("#location-error-message").html("Oops. Your browser reports you denied the access to location information. That is totally okay, just skip this step and continue to next one. If that was by a mistake, please change that preference from your browser settings and refresh this page.");
     } else if (error.code == 2) {
         $("#location-error-message").html("Oops. Your browser is unable to locate you. This feature requires a device with wi-fi or GPS - it doesn't work on desktop computers. If you're using a laptop, try enabling wifi and refreshing this page. If you don't want to try to fix this, just continue to the next step.");
         if (error.message) {
@@ -30,7 +30,7 @@ function geolocation_error(error) {
 }
 
 var keystroke_samples = 0;
-var passwords = [".tie5Roanl", "qwerty", "ohsiF7ux", "How is your day?", "futurice", "7013880", "This data is really useful!"];
+var passwords = ["How is your day?", ".tie5Roanl", "futurice", "qwerty", "ohsiF7ux", "7013880", "This data is really useful!"];
 var current_password = 0;
 var current_password_samples = 0;
 
@@ -56,6 +56,7 @@ $(document).ready(function (){
         $("#no_location_available").removeClass("hidden");
         $("#share_location_span").addClass("hidden");
         $("#enable-location").addClass("hidden");
+        $.post("/data/location_post", {"location": "error", "location-error": "geolocation not supported"});
     }
     $(".another_password").click(function (){
         current_password += 1;
