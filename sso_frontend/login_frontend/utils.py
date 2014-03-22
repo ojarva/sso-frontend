@@ -84,6 +84,7 @@ LOCAL_URLS = {
     "/configure": "settings page",
     "/index": "index page",
     "/idp/login": "SAML login",
+    "/admin_": "admin UI",
 }
 
 
