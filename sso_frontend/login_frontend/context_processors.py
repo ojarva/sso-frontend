@@ -8,6 +8,11 @@ These overwrite
 - emulate_legacy
 - first_name
 - last_name
+- auth_status
+- vulnerability
+- ask_location
+
+from the context.
 """
 
 from django.conf import settings
@@ -16,8 +21,10 @@ from login_frontend.models import Browser
 from django.utils.functional import SimpleLazyObject
 from django_statsd.clients import statsd as sd
 from django.core.cache import get_cache
+from login_frontend.utils import get_return_url
 
 dcache = get_cache("default")
+bcache = get_cache("browsers")
 user_cache = get_cache("users")
 
 __all__ = ["add_misc_info", "add_user", "add_session_info"]
@@ -33,6 +40,13 @@ def add_misc_info(request):
         browser = request.browser
         ret["auth_status"] = browser.get_auth_state()
         ret["browser"] = browser
+        if not bcache.get("boomerang-done-%s" % browser.bid_public):
+            ret["boomerang"] = True
+
+    return_service = get_return_url(request)
+    if return_service:
+        ret["return_readable"] = return_service
+
 
     #should_timesync is not added here, as it is per-page property.
     #not all pages should start executing timesync.

@@ -1,10 +1,3 @@
-BOOMR.init({
-    beacon_url: "/report/navigation_timing",
-    BW: {
-        base_url: "/static/boomerang/images/"
-    }
-}).addVar('client', 'boomerang');
-
 function login_ping() {
  $.get("/ping/internal/js?"+ document.location.search, function(data) {
   if ("redirect_location" in data) {
