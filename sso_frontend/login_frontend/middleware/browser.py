@@ -216,7 +216,7 @@ class BrowserMiddleware(object):
             log.debug("Browser does not exist")
             return response
 
-        cookies = browser.get_cookies()
+        cookies = []
         if request.COOKIES.get(Browser.C_BID_SESSION) != browser.bid_session:
             # No valid session ID exists. Regen it first.
             browser.bid_session = create_browser_uuid()
