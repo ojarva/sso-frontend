@@ -199,6 +199,8 @@ class BrowserMiddleware(object):
     def process_response(self, request, response):
         """ Automatically adds session cookie if old one is not available. """
         response["Server"] = "https://github.com/ojarva/sso-frontend"
+        response["X-bidpublic"] = request.COOKIES.get(Browser.C_BID_PUBLIC, "none")
+
         if request.path.startswith("/csp-report") or request.path.startswith("/timesync"):
             log.debug("Browser from '%s' reporting CSP/timesync - skip process_response", request.remote_ip)
             sd.incr("login_frontend.middleware.BrowserMiddleware.process_response.skip", 1)
