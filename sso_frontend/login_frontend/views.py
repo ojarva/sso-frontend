@@ -22,6 +22,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
 from django_statsd.clients import statsd as sd
+from django_statsd.views import record as django_statsd_navigation_timing
 from login_frontend.authentication_views import protect_view
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
@@ -99,6 +100,12 @@ def main_redir(request):
         return redirect_with_get_params("login_frontend.providers.pubtkt", request.GET)
     return redirect_with_get_params("login_frontend.views.indexview", request.GET)
 
+
+@require_http_methods(["POST", "GET"])
+@ratelimit(rate='30/5s', ratekey='5s_timing', block=True, method=["POST"], keys=get_ratelimit_keys)
+def timing_report(request):
+    custom_log(request, "Logging request timing: %s - %s" % (time.time(), request.POST.dict()))
+    return django_statsd_navigation_timing(request)
 
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="5s_auth", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)

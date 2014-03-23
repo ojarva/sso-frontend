@@ -1,3 +1,10 @@
+BOOMR.init({
+    beacon_url: "/report/navigation_timing",
+    BW: {
+        base_url: "/static/boomerang/images/"
+    }
+}).addVar('client', 'boomerang');
+
 function login_ping() {
  $.get("/ping/internal/js?"+ document.location.search, function(data) {
   if ("redirect_location" in data) {
@@ -48,7 +55,7 @@ $.ajaxSetup({
 
 
 $(document).ready(function() {
- stick.send('/services/timing/record');
+ stick.send('/report/navigation_timing');
  refresh_timestamps();
  setInterval(refresh_timestamps, 3000);
  $(".popover-link").popover();
