@@ -51,7 +51,7 @@ you can still authenticate using SMS messages if needed.</p>
 <li>Scan this QR code and continue to next step below.</li>
 </ol>
 <p><img class="img-responsive" src="{% url 'login_frontend.views.get_authenticator_qr' authenticator_qr_nonce %}"></p>
-<p class="text-center"><i class="fa fa-sort-down"></i> After scanning, scroll down to the last step. <i class="fa fa-sort-down"></i></p>
+<p class="text-center"><i class="fa fa-angle-down"></i><i class="fa fa-angle-down"></i> After scanning, scroll down to the last step. <i class="fa fa-angle-down"></i><i class="fa fa-angle-down"></i></p>
 </div>
 
 
@@ -61,14 +61,14 @@ If you can't scan this code, you can setup Authenticator manually.
 </div>
 
 <div class="hidden manual-instructions">
-<p><strong>Use these instructions only if you can't scan QR code.</strong> <button data-open-class="manual-instructions" class="toggle btn btn-sm btn-info">Show barcode instructions</button></p>
+<p><strong>Use these instructions only if you can't scan QR code.</strong> <button data-open-class="manual-instructions" class="toggle btn btn-sm btn-primary">Go back to barcode instructions</button></p>
 </p>
 <ol>
 <li>In Authenticator, select <button class="btn btn-small btn-default" disabled="disabled">Begin Setup</button> and <button class="btn btn-small btn-default" disabled="disabled">Enter provided key</button></li>
 <li>To first field ("Enter account name"), enter "<kbd>{{ authenticator_id }}</kbd>"</li>
-<li>To second field ("Enter your key"), enter "<kbd>{{ authenticator_secret }}</kbd>"</li>
+<li>To second field ("Enter your key"), enter "<kbd>{{ authenticator_secret }}</kbd>". This must match exactly.</li>
 <li>Key type is "Time based"</li>
-<li>Click <button class="btn btn-small btn-default" disabled="disabled">Add</button> and continue to next step</li>
+<li>Click <button class="btn btn-small btn-default" disabled="disabled">Add</button> on Authenticator and scroll down to the last step on this page <i class="fa fa-angle-down"></i></li>
 </ol>
 </div>
 </div>

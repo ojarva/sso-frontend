@@ -107,13 +107,17 @@
 			<i class="fa fa-exclamation-triangle"></i>
 			You have generated Authenticater configuration, but haven't ever used it. If SMS delivery fails, <strong><span class="tooltip-link" title="Except if you have emergency codes available.">you can't sign in</span></strong>.
 		</div>
-		<p>If you already have Authenticator installed and configured, this is a false alarm. Please sign in once with it to get rid of this warning. Name of the Authenticator code should be "{{ authenticator_id }}".</p>
+		<p>If you have Authenticator installed, please enter the code below to validate it. The name of the Authenticator code should be "{{ authenticator_id }}".</p>
+		<form method="POST" action="{% url 'login_frontend.views.configure' %}?{{get_params }}">
+		{% csrf_token %}
+		<input id="id_otp" name="otp_code" type="tel" pattern="[0-9 ]*" autocomplete='off' placeholder="123456" />
+		<button class="btn btn-primary">Validate Authenticator installation</button>
+		</form>
 
-		<p>If you don't have Authenticator configured, please do so now:</p>
+
+		<p>If you don't have Authenticator configured, or the code does not match, please configure it now:</p>
 	{% else %}
-		<p><i class="fa fa-heart"></i> You have configured Authenticator. The name of the code should be "{{ authenticator_id }}".
-		If that does not match to what your Authenticator app says, you have to reconfigure it.</p>
-		<p>If you have lost the configuration, please configure Authenticator again:</p>
+		<p><i class="fa fa-heart"></i> You have successfully configured Authenticator. The name of the code should be "{{ authenticator_id }}". If that does not match what your Authenticator app says, please configure Authenticator again:</p>
 	{% endif %}
 
 	<form name="loginform" method="POST" action="{% url 'login_frontend.views.configure_authenticator' %}?{{ get_params }}">

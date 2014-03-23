@@ -585,6 +585,21 @@ def configure(request):
     ret["return_readable"] = get_return_url(request)
 
     if request.method == "POST":
+        if request.POST.get("otp_code"):
+            otp = request.POST.get("otp_code")
+            (status, message) = request.browser.user.validate_authenticator_code(otp, request)
+            if status:
+                # Correct OTP.
+                user.strong_configured = True
+                user.strong_authenticator_used = True
+                user.strong_skips_available = 0
+                user.save()
+                custom_log(request, "configure: validated Authenticator code", level="info")
+                add_user_log(request, "Successfully validated Authenticator configuration", "gear")
+                messages.success(request, "Successfully validated Authenticator configuration")
+            else:
+                if message:
+                    messages.warning(request, message)
         if request.POST.get("always_sms") == "on":
             add_user_log(request, "Switched to SMS authentication", "info")
             custom_log(request, "cstrong: Switched to SMS authentication", level="info")
