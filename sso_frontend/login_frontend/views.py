@@ -104,7 +104,17 @@ def main_redir(request):
 @require_http_methods(["POST", "GET"])
 @ratelimit(rate='30/5s', ratekey='5s_timing', block=True, method=["POST"], keys=get_ratelimit_keys)
 def timing_report(request):
-    custom_log(request, "Logging request timing: %s - %s" % (time.time(), request.POST.dict()))
+    if hasattr(request, "browser") and request.browser:
+        bid_public = request.browser.bid_public
+    else:
+        bid_public = None
+
+    if request.method == 'POST':
+        custom_log(request, "Logging request timing (POST): %s - %s" % (time.time(), request.POST.dict()))
+    else:
+        if request.GET.get("client") == "boomerang" and bid_public:
+            bcache.set("boomerang-done-%s" % bid_public, time.time(), 3600)
+        custom_log(request, "Logging request timing (GET): %s - %s" % (time.time(), request.GET.dict()))
     return django_statsd_navigation_timing(request)
 
 @require_http_methods(["GET", "POST"])

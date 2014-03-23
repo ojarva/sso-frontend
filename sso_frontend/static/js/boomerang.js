@@ -100,92 +100,6 @@ boomr = {
 
 	// Utility functions
 	utils: {
-		getCookie: function(name) {
-			if(!name) {
-				return null;
-			}
-
-			name = ' ' + name + '=';
-
-			var i, cookies;
-			cookies = ' ' + d.cookie + ';';
-			if ( (i=cookies.indexOf(name)) >= 0 ) {
-				i += name.length;
-				cookies = cookies.substring(i, cookies.indexOf(';', i));
-				return cookies;
-			}
-
-			return null;
-		},
-
-		setCookie: function(name, subcookies, max_age, path, domain, sec) {
-			var value = "",
-			    k, nameval, c,
-			    exp = "";
-
-			if(!name) {
-				return false;
-			}
-
-			for(k in subcookies) {
-				if(subcookies.hasOwnProperty(k)) {
-					value += '&' + encodeURIComponent(k)
-							+ '=' + encodeURIComponent(subcookies[k]);
-				}
-			}
-			value = value.replace(/^&/, '');
-
-			if(max_age) {
-				exp = new Date();
-				exp.setTime(exp.getTime() + max_age*1000);
-				exp = exp.toGMTString();
-			}
-
-			nameval = name + '=' + value;
-			c = nameval +
-				((max_age) ? "; expires=" + exp : "" ) +
-				((path) ? "; path=" + path : "") +
-				((typeof domain !== "undefined") ? "; domain="
-						+ (domain !== null ? domain : impl.site_domain ) : "") +
-				((sec) ? "; secure" : "");
-
-			if ( nameval.length < 4000 ) {
-				d.cookie = c;
-				// confirm cookie was set (could be blocked by user's settings, etc.)
-				return ( value === this.getCookie(name) );
-			}
-
-			return false;
-		},
-
-		getSubCookies: function(cookie) {
-			var cookies_a,
-			    i, l, kv,
-			    cookies={};
-
-			if(!cookie) {
-				return null;
-			}
-
-			cookies_a = cookie.split('&');
-
-			if(cookies_a.length === 0) {
-				return null;
-			}
-
-			for(i=0, l=cookies_a.length; i<l; i++) {
-				kv = cookies_a[i].split('=');
-				kv.push("");	// just in case there's no value
-				cookies[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1]);
-			}
-
-			return cookies;
-		},
-
-		removeCookie: function(name) {
-			return this.setCookie(name, {}, 0, "/", null);
-		},
-
 		pluginConfig: function(o, config, plugin_name, properties) {
 			var i, props=0;
 
@@ -429,9 +343,6 @@ var make_logger = function(l) {
 	};
 };
 
-boomr.debug = make_logger("debug");
-boomr.info = make_logger("info");
-boomr.warn = make_logger("warn");
 boomr.error = make_logger("error");
 
 if(w.YAHOO && w.YAHOO.widget && w.YAHOO.widget.Logger) {
@@ -489,35 +400,6 @@ var impl = {
 	// of the BOOMR.plugins.RT object
 	start: function() {
 		var t_end, t_start = new Date().getTime();
-
-		// Disable use of RT cookie by setting its name to a falsy value
-		if(!this.cookie) {
-			return this;
-		}
-
-		// We use document.URL instead of location.href because of a bug in safari 4
-		// where location.href is URL decoded
-		if(!BOOMR.utils.setCookie(this.cookie,
-						{ s: t_start, r: d.URL.replace(/#.*/, '') },
-						this.cookie_exp,
-						"/", null)
-		) {
-			BOOMR.error("cannot set start cookie", "rt");
-			return this;
-		}
-
-		t_end = new Date().getTime();
-		if(t_end - t_start > 50) {
-			// It took > 50ms to set the cookie
-			// The user Most likely has cookie prompting turned on so
-			// t_start won't be the actual unload time
-			// We bail at this point since we can't reliably tell t_done
-			BOOMR.utils.removeCookie(this.cookie);
-
-			// at some point we may want to log this info on the server side
-			BOOMR.error("took more than 50ms to set cookie... aborting: "
-					+ t_start + " -> " + t_end, "rt");
-		}
 
 		return this;
 	},
@@ -577,7 +459,6 @@ var impl = {
 			}
 		}
 		else {
-			BOOMR.warn("This browser doesn't support the WebTiming API", "rt");
 		}
 
 		return;
@@ -709,19 +590,6 @@ BOOMR.plugins.RT = {
 
 		r = r2 = d.referrer.replace(/#.*/, '');
 
-		// If impl.cookie is not set, the dev does not want to use cookie time
-		if(impl.cookie) {
-			subcookies = BOOMR.utils.getSubCookies(BOOMR.utils.getCookie(impl.cookie));
-			BOOMR.utils.removeCookie(impl.cookie);
-
-			if(subcookies && subcookies.s && subcookies.r) {
-				r = subcookies.r;
-				if(!impl.strict_referrer || r === r2) {
-					t_start = parseInt(subcookies.s, 10);
-				}
-			}
-		}
-
 		if(t_start && impl.navigationType != 2) {	// 2 is TYPE_BACK_FORWARD but the constant may not be defined across browsers
 			BOOMR.addVar("rt.start", "cookie");	// if the user hit the back button, referrer will match, and cookie will match
 		}						// but will have time of previous page start, so t_done will be wrong
@@ -818,9 +686,7 @@ var images=[
 	{ name: "image-1.png", size: 40658, timeout: 1200 },
 	{ name: "image-2.png", size: 164897, timeout: 1300 },
 	{ name: "image-3.png", size: 381756, timeout: 1500 },
-	{ name: "image-4.png", size: 1234664, timeout: 1200 },
-	{ name: "image-5.png", size: 4509613, timeout: 1200 },
-	{ name: "image-6.png", size: 9084559, timeout: 1200 }
+	{ name: "image-4.png", size: 1234664, timeout: 1200 }
 ];
 
 images.end = images.length;
@@ -891,7 +757,6 @@ var impl = {
 		lat_filtered = this.iqr(this.latencies.sort(this.ncmp));
 		n = lat_filtered.length;
 
-		BOOMR.debug(lat_filtered, "bw");
 
 		// First we get the arithmetic mean, standard deviation and standard error
 		// We ignore the first since it paid the price of DNS lookup, TCP connect
@@ -963,10 +828,6 @@ var impl = {
 			}
 		}
 
-		BOOMR.debug('got ' + n + ' readings', "bw");
-
-		BOOMR.debug('bandwidths: ' + bandwidths, "bw");
-		BOOMR.debug('corrected: ' + bandwidths_corrected, "bw");
 
 		// First do IQR filtering since we use the median here
 		// and should use the stddev after filtering.
@@ -977,9 +838,6 @@ var impl = {
 			bandwidths = bandwidths.sort(this.ncmp);
 			bandwidths_corrected = bandwidths_corrected.sort(this.ncmp);
 		}
-
-		BOOMR.debug('after iqr: ' + bandwidths, "bw");
-		BOOMR.debug('corrected: ' + bandwidths_corrected, "bw");
 
 		// Now get the mean & median.
 		// Also get corrected values that eliminate latency
@@ -1019,10 +877,6 @@ var impl = {
 						+ bandwidths_corrected[Math.ceil(n/2)]
 					) / 2
 				);
-
-		BOOMR.debug('amean: ' + amean + ', median: ' + median, "bw");
-		BOOMR.debug('corrected amean: ' + amean_corrected + ', '
-				+ 'median: ' + median_corrected, "bw");
 
 		return {
 			mean: amean,
@@ -1139,7 +993,6 @@ var impl = {
 		if(i >= images.end-1
 			|| typeof this.results[this.nruns-run].r[i+1] !== "undefined"
 		) {
-			BOOMR.debug(this.results[this.nruns-run], "bw");
 			// First run is a pilot test to decide what the largest image
 			// that we can download is. All following runs only try to
 			// download this image
@@ -1168,24 +1021,6 @@ var impl = {
 
 		BOOMR.addVar(o);
 
-		// If we have an IP address we can make the BA cookie persistent for a while
-		// because we'll recalculate it if necessary (when the user's IP changes).
-		if(!isNaN(o.bw)) {
-			BOOMR.utils.setCookie(this.cookie,
-						{
-							ba: Math.round(o.bw),
-							be: o.bw_err,
-							l:  o.lat,
-							le: o.lat_err,
-							ip: this.user_ip,
-							t:  o.bw_time
-						},
-						(this.user_ip ? this.cookie_exp : 0),
-						"/",
-						null
-				);
-		}
-
 		this.complete = true;
 		BOOMR.sendBeacon();
 		this.running = false;
@@ -1207,38 +1042,6 @@ var impl = {
 			this.results.push({r:[]});
 			this.load_img(images.start, this.runs_left--, this.img_loaded);
 		}
-	},
-
-	setVarsFromCookie: function(cookies) {
-		var ba = parseInt(cookies.ba, 10),
-		    bw_e = parseFloat(cookies.be, 10),
-		    lat = parseInt(cookies.l, 10) || 0,
-		    lat_e = parseFloat(cookies.le, 10) || 0,
-		    c_sn = cookies.ip.replace(/\.\d+$/, '0'),	// Note this is IPv4 only
-		    t = parseInt(cookies.t, 10),
-		    p_sn = this.user_ip.replace(/\.\d+$/, '0'),
-
-		// We use the subnet instead of the IP address because some people
-		// on DHCP with the same ISP may get different IPs on the same subnet
-		// every time they log in
-
-		    t_now = Math.round((new Date().getTime())/1000);	// seconds
-
-		// If the subnet changes or the cookie is more than 7 days old,
-		// then we recheck the bandwidth, else we just use what's in the cookie
-		if(c_sn === p_sn && t >= t_now - this.cookie_exp) {
-			this.complete = true;
-			BOOMR.addVar({
-				'bw': ba,
-				'lat': lat,
-				'bw_err': bw_e,
-				'lat_err': lat_e
-			});
-
-			return true;
-		}
-
-		return false;
 	}
 
 };
@@ -1265,29 +1068,12 @@ BOOMR.plugins.BW = {
 
 		BOOMR.removeVar('ba', 'ba_err', 'lat', 'lat_err');
 
-		cookies = BOOMR.utils.getSubCookies(BOOMR.utils.getCookie(impl.cookie));
-
-		if(!cookies || !cookies.ba || !impl.setVarsFromCookie(cookies)) {
-			BOOMR.subscribe("page_ready", this.run, null, this);
-		}
-
+		BOOMR.subscribe("page_ready", this.run, null, this);
 		return this;
 	},
 
 	run: function() {
 		if(impl.running || impl.complete) {
-			return this;
-		}
-
-		if(w.location.protocol === 'https:') {
-			// we don't run the test for https because SSL stuff will mess up b/w
-			// calculations we could run the test itself over HTTP, but then IE
-			// will complain about insecure resources, so the best is to just bail
-			// and hope that the user gets the cookie from some other page
-
-			BOOMR.info("HTTPS detected, skipping bandwidth test", "bw");
-			impl.complete = true;
-			BOOMR.sendBeacon();
 			return this;
 		}
 
@@ -1345,7 +1131,6 @@ var impl = {
 		var p, pn, pt, data;
 		p = w.performance || w.msPerformance || w.webkitPerformance || w.mozPerformance;
 		if(p && p.timing && p.navigation) {
-			BOOMR.info("This user agent supports NavigationTiming.", "nt");
 			pn = w.performance.navigation;
 			pt = w.performance.timing;
 			data = {
