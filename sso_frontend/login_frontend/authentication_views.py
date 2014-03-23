@@ -21,7 +21,7 @@ from django_statsd.clients import statsd as sd
 from login_frontend.emails import new_device_notify, emergency_used_notify
 from login_frontend.models import *
 from login_frontend.send_sms import send_sms
-from login_frontend.utils import save_timing_data, redirect_with_get_params, redir_to_sso, get_return_url, map_username
+from login_frontend.utils import save_timing_data, redirect_with_get_params, redir_to_sso, map_username
 from ratelimit.decorators import ratelimit
 from ratelimit.helpers import is_ratelimited
 import datetime
@@ -177,8 +177,6 @@ def authenticate_with_password(request):
     ret = {}
     cookies = []
     browser = None
-
-    ret["return_readable"] = get_return_url(request)
 
     if request.browser is None:
         # No Browser object is initialized. Create one.
@@ -481,7 +479,6 @@ def authenticate_with_authenticator(request):
     ret = {}
     user = request.browser.user
     assert user != None, "Browser is authenticated but no User object exists."
-    ret["return_readable"] = get_return_url(request)
 
     skips_available = user.strong_skips_available
     ret["skips_available"] = skips_available
@@ -643,7 +640,6 @@ def authenticate_with_sms(request):
 
     skips_available = user.strong_skips_available
     ret["skips_available"] = skips_available
-    ret["return_readable"] = get_return_url(request)
 
     if request.method == "POST" and request.POST.get("skip"):
         if skips_available > 0:
@@ -909,7 +905,6 @@ def authenticate_with_emergency(request):
             ret["invalid_otp"] = True
 
     ret["generated_at"] = str(codes.generated_at)
-    ret["return_readable"] = get_return_url(request)
     ret["should_timesync"] = request.browser.should_timesync()
     ret["get_params"] = urllib.urlencode(get_params)
     ret["emergency_code_id"] = codes.current_code.code_id

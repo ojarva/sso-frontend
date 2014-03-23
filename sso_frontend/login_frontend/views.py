@@ -27,7 +27,7 @@ from login_frontend.authentication_views import protect_view
 from login_frontend.models import *
 from login_frontend.providers import pubtkt_logout
 from login_frontend.emails import new_authenticator_notify, new_emergency_generated_notify
-from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name, store_location_caching, get_return_url, get_ratelimit_keys
+from login_frontend.utils import get_geoip_string, redirect_with_get_params, redir_to_sso, paginate, check_browser_name, store_location_caching, get_ratelimit_keys
 from ratelimit.decorators import ratelimit
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
@@ -428,7 +428,7 @@ def sessions(request):
         except BrowserTime.DoesNotExist:
             pass
 
-        logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(Q(expires_at__gte=timezone.now()) | Q(expires_at=None))
+        logins = BrowserLogin.objects.filter(user=user, browser=browser).filter(can_logout=False).filter(signed_out=False).filter(Q(expires_at__gte=timezone.now()) | Q(expires_at=None)).filter(expires_at__lte=timezone.now()+datetime.timedelta(days=30))
         details["logins"] = logins
         cache_keys = [("last_known_location", "last-known-location-%s"), ("last_known_location_from", "last-known-location-from-%s"), ("last_known_location_timestamp", "last-known-location-timestamp-%s")]
         for tk, k in cache_keys:
@@ -599,7 +599,6 @@ def configure(request):
     back_url = redir_to_sso(request, no_default=True)
     if back_url:
         ret["back_url"] = back_url.url
-    ret["return_readable"] = get_return_url(request)
 
     if request.method == "POST":
         if request.POST.get("otp_code"):
