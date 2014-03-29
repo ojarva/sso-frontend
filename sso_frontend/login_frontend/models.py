@@ -934,7 +934,10 @@ class User(models.Model):
         self.strong_authenticator_secret = None
         self.strong_authenticator_generated_at = None
         self.strong_authenticator_used = False
-        EmergencyCodes.objects.get(user=self).delete()
+        try:
+            EmergencyCodes.objects.get(user=self).delete()
+        except EmergencyCodes.DoesNotExist:
+            pass
         self.save()
 
     @sd.timer("login_frontend.models.User.gen_authenticator")
