@@ -293,6 +293,7 @@ def authenticate_with_password(request):
                     custom_log(request, "1f: only basic authentication was required. Upgrade directly to L_STRONG and S_AUTHENTICATED")
                     browser.set_auth_level(Browser.L_STRONG)
                     browser.set_auth_state(Browser.S_AUTHENTICATED)
+                    browser.auth_state_changed()
                 else:
                     # Continue to strong authentication
                     custom_log(request, "1f: set L_BASIC and S_REQUEST_STRONG")
