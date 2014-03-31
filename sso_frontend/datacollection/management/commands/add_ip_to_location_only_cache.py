@@ -7,4 +7,4 @@ class Command(BaseCommand): # pragma: no cover
 
     def handle(self, *args, **options):
         for ip in args:
-            dcache.set("location-only-%s" ip, True, 86400 * 60)
+            dcache.set("location-only-%s" % ip, True, 86400 * 60)
