@@ -17,7 +17,9 @@
 
 <h1 class="page-header">Record your location</h1>
 
-
+{% if already_participated %}
+    <div class="alert alert-danger">You or someone from the same location have already participated. You can't finish this task.</div>
+{% else %}
 <div id="enable-location">
 
     <div class="hidden" id="location-error">
@@ -40,6 +42,7 @@
     </div>
 </div>
 
+{% endif %}
 
 <form id="browser_details_form" class="hidden" method="post" action="/data/browser_details">
     {% csrf_token %}

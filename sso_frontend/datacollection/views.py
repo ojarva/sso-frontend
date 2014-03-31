@@ -224,6 +224,9 @@ def index_location_only(request):
         custom_log(request, "Connection type: %s" % request.POST.dict())
         return HttpResponse("OK")
 
+    if dcache.get("location-only-%s" % request.META.get("REMOTE_ADDR")):
+        ret["already_participated"] = True
+
     response = render_to_response("datacollection/index_location_only.html", ret, context_instance=RequestContext(request))
     response.set_cookie("data_id", value=data_id, secure=settings.SECURE_COOKIES, max_age=86400*180)
     return response
