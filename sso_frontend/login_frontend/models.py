@@ -112,10 +112,10 @@ class EmergencyCodes(models.Model):
 
     def delete(self, *args, **kwargs):
         # Delete cached emergency code status
-        super(EmergencyCodes, self).delete( *args, **kwargs)
         user_cache.set("%s-emergency-codes-valid" % self.user.username, False, 7*86400)
         dcache.delete("runstats-stats.models.EmergencyCodes.total")
         dcache.delete("runstats-stats.models.EmergencyCodes.total_valid")
+        super(EmergencyCodes, self).delete( *args, **kwargs)
 
     @sd.timer("login_frontend.models.EmergencyCodes.revoke_codes")
     def revoke_codes(self):
@@ -286,7 +286,7 @@ class Browser(models.Model):
             last_sync = BrowserTime.objects.filter(browser=self).latest()
         except BrowserTime.DoesNotExist:
             return True
-        if timezone.now() - last_sync.checked_at > datetime.timedelta(hours=12):
+        if timezone.now() - last_sync.checked_at > datetime.timedelta(hours=1):
             return True
         return False
 
