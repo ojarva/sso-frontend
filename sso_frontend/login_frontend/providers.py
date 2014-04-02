@@ -198,6 +198,7 @@ def pubtkt(request):
             if not created:
                 obj.access_count += 1
                 obj.save()
+        ret["should_timesync"] = browser.should_timesync()
         response = render_to_response("login_frontend/html_redirect.html", ret, context_instance=RequestContext(request))
 
         # Add/update BrowserLogin
