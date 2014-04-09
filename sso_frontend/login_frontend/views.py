@@ -693,7 +693,7 @@ def get_authenticator_qr(request, **kwargs):
 
     totp = pyotp.TOTP(request.browser.user.strong_authenticator_secret)
     qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=20, border=0)
-    qr.add_data(totp.provisioning_uri(request.browser.user.strong_authenticator_id))
+    qr.add_data(totp.provisioning_uri(request.browser.user.strong_authenticator_id, "Futurice"))
     img = qr.make_image()
     stringio = StringIO()
     img.save(stringio)
