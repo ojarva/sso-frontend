@@ -15,7 +15,7 @@ class LocationMiddleware(object):
                 return
             if browser.user.location_authorized:
                 request.ask_location = True
-                return
+            return
         if bcache.get("location-authorized-for-%s" % browser.bid_public):
             request.ask_location = True
             return
