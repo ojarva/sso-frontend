@@ -22,6 +22,9 @@ from django.utils.functional import SimpleLazyObject
 from django_statsd.clients import statsd as sd
 from django.core.cache import get_cache
 from login_frontend.utils import get_return_url
+import logging
+
+logger = logging.getLogger(__name__)
 
 dcache = get_cache("default")
 bcache = get_cache("browsers")
@@ -32,6 +35,7 @@ __all__ = ["add_misc_info", "add_user", "add_session_info"]
 def add_misc_info(request):
     ret = {}
     ret["admin_email"] = settings.ADMIN_CONTACT_EMAIL
+    ret["dnt"] = None
     if hasattr(request, "vulnerability"):
         ret["vulnerability"] = request.vulnerability
     if hasattr(request, "ask_location"):
@@ -42,6 +46,12 @@ def add_misc_info(request):
         ret["browser"] = browser
         if not bcache.get("boomerang-done-%s" % browser.bid_public):
             ret["boomerang"] = True
+    if 'HTTP_DNT' in request.META and request.META['HTTP_DNT'] == '1':
+        ret["dnt"] = True
+        if hasattr(request, "browser") and request.browser:
+            logger.info("DNT enabled for %s", request.browser.bid_public)
+            if bcache.get("dnt-ok-%s" % request.browser.bid_public):
+                ret["dnt"] = False
 
     return_service = get_return_url(request)
     if return_service:
