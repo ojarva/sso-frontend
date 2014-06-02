@@ -18,7 +18,7 @@
 <h1 class="page-header">Record your location</h1>
 
 {% if already_participated %}
-    <div class="alert alert-danger">You or someone from the same location have already participated. You can't finish this task.</div>
+    <div class="alert alert-danger">Sorry, but you or someone else from (almost) same location already participated. This error message is not a bug. You can't finish this task. Do not provide incorrect proof - every submission is manually checked, and invalid ones are always rejected.</div>
 {% else %}
 <div id="enable-location">
 
@@ -33,7 +33,7 @@
 </div>
 
 <div id="no_location_available" class="hidden">
-    <div class="alert alert-danger">Your browser does not support geolocation API. You can't finish this task.</div>
+    <div class="alert alert-danger">Your browser does not support geolocation API. You can't finish this task. You can try again with newer browser. Also, try enabling javascript, if you have it disabled.</div>
 </div>
 
 <div id="enable-location-thanks" class="hidden">

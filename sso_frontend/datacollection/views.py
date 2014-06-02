@@ -26,6 +26,7 @@ from ratelimit.decorators import ratelimit
 import datetime
 import json
 import logging
+import countries
 import math
 import os
 import simplekml
@@ -41,6 +42,7 @@ import urlparse
 import p0f
 import math
 from maxmind import get_omni_data
+from login_frontend.utils import geo
 
 dcache = get_cache("default")
 
@@ -188,7 +190,21 @@ def location_only(request):
         data["data_id"] = data_id
         data["remote_ip"] = request.META.get("REMOTE_ADDR")
         custom_log(request, "Recorded a new location_only: %s" % data, level="info")
-        response = HttpResponse("OK: this is your proof for finishing the task: <strong>%s</strong>" % data_id)
+        data_id_resp = "%s%s" % (datetime.date.today().day, data_id)
+        try:
+            if float(data["accuracy"]) > 25000:
+                return HttpResponse("Sorry! Your browser doesn't provide accurate enough information. You can't complete this task with your device.")
+        except:
+            pass
+        response = HttpResponse("OK: this is your proof for finishing the task: <strong>%s</strong>" % data_id_resp)
+        try:
+            cc = countries.CountryChecker(settings.PROJECT_ROOT+'data/TM_WORLD_BORDERS-0.3.shp')
+            d = cc.getCountry(countries.Point(data["latitude"], data["longitude"]))
+            if d.iso in ("NP", "IN", "BD", "PK", "MA"):
+                custom_log(request, "User location is %s, which is banned." % d.iso)
+                response = HttpResponse("Fail: you may not use proxy for this task. Your country is %s, which does not match to what you reported." % d)
+        except:
+            pass
         response.set_cookie("ask_location", value="1", secure=settings.SECURE_COOKIES)
     else:
         custom_log(request, "Missing mandatory fields: %s" % location)
@@ -225,7 +241,14 @@ def index_location_only(request):
         return HttpResponse("OK")
 
     if dcache.get("location-only-%s" % request.META.get("REMOTE_ADDR")):
+        custom_log(request, "IP %s has already participated. Show error message." % (request.META.get("REMOTE_ADDR")))
         ret["already_participated"] = True
+    try:
+     d = geo.city(request.META.get("REMOTE_ADDR"))
+     if d.country.iso_code in ("NP", "IN", "BD", "PK", "MA"):
+        ret["already_participated"] = True
+    except:
+     pass
 
     response = render_to_response("datacollection/index_location_only.html", ret, context_instance=RequestContext(request))
     response.set_cookie("data_id", value=data_id, secure=settings.SECURE_COOKIES, max_age=86400*180)
