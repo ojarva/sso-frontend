@@ -24,6 +24,7 @@ from login_frontend.send_sms import send_sms
 from login_frontend.utils import save_timing_data, redirect_with_get_params, redir_to_sso, map_username
 from ratelimit.decorators import ratelimit
 from ratelimit.helpers import is_ratelimited
+from validate_yubikey import *
 import datetime
 import json
 import logging
@@ -155,6 +156,25 @@ def protect_view(current_step, **main_kwargs):
         return inner
     return wrap
 
+
+
+def validate_yubikey(user, input):
+    """ Validates yubico OTP """
+    if not (user.yubikey_internal_uid and user.yubikey_public_uid and user.yubikey_secret):
+        return (False, "No Yubikey configured")
+    validator = YubikeyValidate()
+    try:
+        (internalcounter, timestamp) = validator.validate(input, user.yubikey_public_uid, user.yubikey_internal_uid, user.yubikey_secret, user.yubikey_last_id, user.yubikey_last_timestamp)
+    except BadOtpException:
+        return (False, False)
+    except (ReplayedOtpException, DelayedOtpException):
+        return (False, "This OTP was already used. Do not store Yubikey OTPs.")
+    except IncorrectOtpException:
+        return (False, "This is not your Yubikey.")
+    user.yubikey_last_id = internalcounter
+    user.yubikey_last_timestamp = timestamp
+    user.save()
+    return (True, False)
 
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='80/5s', ratekey="2s", block=True, method=["POST", "GET"])
@@ -557,6 +577,14 @@ def authenticate_with_authenticator(request):
                 # If authenticator code did not match, also try latest SMS (if available).
                 custom_log(request, "2f-auth: Authenticator code did not match. Testing SMS", level="info")
                 status, _ = request.browser.validate_sms(otp)
+
+            if not status:
+                # If neither SMS or Authenticator matched, test Yubikey.
+                custom_log(request, "2f-auth: OTP from SMS/Authenticator did not match. Try Yubikey.", level="info")
+                (status, yubikey_message) = validate_yubikey(user, otp)
+                if yubikey_message:
+                    message = yubikey_message
+
             if status:
                 request.browser.twostep_last_entered_at = timezone.now()
                 if browser_name and browser_name != request.browser.name:
@@ -718,6 +746,13 @@ def authenticate_with_sms(request):
                 # If OTP from SMS did not match, also test for Authenticator OTP.
                 custom_log(request, "2f-sms: OTP from SMS did not match, testing Authenticator", level="info")
                 (status, _) = request.browser.user.validate_authenticator_code(otp, request)
+
+            if not status:
+                # If neither SMS or Authenticator matched, test Yubikey.
+                custom_log(request, "2f-sms: OTP from SMS/Authenticator did not match. Try Yubikey.", level="info")
+                (status, yubikey_message) = validate_yubikey(user, otp)
+                if yubikey_message:
+                    message = yubikey_message
 
             if status:
                 request.browser.twostep_last_entered_at = timezone.now()

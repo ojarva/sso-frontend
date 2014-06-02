@@ -90,7 +90,7 @@
   <div class="form-group control-group">
     <label for="id_otp" class="control-label">One-time password (<span class="onlybefore" data-timestamp="{{ sms_valid_until }}">Expires {% include "snippets/timestamp.html" with timestamp=sms_valid_until %}</span>
 <span class="onlyafter hidden" data-timestamp="{{ sms_valid_until }}">expired. <a href="?{{ get_params }}">Request a new code</a></span>)</label>
-    <input class="form-control autofocus track_content" id="id_otp" placeholder="1234567" title="You should enter 7-digit one-time password from SMS." name="otp" type="tel" data-len="6-7" pattern="[0-9]{6,7}" autocomplete='off' />
+    <input class="form-control autofocus track_content" id="id_otp" placeholder="1234567" title="You should enter 7-digit one-time password from SMS." name="otp" type="tel" data-len="6-48" pattern="([0-9]{6,7}|[cbdefghijklnrtuv]{32,48})" autocomplete='off' />
     <span class="glyphicon form-control-feedback"></span>
   </div>
   <div class="form-group">

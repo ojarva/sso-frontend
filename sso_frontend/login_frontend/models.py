@@ -854,6 +854,14 @@ class User(models.Model):
 
     strong_skips_available = models.IntegerField(default=0)
 
+    # UID and secret must be unique - multiple users should never use the same keys.
+    yubikey_public_uid = models.CharField(max_length=16, null=True, blank=True, unique=True)
+    yubikey_internal_uid = models.CharField(max_length=16, null=True, blank=True, unique=True)
+    yubikey_secret = models.CharField(max_length=52, null=True, blank=True, unique=True)
+    yubikey_last_id = models.IntegerField(default=0)
+    yubikey_last_temp_id = models.IntegerField(default=0)
+    yubikey_last_timestamp = models.IntegerField(default=0)
+
     # If this is True, no strong authentication is required, and login is valid only for 12 hours
     emulate_legacy = models.BooleanField(default=False)
 
