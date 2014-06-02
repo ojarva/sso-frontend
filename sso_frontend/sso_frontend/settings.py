@@ -326,7 +326,7 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler'
         },
         'logfile_main': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/main",
             'maxBytes': 50000000,
@@ -343,7 +343,7 @@ LOGGING = {
         },
 
         'logfile_saml': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/saml",
             'maxBytes': 50000000,
@@ -352,7 +352,7 @@ LOGGING = {
         },
 
         'logfile_openid': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/openid",
             'maxBytes': 50000000,
@@ -361,7 +361,7 @@ LOGGING = {
         },
 
         'logfile_users': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/users",
             'maxBytes': 50000000,
@@ -370,7 +370,7 @@ LOGGING = {
         },
 
         'logfile_django': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/django",
             'maxBytes': 50000000,
@@ -379,7 +379,7 @@ LOGGING = {
         },
 
         'logfile_errors': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/errors",
             'maxBytes': 50000000,
@@ -388,7 +388,7 @@ LOGGING = {
         },
 
         'logfile_timing': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': PROJECT_ROOT + "/logs/timing",
             'maxBytes': 500000000,
@@ -439,22 +439,22 @@ LOGGING = {
         'users': {
           'handlers': ['logfile_users'],
           'propagate': True,
-          'level': 'DEBUG',
+          'level': 'INFO',
         },
         'openid_provider': {
           'handlers': ['logfile_openid'],
           'propagate': True,
-          'level': 'DEBUG',
+          'level': 'INFO',
         },
         'saml2idp': {
           'handlers': ['logfile_saml'],
           'propagate': True,
-          'level': 'DEBUG',
+          'level': 'INFO',
         },
         'timing_data': {
           'handlers': ['logfile_timing'],
           'propagate': False,
-          'level': 'DEBUG',
+          'level': 'INFO',
         },
         'audit': {
           'handlers': ['logfile_audit'],
@@ -464,7 +464,7 @@ LOGGING = {
         '': {
           'handlers': ['logfile_main'],
           'propagate': True,
-          'level': 'DEBUG',
+          'level': 'INFO',
         },
     }
 }
