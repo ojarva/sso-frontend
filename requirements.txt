@@ -1,3 +1,6 @@
+countries
+django-debug-toolbar
+html2text
 django-statsd-mozilla
 statsd
 p0f
