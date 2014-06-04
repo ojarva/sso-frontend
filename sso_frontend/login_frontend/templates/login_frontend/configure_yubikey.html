@@ -1,0 +1,62 @@
+{% extends "login_frontend/base.html" %}
+
+{% block title %}Configure Yubikey - {% endblock %}
+{% block content %}
+
+<h2>Configure Yubikey</h2>
+
+<div class="panel panel-info">
+<div class="panel-heading">
+ <h3 class="panel-title">What is Yubikey?</h3>
+</div>
+<div class="panel-body">
+
+<p>Yubikey is a small hardware token that generates one-time passwords.</p>
+
+<dl>
+<dt>Why?</dt>
+<dd>Faster, easier, probably even more secure.</dd>
+<dt>How do I use Yubikey?</dt>
+<dd>When this service asks for strong authentication (either Authenticator or SMS authentication), just touch the Yubikey, and it will enter one-time password for you. There is no separate view for this.</dd>
+<dt>How can I get one?</dt>
+<dd>Ask from IT team</dd>
+<dt>What should I do if I lose my Yubikey?</dd>
+<dd><form method="POST" action="{% url 'login_frontend.views.configure_yubikey' %}?{{get_params }}">
+{% csrf_token %}
+<input type="hidden" name="revoke-yubikey" value="true">
+<button class="btn btn-danger btn-sm">Revoke your key</button>
+</form></dd>
+<dt>Can I still use Authenticator?</dt>
+<dd>Yes, you can.</dd>
+<dt>Can I use my own Yubikey?</dt>
+<dd>Yes, but you must dedicate one slot for this service. IT team will configure it for you.</dd>
+<dt>Why I have to enter password with Yubikey?</dt>
+<dd>Password is something only you know. If the Yubikey is stolen/lost, that alone does not allow signing in to your account.</dd>
+</dl>
+
+</div>
+</div>
+
+<div class="panel panel-info">
+<div class="panel-heading">
+	<h3 class="panel-title">Yubikey setup</h3>
+</div>
+<div class="panel-body">
+
+<p>Focus this field (when signing in normally, the field is automatically focused) and touch your Yubikey to enter the OTP.</p>
+
+<form method="POST" action="{% url 'login_frontend.views.configure_yubikey' %}?{{ get_params }}">
+{% csrf_token %}
+<input type="hidden" name="configure-yubikey" value="true">
+<input type="text" name="otp" placeholder="Enter OTP here">
+<button class="btn btn-primary">Configure Yubikey</button>
+
+</form>
+</div>
+</div>
+
+<p>Want to skip this for now? <a href="{% url 'login_frontend.views.configure' %}">Go back to configuration view</a>
+{% if back_url %} or <a href="{{ back_url }}">continue to your originating service</a>{% endif %}
+</p>
+
+{% endblock %}

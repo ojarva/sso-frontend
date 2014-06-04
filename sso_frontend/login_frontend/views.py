@@ -33,6 +33,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+from validate_yubikey import *
 import datetime
 import json
 import logging
@@ -592,6 +593,8 @@ def configure(request):
     emergency_codes = user.get_emergency_codes()
     ret["emergency_codes"] = emergency_codes
     ret["user_aliases"] = user.get_aliases()
+    ret["yubikey"] = user.yubikey
+
     locations = UserLocation.objects.filter(user=user).count()
     if locations > 0:
         ret["locations_shared"] = locations
@@ -809,6 +812,112 @@ def get_emergency_codes_pdf(request, **kwargs):
     custom_log(request, "Downloaded emergency codes", level="info")
     new_emergency_generated_notify(request, codes)
     return response
+
+
+@require_http_methods(["GET", "POST"])
+@ratelimit(rate='10/5s', ratekey="5s_config", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='80/1m', ratekey="1m_config", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@ratelimit(rate='1000/6h', ratekey="6h_config", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)
+@protect_view("configure_yubikey", required_level=Browser.L_STRONG)
+def configure_yubikey(request):
+    ret = {}
+    ret["get_params"] = urllib.urlencode(request.GET)
+    user = request.browser.user
+    if request.method != "POST":
+        custom_log(request, "cyubi: Tried to enter Yubikey configuration view with GET request. Redirecting back. Referer: %s" % request.META.get("HTTP_REFERRER"), level="info")
+        messages.info(request, "You can't access configuration page directly. Please click a link below to configure Yubikey.")
+        return redirect_with_get_params("login_frontend.views.configure", request.GET)
+
+    ret["back_url"] = redir_to_sso(request).url
+
+    if request.POST.get("revoke-yubikey"):
+        if user.yubikey:
+            user.yubikey = None
+            user.save()
+            messages.success(request, "Your Yubikey is now revoked.")
+            custom_log(request, "cyubi: Revoked Yubikey", level="info")
+        else:
+            messages.success(request, "You don't have Yubikey configured. No changes were made.")
+
+    otp = request.POST.get("otp")
+    if otp:
+        # validate OTP.
+        try:
+            validator = YubikeyValidate(otp)
+        except BadOtpException:
+            custom_log(request, "cyubi: Entered incorrect Yubikey OTP", level="warn")
+            messages.warning(request, "Invalid Yubikey OTP. This code should come from your Yubikey. It is not your password or Authenticator/SMS OTP.")
+            return render_to_response("login_frontend/configure_yubikey.html", ret, context_instance=RequestContext(request))
+
+        # Unknown Yubikey
+        try:
+            yubikey = Yubikey.objects.get(public_uid=validator.public_uid)
+        except Yubikey.DoesNotExist:
+            custom_log(request, "cyubi: Unknown Yubikey. public_uid=%s" % validator.public_uid, level="warn")
+            messages.warning(request, "Unknown Yubikey. Please contact IT team to get your Yubikey reconfigured.")
+            return render_to_response("login_frontend/configure_yubikey.html", ret, context_instance=RequestContext(request))
+ 
+        # Invalid OTP
+        validation_failed = False
+        try:
+            (internalcounter, timestamp) = validator.validate(validator.public_uid, yubikey.internal_uid, yubikey.secret, yubikey.last_id, yubikey.last_timestamp)
+        except IncorrectOtpException:
+            validation_failed = True
+            custom_log(request, "cyubi: Yubikey private UID does not match.", level="warn")
+            messages.warning(request, "Internal error: your Yubikey is configured incorrectly. Please contact IT team.")
+        except BadOtpException:
+            validation_failed = True
+            custom_log(request, "cyubi: Yubikey CRC check failed.", level="warn")
+            messages.warning(request, "Internal error: integrity check for your Yubikey failed. Please contact IT team.")
+        except ReplayedOtpException:
+            validation_failed = True
+            custom_log(request, "cyubi: replay detected.", level="warn")
+            messages.warning(request, "Do not store Yubikey values. It seems your code was replayed.")
+        except DelayedOtpException:
+            validation_failed = True
+            custom_log(request, "cyubi: delayed code detected.", level="warn")
+            messages.warning(request, "Do not store Yubikey values. It seems you entered old code.")
+
+        if yubikey.compromised:
+            messages.warning(request, "This key is marked as compromised. Please bring the key to IT team for reconfiguration. You can not use this key before it is reconfigured.")
+            validation_failed = True
+
+        if validation_failed:
+            return render_to_response("login_frontend/configure_yubikey.html", ret, context_instance=RequestContext(request))
+
+        # If no replay/delays were detected, always save Yubikey values to prevent any replay attacks.
+        yubikey.last_id = internalcounter
+        yubikey.last_timestamp = timestamp
+        yubikey.save()
+
+
+
+        associated_users = yubikey.user_set.all()
+
+        if len(associated_users) == 0:
+            user.yubikey = yubikey
+            user.save()
+            custom_log(request, "cyubi: Configured Yubikey with public_uid=%s" % yubikey.public_uid, level="info")
+            add_user_log(request, "Successfully configured Yubikey", "gear")
+            messages.success(request, "Your Yubikey is now configured. You can use it on your next login - just use it on the Authenticator/SMS form.")
+            return redirect_with_get_params("login_frontend.views.configure", request.GET.dict())
+
+        associated_user = associated_users[0] # ForeignKey -> only a single user
+        if associated_user == user:
+            custom_log(request, "cyubi: user tried to reconfigure their current key", level="info")
+            messages.info(request, "You already have this key configured. No changes were made.")
+            return redirect_with_get_params("login_frontend.views.configure", request.GET.dict())
+
+        yubikey.compromised = True
+        yubikey.save()
+        associated_user.yubikey = None
+        associated_user.save()
+
+        custom_log(request, "cyubi: user tried to configure key that belonged to %s. Marked as compromised." % associated_user.username, level="error")
+        messages.warning(request, "This key belonged to another user. It is now marked as compromised. Please bring the key to IT team for reconfiguration.")
+
+    return render_to_response("login_frontend/configure_yubikey.html", ret, context_instance=RequestContext(request))
+
 
 @require_http_methods(["GET", "POST"])
 @ratelimit(rate='10/5s', ratekey="5s_config", block=True, method=["POST", "GET"], keys=get_ratelimit_keys)

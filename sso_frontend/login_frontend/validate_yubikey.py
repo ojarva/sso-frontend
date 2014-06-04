@@ -28,8 +28,16 @@ class IncorrectOtpException(InvalidOTPException):
 class YubikeyValidate(object):
     """ This class validates Yubikey OTPs. """
 
-    def __init__(self):
-        pass
+    def __init__(self, otp = None):
+        self.otp = otp
+
+        if (len(self.otp) <= 32) or (len(self.otp) > 48):
+            raise BadOtpException
+        match = re.search('^([cbdefghijklnrtuv]{0,16})([cbdefghijklnrtuv]{32})$', re.escape(self.otp))
+        if match == None:
+            raise BadOtpException
+        self.match = match
+        self.public_uid = self.match.group(1)
 
     @classmethod
     def hex2dec(cls, hex_val):
@@ -68,33 +76,25 @@ class YubikeyValidate(object):
         """ Decrypts AES128 string in ECB mode. """
         return AES.new(aeskey.decode('hex'), AES.MODE_ECB).decrypt(aesdata.decode('hex')).encode('hex')
 
-    def validate(self, otp_val, expected_public_id, expected_private_id, aeskey, last_counter, last_time):
+    def validate(self, expected_public_uid, expected_private_uid, aeskey, last_counter, last_timestamp):
         """ Validates OTP value. Raises exception if code is not valid. """
 
-        if (len(otp_val) <= 32) or (len(otp_val) > 48):
-            raise BadOtpException
-        match = re.search('([cbdefghijklnrtuv]{0,16})([cbdefghijklnrtuv]{32})', re.escape(otp_val))
-        if match == None:
-            raise BadOtpException
-
         try:
-            if match.group(1) and match.group(2):
-                userid = match.group(1)
-                if userid != expected_public_id:
-                    raise IncorrectOtpException
-                token = self.modhex2hex(match.group(2))
-                plaintext = self.aes128ecb_decrypt(aeskey, token)
-                uid = plaintext[:12]
-                if expected_private_id != uid:
-                    raise IncorrectOtpException
-                if not self.calculate_crc(plaintext):
-                    raise BadOtpException
-                internalcounter = self.hex2dec(plaintext[14:16] + plaintext[12:14] + plaintext[22:24])
-                timestamp = self.hex2dec(plaintext[20:22] + plaintext[18:20] + plaintext[16:18])
-                if last_counter >= internalcounter:
-                    raise ReplayedOtpException
-                if (last_time >= timestamp) and ((last_counter >> 8) == (internalcounter >> 8)):
-                    raise DelayedOtpException
+            if self.public_uid != expected_public_uid:
+                raise IncorrectOtpException
+            token = self.modhex2hex(self.match.group(2))
+            plaintext = self.aes128ecb_decrypt(aeskey, token)
+            uid = plaintext[:12]
+            if expected_private_uid != uid:
+                raise IncorrectOtpException
+            if not self.calculate_crc(plaintext):
+                raise BadOtpException
+            internalcounter = self.hex2dec(plaintext[14:16] + plaintext[12:14] + plaintext[22:24])
+            timestamp = self.hex2dec(plaintext[20:22] + plaintext[18:20] + plaintext[16:18])
+            if last_counter >= internalcounter:
+                raise ReplayedOtpException
+            if (last_timestamp >= timestamp) and ((last_counter >> 8) == (internalcounter >> 8)):
+                raise DelayedOtpException
         except IndexError:
             raise BadOtpException
         return (internalcounter, timestamp)

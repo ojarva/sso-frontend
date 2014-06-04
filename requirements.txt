@@ -1,3 +1,4 @@
+pycrypto
 countries
 django-debug-toolbar
 html2text

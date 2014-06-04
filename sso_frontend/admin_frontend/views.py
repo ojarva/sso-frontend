@@ -14,7 +14,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-from login_frontend.models import Browser, User, BrowserLogin, BrowserUsers, Log, EmergencyCodes
+from login_frontend.models import Browser, User, BrowserLogin, BrowserUsers, Log, EmergencyCodes, Yubikey
 from login_frontend.utils import get_and_refresh_user, paginate
 from login_frontend.views import protect_view
 import logging
@@ -165,6 +165,16 @@ def userdetails(request, **kwargs):
     ret["user_aliases"] = ret["auser"].get_aliases()
 
     return render_to_response("admin_frontend/userdetails.html", ret, context_instance=RequestContext(request))
+
+@require_http_methods(["GET"])
+@protect_view("yubikeys", required_level=Browser.L_STRONG, admin_only=True)
+def yubikeys(request):
+    """ Shows list of configured Yubikeys """
+    ret = {}
+    custom_log(request, "Admin: list of Yubikeys")
+    entries = Yubikey.objects.all()
+    ret["entries"] = paginate(request, entries)
+    return render_to_response("admin_frontend/yubikeys.html", ret, context_instance=RequestContext(request))
 
 @require_http_methods(["GET"])
 @protect_view("logins", required_level=Browser.L_STRONG, admin_only=True)

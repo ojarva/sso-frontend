@@ -31,7 +31,7 @@ user_cache = get_cache("users")
 
 log = logging.getLogger(__name__)
 
-__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f", "BrowserTime", "UserService", "UserLocation"]
+__all__ = ["create_browser_uuid", "EmergencyCodes", "EmergencyCode", "add_user_log", "Log", "Browser", "BrowserLogin", "BrowserUsers", "User", "AuthenticatorCode", "KeystrokeSequence", "BrowserDetails", "BrowserP0f", "BrowserTime", "UserService", "UserLocation", "Yubikey"]
 
 redis_instance = redis.Redis()
 
@@ -839,6 +839,17 @@ class KeystrokeSequence(models.Model):
         super(KeystrokeSequence, self).save(*args, **kwargs)
         dcache.delete("runstats-stats.models.KeystrokeSequence.total")
 
+
+class Yubikey(models.Model):
+    # UID and secret must be unique - multiple users should never use the same keys.
+    public_uid = models.CharField(max_length=16, null=True, blank=True, unique=True)
+    internal_uid = models.CharField(max_length=16, null=True, blank=True, unique=True)
+    secret = models.CharField(max_length=52, null=True, blank=True, unique=True)
+    last_id = models.IntegerField(default=0)
+    last_temp_id = models.IntegerField(default=0)
+    last_timestamp = models.IntegerField(default=0)
+    compromised = models.BooleanField(default=False)
+
 class User(models.Model):
     username = models.CharField(max_length=50, primary_key=True)
     is_admin = models.BooleanField(default=False, db_index=True)
@@ -854,13 +865,7 @@ class User(models.Model):
 
     strong_skips_available = models.IntegerField(default=0)
 
-    # UID and secret must be unique - multiple users should never use the same keys.
-    yubikey_public_uid = models.CharField(max_length=16, null=True, blank=True, unique=True)
-    yubikey_internal_uid = models.CharField(max_length=16, null=True, blank=True, unique=True)
-    yubikey_secret = models.CharField(max_length=52, null=True, blank=True, unique=True)
-    yubikey_last_id = models.IntegerField(default=0)
-    yubikey_last_temp_id = models.IntegerField(default=0)
-    yubikey_last_timestamp = models.IntegerField(default=0)
+    yubikey = models.ForeignKey("Yubikey", null=True)
 
     # If this is True, no strong authentication is required, and login is valid only for 12 hours
     emulate_legacy = models.BooleanField(default=False)

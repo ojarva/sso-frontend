@@ -160,20 +160,21 @@ def protect_view(current_step, **main_kwargs):
 
 def validate_yubikey(user, input):
     """ Validates yubico OTP """
-    if not (user.yubikey_internal_uid and user.yubikey_public_uid and user.yubikey_secret):
-        return (False, "No Yubikey configured")
-    validator = YubikeyValidate()
+    if not user.yubikey:
+        return (False, False)
+    yubikey = user.yubikey
     try:
-        (internalcounter, timestamp) = validator.validate(input, user.yubikey_public_uid, user.yubikey_internal_uid, user.yubikey_secret, user.yubikey_last_id, user.yubikey_last_timestamp)
+        validator = YubikeyValidate(input)
+        (internalcounter, timestamp) = validator.validate(yubikey.public_uid, yubikey.internal_uid, yubikey.secret, yubikey.last_id, yubikey.last_timestamp)
     except BadOtpException:
         return (False, False)
     except (ReplayedOtpException, DelayedOtpException):
         return (False, "This OTP was already used. Do not store Yubikey OTPs.")
     except IncorrectOtpException:
         return (False, "This is not your Yubikey.")
-    user.yubikey_last_id = internalcounter
-    user.yubikey_last_timestamp = timestamp
-    user.save()
+    yubikey.last_id = internalcounter
+    yubikey.last_timestamp = timestamp
+    yubikey.save()
     return (True, False)
 
 @require_http_methods(["GET", "POST"])

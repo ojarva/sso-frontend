@@ -189,6 +189,30 @@
 	</div>
 </div>
 
+<div class="panel panel-info">
+	<div class="panel-heading">
+		Yubikeys
+	</div>
+	<div class="panel-body">
+		<p>Yubikeys are small hardware tokens for entering the OTP.</p>
+
+		{% if yubikey %}
+			<p>You already have Yubikey configured.</p>
+		{% endif %}
+
+		<form name="configure_yubikey" method="POST" action="{% url 'login_frontend.views.configure_yubikey' %}?{{ get_params }}">
+			{% csrf_token %}
+			<input type="hidden" name="configure_yubikey" value="true">
+			{% if yubikey %}
+				<button class="btn btn-info" type="submit">Reconfigure Yubikey</button>
+			{% else %}
+				<button class="btn btn-primary" type="submit">Configure Yubikey</button>
+			{% endif %}
+		</form>
+	</div>
+</div>
+
+
 <div id="enable-notification" class="hidden">
 
 <div class="panel panel-info">

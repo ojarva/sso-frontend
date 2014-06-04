@@ -1,0 +1,28 @@
+{% if entries %}
+
+{% include "snippets/pagination.html" %}
+
+<table class="table table-striped table-responsive">
+<thead>
+<tr>
+<th>User</th>
+<th>Compromised</th>
+<th>Public UID</th>
+</tr>
+</thead>
+<tbody>
+{% for item in entries %}
+<tr>
+<td>{{ item.username }}</td>
+<td>{{ item.compromised }}</td>
+<td>{{ item.public_uid }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% include "snippets/pagination.html" %}
+
+{% else %}
+<p>No Yubikeys configured.</p>
+{% endif %}
