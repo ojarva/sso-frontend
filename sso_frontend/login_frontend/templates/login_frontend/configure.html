@@ -38,6 +38,24 @@
 		<p><a href="{{ back_url }}" class="btn btn-info">Continue to the service you tried to access</a></p>
 {% endif %}
 
+
+<div class="well">
+<p>To sign in, you need two different things: your password, and one-time password. For longer explanation, please see <a href="{% url 'introduction' %}">separate page</a>.</p>
+
+<p>For one-time passwords, you can use any of these methods:</p>
+<dl>
+    <dt>Authenticator {% if user.strong_authenticator_used %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>  
+    <dd>{% if user.strong_authenticator_used %}You have configured and used Authenticator already.{% else %}You don't have active Authenticator configuration. You should configure this.{% endif %}</dd>
+    <dt>SMS <span class="label label-success">ok</span></dt>
+    <dd>SMSes are less reliable than Authenticator.</dd>
+    <dt>Emergency codes {% if user.emergency_codes_valid %}<span class="label label-success">ok</span>{% elif username %}<span class="label label-warning">Requires action</span>{% endif %}</dt>
+    <dd>These are long random passwords you can use once if you lose access to your mobile phone.</dd>
+    <dt>Yubikeys {% if yubikey %}<span class="label label-success">ok</span>{% endif %}</dt>
+    <dd>Small hardware tokens to generate one-time passwords. Ask yours from IT.</dd>
+</dl>
+
+</div>
+
 {% if not user.strong_authenticator_secret %}
 <div class="panel panel-danger">
 	<div class="panel-heading">
@@ -189,7 +207,7 @@
 	</div>
 </div>
 
-<div class="panel panel-info">
+<div class="panel {% if yubikey %}panel-success{% else %}panel-info{% endif %}">
 	<div class="panel-heading">
 		Yubikeys
 	</div>
