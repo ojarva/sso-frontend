@@ -36,6 +36,7 @@ DISALLOWED_UA = [
  re.compile("^Pingdom.com_bot_version.*"),
  re.compile("^curl/.*"),
  re.compile("^nutch-.*"),
+ re.compile("^com.apple.Safari.SearchHelper.*"),
 ]
 
 __all__ = ["get_browser", "BrowserMiddleware", "get_browser_instance"]
