@@ -1,0 +1,16 @@
+{% extends "login_frontend/base.html" %}
+
+{% block title %}login - {% endblock %}
+
+{% block content %}
+
+<div class="row">
+<div class="col-md-8 col-centered">
+
+{% include "login_frontend/snippets/vulnerable_browser.html" %}
+
+<h3>Login service</h3>
+
+<p>You are seeing this view because your browser indicated it is downloading preview. If you think this is an error, please contact {{ admin_email }}.</p>
+
+{% endblock %}
